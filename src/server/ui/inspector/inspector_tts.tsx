@@ -12,6 +12,7 @@ import Inspector from "./components";
 import { InputCheckbox, InputMapObject, InputMappedGroupSelect, InputNativeAudioOutput, InputRange, InputSelect, InputSelectOption, InputText, InputTextSource } from "./components/input";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 
 type WindowsToken = {
   id: string;
@@ -300,6 +301,44 @@ const UberDuck: FC = () => {
   </>
 }
 
+const piperVoices = proxy<{ value: InputSelectOption[] }>({ value: [] });
+
+const Piper: FC = () => {
+  const { t } = useTranslation();
+  const data = useSnapshot(window.ApiServer.state.services.tts.data.piper);
+  const state = useSnapshot(window.ApiServer.tts.serviceState);
+  const handleUpdate = <K extends keyof TTS_State["piper"]>(key: K, v: TTS_State["piper"][K]) => window.ApiServer.patchService("tts", s => s.data.piper[key] = v);
+  const { value: voices } = useSnapshot(piperVoices);
+
+  const loadVoices = () => {
+    type PiperVoice = { name: string; path: string; }
+    invoke<PiperVoice[]>("plugin:piper_tts|get_voices", { path: data.voice_location }).then(res => {
+      piperVoices.value = res.map(v => ({ value: v.path, label: v.name }));
+    }).catch(err => {
+      toast.error(err)
+      piperVoices.value = [];
+    });
+  }
+
+  useEffect(loadVoices, []);
+
+  return <>
+    <Inspector.SubHeader>{t('tts.piper_title')}</Inspector.SubHeader>
+    <Inspector.Deactivatable active={state.status === ServiceNetworkState.disconnected}>
+      <InputNativeAudioOutput label="common.field_output_device" value={data.device} onChange={e => handleUpdate("device", e)} />
+      <InputSelect
+        value={data.voice}
+        onValueChange={e => handleUpdate("voice", e)}
+        options={voices as InputSelectOption[]}
+        label="tts.field_voice" />
+      <InputText type="text" label="tts.piper_voice_location" value={data.voice_location} onChange={e => { handleUpdate("voice_location", e.target.value); }} />
+      <InputText type="text" label="tts.piper_exe_location" value={data.exe_location} onChange={e => handleUpdate("exe_location", e.target.value)} />
+      <InputText type="number" min="0" step="1" label="tts.piper_speaker_id" value={data.speaker_id} onChange={e => handleUpdate("speaker_id", e.target.valueAsNumber)} />
+      <button onClick={loadVoices} className="btn btn-sm btn-ghost">{t("tts.piper_reload_voices")}</button>
+    </Inspector.Deactivatable>
+  </>
+}
+
 const WordsReplacementModal: FC = () => {
   const {t} = useTranslation();
   const data = useSnapshot(window.ApiServer.state.services.tts);
@@ -343,6 +382,7 @@ const Inspector_TTS: FC = () => {
           { label: "Azure", value: TTS_Backends.azure },
           { label: "TikTok", value: TTS_Backends.tiktok },
           { label: "Uberduck", value: TTS_Backends.uberduck },
+          { label: "Piper", value: TTS_Backends.piper },
           // { label: "VoiceVox", value: TTS_Backends.voicevox },
         ]} onValueChange={e => up("backend", e as TTS_Backends)} />
       </Inspector.Deactivatable>
@@ -351,6 +391,7 @@ const Inspector_TTS: FC = () => {
       {data.data.backend === TTS_Backends.native && <Native />}
       {data.data.backend === TTS_Backends.tiktok && <TikTok />}
       {data.data.backend === TTS_Backends.uberduck && <UberDuck />}
+      {data.data.backend === TTS_Backends.piper && <Piper />}
       {/* {data.data.backend === TTS_Backends.voicevox && <VoiceVox />} */}
       <ServiceButton status={state.status} onStart={() => window.ApiServer.tts.start()} onStop={() => window.ApiServer.tts.stop()} />
     </Inspector.Content>

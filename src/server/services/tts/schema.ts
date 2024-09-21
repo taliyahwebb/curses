@@ -8,6 +8,7 @@ export enum TTS_Backends {
   azure = "azure",
   tiktok = "tiktok",
   uberduck = "uberduck",
+  piper = "piper",
   // voicevox = "voicevox",
 }
 
@@ -61,6 +62,13 @@ export const Service_TTS_Schema = z.object({
     rate: zSafe(zStringNumber(), "1"),
     key: zSafe(z.coerce.string(), ""),
     location: zSafe(z.coerce.string(), ""),
+  }).default({}),
+  piper: z.object({
+    device: zSafe(z.coerce.string(), ""),
+    voice: zSafe(z.coerce.string(), ""),
+    exe_location: zSafe(z.coerce.string(), ""),
+    voice_location: zSafe(z.coerce.string(), ""),
+    speaker_id: zSafe(z.coerce.number(), 0),
   }).default({})
 }).default({});
 

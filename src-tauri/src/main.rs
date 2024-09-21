@@ -85,6 +85,7 @@ fn main() {
         .plugin(services::audio::init())
         .plugin(services::windows_tts::init())
         .plugin(services::uberduck_tts::init())
+        .plugin(services::piper_tts::init())
         .plugin(services::keyboard::init())
         .plugin(services::uwu::init())
         .run(tauri::generate_context!())
