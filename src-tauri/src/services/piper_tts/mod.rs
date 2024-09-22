@@ -49,7 +49,7 @@ fn scan_voice_directory(path: PathBuf) -> io::Result<Vec<Voice>> {
     fn try_into_voice(entry: std::fs::DirEntry) -> Option<Voice> {
         let path = entry.path();
         if path.is_file() && path.extension().is_some_and(|ext| ext == "onnx") && path.with_extension("onnx.json").exists() {
-            // we only need the name for display purposes, so the lossy conversion is fine.
+            // we only need the name for display purposes, so the lossy conversion here is fine.
             let name = path.file_stem()?.to_string_lossy().into();
             Some(Voice { name, path })
         } else {
@@ -59,14 +59,14 @@ fn scan_voice_directory(path: PathBuf) -> io::Result<Vec<Voice>> {
 
     Ok(std::fs::read_dir(path)?
         .filter_map(Result::ok)
-        .map(try_into_voice)
-        .filter_map(|x| x)
+        .filter_map(try_into_voice)
         .collect())
 }
 
-async fn pipe_to_stdin(command: &mut tokio::process::Child, bytes: &[u8]) -> io::Result<()> {
+/// Writes a byte slice to the standard input of a child process
+async fn write_to_stdin(process: &mut tokio::process::Child, bytes: &[u8]) -> io::Result<()> {
     use tokio::io::AsyncWriteExt;
-    let stdin = command.stdin.as_mut().expect("Failed to open stdin");
+    let stdin = process.stdin.as_mut().expect("Failed to open stdin");
     stdin.write_all(bytes).await
 }
 
@@ -79,7 +79,7 @@ fn add_arg_if_some(command: &mut tokio::process::Command, name: &str, value: Opt
 
 /// Invokes piper to generate a WAV file and returns it as a byte vector
 async fn get_wav_bytes(args: &SpeakArgs) -> Result<Vec<u8>, io::Error> {
-    // i tried to read the wav data from stdout, but that didn't work,
+    // at first i tried to read the wav data from stdout, but that didn't work,
     // so now i just use a regular file here.
     let wav_file = tempfile::NamedTempFile::new()?;
     let wav_file_path = wav_file.path();
@@ -103,19 +103,18 @@ async fn get_wav_bytes(args: &SpeakArgs) -> Result<Vec<u8>, io::Error> {
     #[cfg(windows)]
     {
         // console applications on windows have the annoying habbit of spawning a terminal window.
-        // we need to explicitly tell CreateProcess to not do that.
+        // we need to explicitly tell CreateProcess not to do that.
         command.creation_flags(0x08000000); // CREATE_NO_WINDOW
     }
 
     let mut process = command.spawn()?;
 
-    pipe_to_stdin(&mut process, &args.value.as_bytes()).await?;
+    write_to_stdin(&mut process, &args.value.as_bytes()).await?;
 
     let status = process.wait().await?;
 
     if status.success() {
-        let bytes = tokio::fs::read(wav_file_path).await?;
-        Ok(bytes)
+        tokio::fs::read(wav_file_path).await
     } else {
         let error = match status.code() {
             Some(code) => format!("Piper exited with status code: {code}"),
@@ -130,7 +129,7 @@ fn get_voices(path: PathBuf) -> Result<Vec<Voice>, String> {
     match scan_voice_directory(path) {
         Ok(vec) if vec.is_empty() => Err("No voices found. Voice files must come in pairs named '<file>.onnx' and '<file>.onnx.json'".into()),
         Ok(vec) => Ok(vec),
-        Err(e) => Err(e.to_string())
+        Err(e) => Err(e.to_string()),
     }
 }
 
