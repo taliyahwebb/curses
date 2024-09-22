@@ -127,7 +127,11 @@ async fn get_wav_bytes(args: &SpeakArgs) -> Result<Vec<u8>, io::Error> {
 
 #[tauri::command]
 fn get_voices(path: PathBuf) -> Result<Vec<Voice>, String> {
-    scan_voice_directory(path).map_err(|e| e.to_string())
+    match scan_voice_directory(path) {
+        Ok(vec) if vec.is_empty() => Err("No voices found. Voice files must come in pairs named '<file>.onnx' and '<file>.onnx.json'".into()),
+        Ok(vec) => Ok(vec),
+        Err(e) => Err(e.to_string())
+    }
 }
 
 #[tauri::command]
