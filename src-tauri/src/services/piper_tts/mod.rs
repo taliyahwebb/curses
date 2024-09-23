@@ -138,8 +138,9 @@ async fn get_wav_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
     let status = process.wait().await?;
 
     if status.success() {
-        let result = tokio::fs::read(wav_file_path).await;
-        result.with_context(|| format!("Could not read temporary file at {}", wav_file_path.display()))
+        tokio::fs::read(wav_file_path)
+            .await
+            .with_context(|| format!("Could not read temporary file at {}", wav_file_path.display()))
     } else {
         let error = match status.code() {
             Some(code) => format!("Piper exited with status code: {code}"),
