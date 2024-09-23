@@ -81,7 +81,7 @@ async fn write_to_stdin(process: &mut tokio::process::Child, bytes: &[u8]) -> io
     use tokio::io::AsyncWriteExt;
     let stdin = process.stdin.as_mut().expect("Failed to open stdin");
     let result = stdin.write_all(bytes).await;
-    result.with_context(|| "Could not write to piper's stanard input")
+    result.with_context(|| "Could not write to piper's standard input")
 }
 
 /// Handles adding optional command line parameters to a Command object
@@ -131,7 +131,7 @@ async fn get_wav_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
         command.creation_flags(0x08000000); // CREATE_NO_WINDOW
     }
 
-    let mut process = command.spawn().with_context(|| "Could not start Piper")?;
+    let mut process = command.spawn().with_context(|| "Failed to start Piper")?;
 
     write_to_stdin(&mut process, &args.value.as_bytes()).await?;
 
@@ -140,7 +140,7 @@ async fn get_wav_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
     if status.success() {
         tokio::fs::read(wav_file_path)
             .await
-            .with_context(|| format!("Could not read temporary file at {}", wav_file_path.display()))
+            .with_context(|| format!("Failed to read temporary file at {}", wav_file_path.display()))
     } else {
         let error = match status.code() {
             Some(code) => format!("Piper exited with status code: {code}"),
