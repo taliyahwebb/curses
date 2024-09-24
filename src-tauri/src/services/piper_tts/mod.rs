@@ -107,14 +107,16 @@ async fn get_wav_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
     // so now i just use a regular file here.
     let wav_file = create_temp_file()?;
     let wav_file_path = wav_file.path();
+    let model_path = &args.voice_path;
+    let piper_path = &args.exe_path;
 
-    let mut command = tokio::process::Command::new(&args.exe_path);
+    let mut command = tokio::process::Command::new(piper_path);
     command.stdin(std::process::Stdio::piped());
     command.stdout(std::process::Stdio::null());
     command.stderr(std::process::Stdio::null());
     command.arg("-q"); // quiet
     command.arg("-m");
-    command.arg(&args.voice_path);
+    command.arg(model_path);
     command.arg("-f");
     command.arg(wav_file_path);
 
@@ -131,7 +133,9 @@ async fn get_wav_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
         command.creation_flags(0x08000000); // CREATE_NO_WINDOW
     }
 
-    let mut process = command.spawn().with_context(|| "Failed to start Piper")?;
+    let mut process = command
+        .spawn()
+        .with_context(|| format!("Failed to start {}", piper_path.display()))?;
 
     write_to_stdin(&mut process, &args.value.as_bytes()).await?;
 
