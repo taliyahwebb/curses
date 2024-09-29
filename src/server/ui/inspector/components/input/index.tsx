@@ -106,21 +106,14 @@ export const InputFilePath: FC<InputFilePathProps> = ({ label, value, onChange, 
     }
   };
 
-  return (
-    <InputContainer label={label}>
-      <div className="flex">
-        <InputBaseText
-          ref={inputRef}
-          value={value}
-          onChange={onChange}
-          className="rounded-r-none"
-        />
-        <button onClick={handleButtonClick} className="btn btn-square btn-sm rounded-l-none">
-          { options.directory ? <RiFolder2Line/> : <RiFile3Line/> }
-        </button>
-      </div>
-    </InputContainer>
-  );
+  return <InputContainer label={label} vertical>
+    <div className="flex">
+      <InputBaseText ref={inputRef} value={value} onChange={onChange} fieldWidth={false} className="rounded-r-none w-full" />
+      <button onClick={handleButtonClick} className="btn btn-square btn-sm rounded-l-none">
+        {options.directory ? <RiFolder2Line /> : <RiFile3Line />}
+      </button>
+    </div>
+  </InputContainer>
 };
 
 const ColorSelectDropdown: FC<any> = ({ onChange, value }) => {

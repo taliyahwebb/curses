@@ -327,22 +327,14 @@ const Piper: FC = () => {
     <Inspector.SubHeader>{t('tts.piper_title')}</Inspector.SubHeader>
     <Inspector.Deactivatable active={state.status === ServiceNetworkState.disconnected}>
       <InputNativeAudioOutput label="common.field_output_device" value={data.device} onChange={e => handleUpdate("device", e)} />
-
-      <InputSelect
-        value={data.voice}
-        onValueChange={e => handleUpdate("voice", e)}
-        options={voices as InputSelectOption[]}
-        label="tts.field_voice" />
-
+      <InputSelect value={data.voice} onValueChange={e => handleUpdate("voice", e)} options={voices as InputSelectOption[]} label="tts.field_voice" />
       <InputText type="number" min="0" step="1" label="tts.piper_speaker_id" value={data.speaker_id} onChange={e => handleUpdate("speaker_id", e.target.valueAsNumber)} />
-
       <InputFilePath
         label="tts.piper_exe_location"
         value={data.exe_location}
         onChange={e => handleUpdate("exe_location", e.target.value)}
         dialogOptions={{ filters: [{ name: "piper.exe", extensions: ["exe"] }] }}
       />
-      
       <InputFilePath
         label="tts.piper_voice_location"
         value={data.voice_location}
@@ -350,7 +342,6 @@ const Piper: FC = () => {
         onPathSelected={path => loadVoicesFrom(path)}
         dialogOptions={{ directory: true }}
       />
-
       <button onClick={loadVoices} className="btn btn-sm">{t("tts.piper_reload_voices")}</button>
     </Inspector.Deactivatable>
   </>
