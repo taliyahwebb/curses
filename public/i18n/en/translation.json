@@ -121,7 +121,7 @@
     "azure_voice_range": "Voice range",
 
     "piper_title": "Piper",
-    "piper_exe_location": "Path to executable",
+    "piper_exe_location": "Executable",
     "piper_voice_location": "Voice directory",
     "piper_reload_voices": "Rescan voice directory",
     "piper_speaker_id": "Speaker ID",
