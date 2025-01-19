@@ -9,6 +9,7 @@ export enum TTS_Backends {
   tiktok = "tiktok",
   uberduck = "uberduck",
   piper = "piper",
+  custom = "custom",
   // voicevox = "voicevox",
 }
 
@@ -69,6 +70,10 @@ export const Service_TTS_Schema = z.object({
     exe_location: zSafe(z.coerce.string(), ""),
     voice_location: zSafe(z.coerce.string(), ""),
     speaker_id: zSafe(z.coerce.number(), 0),
+  }).default({}),
+  custom: z.object({
+    device: zSafe(z.coerce.string(), ""),
+    exe_location: zSafe(z.coerce.string(), ""),
   }).default({})
 }).default({});
 

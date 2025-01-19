@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::{fmt::Display, io, path::PathBuf};
 use tauri::{plugin, Runtime};
 
+use crate::utils::*;
+
 #[derive(Serialize, Deserialize, Debug)]
 struct Voice {
     /// human-readable name to display to the user
@@ -40,20 +42,6 @@ struct SpeakArgs {
 
     /// the actual text to speak
     value: String,
-}
-
-/// Little helper extension to add a better error message to an io::Error
-trait ResultExt {
-    fn with_context<D: Display>(self, message: impl FnOnce() -> D) -> Self;
-}
-impl<T> ResultExt for io::Result<T> {
-    fn with_context<D: Display>(self, message: impl FnOnce() -> D) -> Self {
-        self.map_err(|e| {
-            let kind = e.kind();
-            let error = format!("{}: {}", message(), e);
-            io::Error::new(kind, error)
-        })
-    }
 }
 
 /// Scans the given directory for Piper voice files.

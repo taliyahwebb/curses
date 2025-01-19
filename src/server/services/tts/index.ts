@@ -10,6 +10,7 @@ import { TTS_TikTokService } from "./services/tiktok";
 import { TTS_WindowsService } from "./services/windows";
 import { TTS_UberduckService } from "./services/uberduck";
 import { TTS_PiperService } from "./services/piper";
+import { TTS_CustomService } from "./services/custom";
 import {
   ITTSReceiver,
   ITTSService,
@@ -25,6 +26,7 @@ const backends: {
   [TTS_Backends.tiktok]: TTS_TikTokService,
   [TTS_Backends.uberduck]: TTS_UberduckService,
   [TTS_Backends.piper]: TTS_PiperService,
+  [TTS_Backends.custom]: TTS_CustomService,
 };
 
 class Service_TTS implements IServiceInterface, ITTSReceiver {

@@ -347,6 +347,25 @@ const Piper: FC = () => {
   </>
 }
 
+const Custom: FC = () => {
+  const { t } = useTranslation();
+  const data = useSnapshot(window.ApiServer.state.services.tts.data.custom);
+  const state = useSnapshot(window.ApiServer.tts.serviceState);
+  const handleUpdate = <K extends keyof TTS_State["custom"]>(key: K, v: TTS_State["custom"][K]) => window.ApiServer.patchService("tts", s => s.data.custom[key] = v);
+ 
+  return <>
+    <Inspector.SubHeader>{t('tts.custom_title')}</Inspector.SubHeader>
+    <Inspector.Deactivatable active={state.status === ServiceNetworkState.disconnected}>
+      <InputNativeAudioOutput label="common.field_output_device" value={data.device} onChange={e => handleUpdate("device", e)} />
+      <InputFilePath
+        label="tts.custom_exe_location"
+        value={data.exe_location}
+        onChange={e => handleUpdate("exe_location", e.target.value)}
+      />
+    </Inspector.Deactivatable>
+  </>
+}
+
 const WordsReplacementModal: FC = () => {
   const {t} = useTranslation();
   const data = useSnapshot(window.ApiServer.state.services.tts);
@@ -385,12 +404,13 @@ const Inspector_TTS: FC = () => {
         <InputTextSource label="common.field_text_source" value={data.data.source} onChange={e => up("source", e)} />
         <InputCheckbox label="common.field_use_keyboard_input" value={data.data.inputField} onChange={e => up("inputField", e)} />
         <InputSelect label="common.field_service" value={data.data.backend} options={[
-          { label: "Native", value: TTS_Backends.native },
-          { label: "Windows", value: TTS_Backends.windows },
-          { label: "Azure", value: TTS_Backends.azure },
-          { label: "TikTok", value: TTS_Backends.tiktok },
-          { label: "Uberduck", value: TTS_Backends.uberduck },
-          { label: "Piper", value: TTS_Backends.piper },
+          { label: t('tts.native_title'),     value: TTS_Backends.native    },
+          { label: t('tts.windows_title'),    value: TTS_Backends.windows   },
+          { label: t('tts.azure_title'),      value: TTS_Backends.azure     },
+          { label: t('tts.tiktok_title'),     value: TTS_Backends.tiktok    },
+          { label: t('tts.uberduck_title'),   value: TTS_Backends.uberduck  },
+          { label: t('tts.piper_title'),      value: TTS_Backends.piper     },
+          { label: t('tts.custom_title'),     value: TTS_Backends.custom    },
           // { label: "VoiceVox", value: TTS_Backends.voicevox },
         ]} onValueChange={e => up("backend", e as TTS_Backends)} />
       </Inspector.Deactivatable>
@@ -400,6 +420,7 @@ const Inspector_TTS: FC = () => {
       {data.data.backend === TTS_Backends.tiktok && <TikTok />}
       {data.data.backend === TTS_Backends.uberduck && <UberDuck />}
       {data.data.backend === TTS_Backends.piper && <Piper />}
+      {data.data.backend === TTS_Backends.custom && <Custom />}
       {/* {data.data.backend === TTS_Backends.voicevox && <VoiceVox />} */}
       <ServiceButton status={state.status} onStart={() => window.ApiServer.tts.start()} onStop={() => window.ApiServer.tts.stop()} />
     </Inspector.Content>

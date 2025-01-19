@@ -124,3 +124,23 @@ export const zSafe = <zObj extends z.ZodTypeAny, Val extends z.infer<zObj>>(
 ) => obj.default(value).catch(value);
 // need this for zod transition
 export const assertTypes = <A, B extends A>() => {};
+
+/**
+ * Converts an ArrayBufferLike to an ArrayBuffer by copying its contents.
+ * 
+ * @param buffer - The input buffer to convert
+ * @returns A new ArrayBuffer containing the same data
+ */
+export function toArrayBuffer(buffer: ArrayBufferLike): ArrayBuffer {
+  // Create a new ArrayBuffer with the same length
+  const arrayBuffer = new ArrayBuffer(buffer.byteLength);
+  
+  // Create views to copy the data
+  const sourceView = new Uint8Array(buffer);
+  const destView = new Uint8Array(arrayBuffer);
+  
+  // Copy all bytes from the ArrayBufferLike to the new ArrayBuffer
+  destView.set(sourceView);
+  
+  return arrayBuffer;
+}

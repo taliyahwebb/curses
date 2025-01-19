@@ -15,6 +15,7 @@ use windows::{
 use crate::services::AppConfiguration;
 
 mod services;
+mod utils;
 
 #[derive(Parser, Debug)]
 struct InitArguments {
@@ -86,6 +87,7 @@ fn main() {
         .plugin(services::windows_tts::init())
         .plugin(services::uberduck_tts::init())
         .plugin(services::piper_tts::init())
+        .plugin(services::custom_tts::init())
         .plugin(services::keyboard::init())
         .plugin(services::uwu::init())
         .run(tauri::generate_context!())
