@@ -23,14 +23,24 @@ struct SpeakArgs {
 }
 
 async fn get_audio_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
+    // create temp dir and file paths
     let directory = tempfile::tempdir()?;
     let txtfile = directory.path().join("speak.txt");
     let outfile = directory.path().join("speak.out");
+    let script = &args.exe_path;
 
     // write text to input file
     tokio::fs::write(&txtfile, &args.value).await?;
 
-    let mut command = build_command(&args.exe_path, &txtfile, &outfile);
+    let mut command = build_command(script, &txtfile, &outfile);
+
+    // set the working directory to the script location,
+    // but only if the script path has more than one component.
+    // otherwise it could also be a utility in the user's PATH.
+    if let Some(path) = script.parent() {
+        let dir = tokio::fs::canonicalize(path).await?;
+        command.current_dir(dir);
+    }
 
     let status = command
         .spawn()
@@ -63,19 +73,24 @@ macro_rules! command {
 
 #[cfg(windows)]
 fn build_command(script: &Path, txtfile: &Path, outfile: &Path) -> Command {
-    // we want to support scripts as well, not just bare Win32 EXEs,
+    // we want to support shell scripts as well, not just bare Win32 EXEs,
     // so we special-case a few file types and delegate the rest to cmd.exe
-    let extension = script.extension().and_then(std::ffi::OsStr::to_str);
-    let mut command = match extension {
+    let extension = script
+        .extension()
+        .and_then(std::ffi::OsStr::to_str)
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+
+    let mut command = match extension.as_str() {
         // if we can launch it directly, do that
-        Some("exe" | "com") => command![script],
+        "exe" | "com" => command![script],
 
         // python might not be installed, so we need to probe for it.
-        Some("py") if which::which("python").is_ok() => command!["python", script],
+        "py" if which::which("python").is_ok() => command!["python", script],
 
         // powershell is available on every windows since win7, so we don't need to check.
         // But we do want to bypass the execution policy.
-        Some("ps1") => command!["powershell", "-ExecutionPolicy", "Bypass", "-File", script],
+        "ps1" => command!["powershell", "-ExecutionPolicy", "Bypass", "-File", script],
 
         // everything else we just delegate to cmd.exe
         // so that the user's file associations get used.

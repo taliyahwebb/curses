@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::{fmt::Display, io, path::PathBuf};
+use std::{io, path::PathBuf};
 use tauri::{plugin, Runtime};
 
 use crate::utils::*;
