@@ -44,6 +44,11 @@ fn app_close(app_handle: tauri::AppHandle) {
         return app_handle.exit(0);
     }
 }
+fn app_setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    let window = app.get_window("main").unwrap();
+    window_shadows::set_shadow(&window, true).ok(); // ignore failure
+    Ok(())
+}
 
 fn main() {
     let args = InitArguments::parse();
@@ -72,11 +77,7 @@ fn main() {
     };
 
     tauri::Builder::default()
-        .setup(|app| {
-            let window = app.get_window("main").unwrap();
-            window_shadows::set_shadow(&window, true).ok(); // ignore failure
-            Ok(())
-        })
+        .setup(app_setup)
         .invoke_handler(tauri::generate_handler![get_port, get_native_features, app_close])
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .manage(AppConfiguration { port: args.port })

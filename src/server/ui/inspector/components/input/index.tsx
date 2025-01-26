@@ -1,5 +1,5 @@
 import NiceModal from "@ebay/nice-modal-react";
-import { useId } from "@floating-ui/react-dom-interactions";
+import { useId } from "@floating-ui/react";
 import classNames from "classnames/bind";
 import { ChangeEvent, FC, forwardRef, InputHTMLAttributes, memo, PropsWithChildren, ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { RgbaColor, RgbaColorPicker } from "react-colorful";
