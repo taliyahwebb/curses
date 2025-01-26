@@ -55,13 +55,14 @@ fn main() {
         Err(_err) => {
             #[cfg(windows)]
             {
+                use windows::core::*;
                 use windows::Win32::UI::WindowsAndMessaging::{MessageBoxA, MB_ICONWARNING, MB_OK};
                 let message = format!("Port {} is not available!", args.port);
                 unsafe {
                     MessageBoxA(
                         None,
                         windows::core::PCSTR(message.as_ptr()),
-                        windows::s!("Curses error"),
+                        s!("Curses error"),
                         MB_OK | MB_ICONWARNING,
                     );
                 }

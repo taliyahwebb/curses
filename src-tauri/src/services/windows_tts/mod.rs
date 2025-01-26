@@ -18,7 +18,7 @@ mod intf;
 
 #[derive(Default)]
 pub struct WindowsTTSPlugin {
-    intf: Option<Intf<ISpeechVoice>>
+    intf: Option<Intf<ISpeechVoice>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -42,10 +42,15 @@ pub struct RpcWindowsTTSConfig {
 impl ISpeechToken {
     fn get_desc(&self) -> Option<SpeechObject> {
         unsafe {
-            self.t.0.Id().ok()
+            self.t
+                .0
+                .Id()
+                .ok()
                 .and_then(|id| {
-                    self.t.0
-                        .GetDescription(0).ok()
+                    self.t
+                        .0
+                        .GetDescription(0)
+                        .ok()
                         .map(|label| (id.to_string(), label.to_string()))
                 })
                 .map(|(id, label)| SpeechObject { id, label })
@@ -55,9 +60,11 @@ impl ISpeechToken {
 
 impl WindowsTTSPlugin {
     fn new() -> Self {
-        let Ok(()) = (unsafe { CoInitialize(None) }) else {
+        let result = unsafe { CoInitialize(None) };
+        if result.is_err() {
             return Self::default();
-        };
+        }
+
         let Ok(instance): Result<ISpeechVoice, windows::core::Error> = (unsafe { CoCreateInstance(&SpVoice, None, CLSCTX_ALL) }) else {
             return Self::default();
         };
@@ -103,12 +110,14 @@ fn into_speech_tokens(tokens: ISpeechObjectTokens) -> Option<Vec<ISpeechToken>> 
 fn get_voices(state: State<WindowsTTSPlugin>) -> Result<RpcWindowsTTSConfig, &str> {
     let Some(devices): Option<Vec<SpeechObject>> = state
         .list_devices()
-        .map(|list| list.iter().map(|t| t.get_desc()).flatten().collect()) else {
+        .map(|list| list.iter().map(|t| t.get_desc()).flatten().collect())
+    else {
         return Err("Failed to get device list");
     };
     let Some(voices): Option<Vec<SpeechObject>> = state
         .list_voices()
-        .map(|list| list.iter().map(|t| t.get_desc()).flatten().collect()) else {
+        .map(|list| list.iter().map(|t| t.get_desc()).flatten().collect())
+    else {
         return Err("Failed to get voice list");
     };
 
@@ -121,7 +130,7 @@ pub struct RpcWindowsTTSSpeak {
     voice: String,
     value: String,
     volume: f32, // 0 - 1
-    rate: f32 // 0 - 1 - 5
+    rate: f32,   // 0 - 1 - 5
 }
 
 #[command]
@@ -132,8 +141,8 @@ fn speak(data: RpcWindowsTTSSpeak, state: State<WindowsTTSPlugin>) -> Result<(),
     let Some(sp_voice) = &state.intf else {
         return Err("Plugin is not initialized");
     };
-    
-    if unsafe {sp_voice.0.SetVolume((data.volume * 100.0) as i32)}.is_err() {
+
+    if unsafe { sp_voice.0.SetVolume((data.volume * 100.0) as i32) }.is_err() {
         return Err("Unable to update volume");
     }
 
@@ -143,7 +152,7 @@ fn speak(data: RpcWindowsTTSSpeak, state: State<WindowsTTSPlugin>) -> Result<(),
     } else {
         (-data.rate * 100.0) as i32
     };
-    if unsafe {sp_voice.0.SetRate(rate)}.is_err() {
+    if unsafe { sp_voice.0.SetRate(rate) }.is_err() {
         return Err("Unable to update rate");
     }
 
@@ -152,21 +161,21 @@ fn speak(data: RpcWindowsTTSSpeak, state: State<WindowsTTSPlugin>) -> Result<(),
         .as_deref()
         .and_then(|list| list.iter().find(|t| t.id == data.device))
         .and_then(|token| unsafe { sp_voice.0.putref_AudioOutput(&token.t.0).ok() })
-        else {
+    else {
         return Err("Failed to apply device");
     };
     let Some(_apply_res_voice) = state
         .list_voices()
         .as_deref()
         .and_then(|list| list.iter().find(|t| t.id == data.voice))
-        .and_then(|token| unsafe { sp_voice.0.putref_Voice(&token.t.0).ok() }) else {
+        .and_then(|token| unsafe { sp_voice.0.putref_Voice(&token.t.0).ok() })
+    else {
         return Err("Failed to apply voice");
     };
 
-    if let Err(_err) = unsafe {sp_voice.Speak(&data.value.into(), SpeechVoiceSpeakFlags(SVSFDefault.0 | SVSFlagsAsync.0))} {
+    if let Err(_err) = unsafe { sp_voice.Speak(&data.value.into(), SpeechVoiceSpeakFlags(SVSFDefault.0 | SVSFlagsAsync.0)) } {
         Err("Unable to process text")
-    }
-    else {
+    } else {
         Ok(())
     }
 }
