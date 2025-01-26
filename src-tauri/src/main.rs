@@ -4,13 +4,6 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use tauri::{command, Manager, State};
 use tauri_plugin_window_state::{AppHandleExt, StateFlags};
-use window_shadows::set_shadow;
-
-use windows::{
-    core::PCSTR,
-    s,
-    Win32::UI::WindowsAndMessaging::{MessageBoxA, MB_ICONWARNING, MB_OK},
-};
 
 use crate::services::AppConfiguration;
 
@@ -31,7 +24,7 @@ struct NativeFeatures {
 #[command]
 fn get_native_features() -> NativeFeatures {
     NativeFeatures {
-        background_input: cfg!(feature="background_input")
+        background_input: cfg!(feature = "background_input"),
     }
 }
 
@@ -60,13 +53,18 @@ fn main() {
     match port_availability {
         Ok(l) => l.set_nonblocking(true).unwrap(),
         Err(_err) => {
-            unsafe {
-                MessageBoxA(
-                    None,
-                    PCSTR(format!("Port {} is not available!", args.port).as_ptr()),
-                    s!("Curses error"),
-                    MB_OK | MB_ICONWARNING,
-                );
+            #[cfg(windows)]
+            {
+                use windows::Win32::UI::WindowsAndMessaging::{MessageBoxA, MB_ICONWARNING, MB_OK};
+                let message = format!("Port {} is not available!", args.port);
+                unsafe {
+                    MessageBoxA(
+                        None,
+                        windows::core::PCSTR(message.as_ptr()),
+                        windows::s!("Curses error"),
+                        MB_OK | MB_ICONWARNING,
+                    );
+                }
             }
             return;
         }
@@ -75,7 +73,7 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             let window = app.get_window("main").unwrap();
-            set_shadow(&window, true).expect("Unsupported platform!");
+            window_shadows::set_shadow(&window, true).ok(); // ignore failure
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![get_port, get_native_features, app_close])

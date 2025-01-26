@@ -4,6 +4,7 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
     Manager, Runtime, State,
 };
+
 use windows::{
     core::BSTR,
     Win32::{
@@ -30,6 +31,12 @@ struct SpeechObject {
 struct ISpeechToken {
     id: String,
     pub t: Intf<ISpeechObjectToken>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RpcWindowsTTSConfig {
+    devices: Vec<SpeechObject>,
+    voices: Vec<SpeechObject>,
 }
 
 impl ISpeechToken {
@@ -90,12 +97,6 @@ fn into_speech_tokens(tokens: ISpeechObjectTokens) -> Option<Vec<ISpeechToken>> 
         .flatten()
         .collect();
     Some(ll)
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RpcWindowsTTSConfig {
-    devices: Vec<SpeechObject>,
-    voices: Vec<SpeechObject>,
 }
 
 #[command]
