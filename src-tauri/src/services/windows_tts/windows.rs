@@ -34,9 +34,7 @@ impl<I: Interface> std::ops::DerefMut for Intf<I> {
 }
 
 #[derive(Default)]
-pub struct WindowsTTSPlugin {
-    intf: Option<Intf<ISpeechVoice>>,
-}
+pub struct WindowsTTSPlugin(Option<Intf<ISpeechVoice>>);
 
 #[derive(Serialize, Deserialize, Debug)]
 struct SpeechObject {
@@ -58,45 +56,31 @@ pub struct RpcWindowsTTSConfig {
 
 impl ISpeechToken {
     fn get_desc(&self) -> Option<SpeechObject> {
-        unsafe {
-            self.t
-                .0
-                .Id()
-                .ok()
-                .and_then(|id| {
-                    self.t
-                        .0
-                        .GetDescription(0)
-                        .ok()
-                        .map(|label| (id.to_string(), label.to_string()))
-                })
-                .map(|(id, label)| SpeechObject { id, label })
-        }
+        let id = unsafe { self.t.0.Id() };
+        id.ok().and_then(|id| {
+            let label = unsafe { self.t.0.GetDescription(0) }.ok()?;
+            Some(SpeechObject {
+                id: id.to_string(),
+                label: label.to_string(),
+            })
+        })
     }
 }
 
 impl WindowsTTSPlugin {
     fn new() -> Self {
-        let result = unsafe { CoInitialize(None) };
-        if result.is_err() {
-            return Self::default();
-        }
-
-        let Ok(instance): Result<ISpeechVoice, windows::core::Error> = (unsafe { CoCreateInstance(&SpVoice, None, CLSCTX_ALL) }) else {
-            return Self::default();
-        };
-
-        Self { intf: Some(Intf(instance)) }
+        let voice = unsafe { CoInitialize(None).and_then(|| CoCreateInstance(&SpVoice, None, CLSCTX_ALL)) };
+        Self(voice.map(Intf).ok())
     }
 
     fn list_devices(&self) -> Option<Vec<ISpeechToken>> {
-        self.intf
+        self.0
             .as_ref()
             .and_then(|sp| unsafe { sp.GetAudioOutputs(&BSTR::new(), &BSTR::new()) }.ok())
             .and_then(into_speech_tokens)
     }
     fn list_voices(&self) -> Option<Vec<ISpeechToken>> {
-        self.intf
+        self.0
             .as_ref()
             .and_then(|sp| unsafe { sp.GetVoices(&BSTR::new(), &BSTR::new()) }.ok())
             .and_then(into_speech_tokens)
@@ -152,14 +136,14 @@ fn get_voices(state: State<WindowsTTSPlugin>) -> Result<RpcWindowsTTSConfig, &st
 
 #[tauri::command]
 fn speak(data: RpcWindowsTTSSpeak, state: State<WindowsTTSPlugin>) -> Result<(), &str> {
-    if data.value == "" {
+    if data.value.is_empty() {
         return Ok(());
     }
-    let Some(sp_voice) = &state.intf else {
-        return Err("Plugin is not initialized");
-    };
 
-    if unsafe { sp_voice.0.SetVolume((data.volume * 100.0) as i32) }.is_err() {
+    let voice = state.0.as_ref().ok_or("Plugin is not initialized")?;
+    let volume = (data.volume * 100.0) as i32;
+
+    if unsafe { voice.0.SetVolume(volume) }.is_err() {
         return Err("Unable to update volume");
     }
 
@@ -169,32 +153,31 @@ fn speak(data: RpcWindowsTTSSpeak, state: State<WindowsTTSPlugin>) -> Result<(),
     } else {
         (-data.rate * 100.0) as i32
     };
-    if unsafe { sp_voice.0.SetRate(rate) }.is_err() {
+
+    if unsafe { voice.0.SetRate(rate) }.is_err() {
         return Err("Unable to update rate");
     }
 
-    let Some(_apply_res_device) = state
+    state
         .list_devices()
         .as_deref()
         .and_then(|list| list.iter().find(|t| t.id == data.device))
-        .and_then(|token| unsafe { sp_voice.0.putref_AudioOutput(&token.t.0).ok() })
-    else {
-        return Err("Failed to apply device");
-    };
-    let Some(_apply_res_voice) = state
+        .and_then(|token| unsafe { voice.0.putref_AudioOutput(&token.t.0).ok() })
+        .ok_or("Failed to apply device")?;
+
+    state
         .list_voices()
         .as_deref()
         .and_then(|list| list.iter().find(|t| t.id == data.voice))
-        .and_then(|token| unsafe { sp_voice.0.putref_Voice(&token.t.0).ok() })
-    else {
-        return Err("Failed to apply voice");
-    };
+        .and_then(|token| unsafe { voice.0.putref_Voice(&token.t.0).ok() })
+        .ok_or("Failed to apply voice")?;
 
-    if let Err(_err) = unsafe { sp_voice.Speak(&data.value.into(), SpeechVoiceSpeakFlags(SVSFDefault.0 | SVSFlagsAsync.0)) } {
-        Err("Unable to process text")
-    } else {
-        Ok(())
+    let flags = SpeechVoiceSpeakFlags(SVSFDefault.0 | SVSFlagsAsync.0);
+    if unsafe { voice.Speak(&data.value.into(), flags) }.is_err() {
+        return Err("Unable to process text");
     }
+
+    Ok(())
 }
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
