@@ -1,18 +1,16 @@
 use serde::{Deserialize, Serialize};
+
 use tauri::{
     plugin::{Builder, TauriPlugin},
     Manager, Runtime, State,
 };
 
-use windows::{
-    core::BSTR,
-    Win32::{
-        Media::Speech::{ISpeechObjectToken, ISpeechObjectTokens, ISpeechVoice, SVSFDefault, SVSFlagsAsync, SpVoice, SpeechVoiceSpeakFlags},
-        System::Com::{CoCreateInstance, CoInitialize, CLSCTX_ALL},
-    },
+use windows::Win32::Media::Speech::{
+    ISpeechObjectToken, ISpeechObjectTokens, ISpeechVoice, SVSFDefault, SVSFlagsAsync, SpVoice, SpeechVoiceSpeakFlags,
 };
 
 use windows::core::Interface;
+use windows::core::BSTR;
 
 #[derive(Debug)]
 pub struct Intf<I: Interface>(pub I);
@@ -69,6 +67,7 @@ impl ISpeechToken {
 
 impl WindowsTTSPlugin {
     fn new() -> Self {
+        use windows::Win32::System::Com::{CoCreateInstance, CoInitialize, CLSCTX_ALL};
         let voice = unsafe { CoInitialize(None).and_then(|| CoCreateInstance(&SpVoice, None, CLSCTX_ALL)) };
         Self(voice.map(Intf).ok())
     }
@@ -79,6 +78,7 @@ impl WindowsTTSPlugin {
             .and_then(|sp| unsafe { sp.GetAudioOutputs(&BSTR::new(), &BSTR::new()) }.ok())
             .and_then(into_speech_tokens)
     }
+
     fn list_voices(&self) -> Option<Vec<ISpeechToken>> {
         self.0
             .as_ref()
@@ -88,23 +88,22 @@ impl WindowsTTSPlugin {
 }
 
 fn into_speech_tokens(tokens: ISpeechObjectTokens) -> Option<Vec<ISpeechToken>> {
-    let i_m = unsafe { tokens.Count() }.unwrap();
-    let ll = (0..i_m)
+    let count = unsafe { tokens.Count() }.ok()?;
+    let tokens = (0..count)
         .into_iter()
         .map(|i| {
-            unsafe { tokens.Item(i) }
-                .ok()
-                .and_then(|token| unsafe { token.Id() }.ok().map(|id| (token, id)))
-                .and_then(|(t, id)| {
-                    Some(ISpeechToken {
-                        id: id.to_string(),
-                        t: Intf(t),
-                    })
+            unsafe { tokens.Item(i) }.ok().and_then(|token| {
+                let id = unsafe { token.Id() }.ok()?;
+                Some(ISpeechToken {
+                    id: id.to_string(),
+                    t: Intf(token),
                 })
+            })
         })
         .flatten()
         .collect();
-    Some(ll)
+
+    Some(tokens)
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -118,18 +117,15 @@ pub struct RpcWindowsTTSSpeak {
 
 #[tauri::command]
 fn get_voices(state: State<WindowsTTSPlugin>) -> Result<RpcWindowsTTSConfig, &str> {
-    let Some(devices): Option<Vec<SpeechObject>> = state
+    let devices = state
         .list_devices()
-        .map(|list| list.iter().map(|t| t.get_desc()).flatten().collect())
-    else {
-        return Err("Failed to get device list");
-    };
-    let Some(voices): Option<Vec<SpeechObject>> = state
+        .map(|list| list.iter().flat_map(ISpeechToken::get_desc).collect())
+        .ok_or("Failed to get device list")?;
+
+    let voices = state
         .list_voices()
-        .map(|list| list.iter().map(|t| t.get_desc()).flatten().collect())
-    else {
-        return Err("Failed to get voice list");
-    };
+        .map(|list| list.iter().flat_map(ISpeechToken::get_desc).collect())
+        .ok_or("Failed to get voice list")?;
 
     Ok(RpcWindowsTTSConfig { voices, devices })
 }
