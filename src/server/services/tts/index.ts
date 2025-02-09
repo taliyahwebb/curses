@@ -60,6 +60,7 @@ class Service_TTS implements IServiceInterface, ITTSReceiver {
     this.updateReplacementsCache();
     subscribeKey(this.data, "replaceWords", () => this.updateReplacementsCache());
     subscribeKey(this.data, "replaceWordsIgnoreCase", () => this.updateReplacementsCache());
+
     serviceSubscibeToSource(this.data, "source", data => {
       if (data?.type === TextEventType.final)
         this.play(data.value);
@@ -72,12 +73,13 @@ class Service_TTS implements IServiceInterface, ITTSReceiver {
 
     if (this.data.autoStart)
       this.start();
+    
     window.ApiShared.pubsub.subscribe("stream.on_ended", () => {
       if (this.data.stopWithStream && this.serviceState.status === ServiceNetworkState.connected) {
         this.stop();
       }
     });
-  }  
+  }
 
   stop(): void {
     this.#serviceInstance?.stop();
@@ -91,6 +93,7 @@ class Service_TTS implements IServiceInterface, ITTSReceiver {
   onStart(): void {
     this.#setStatus(ServiceNetworkState.connected);
   }
+
   onStop(error?: string | undefined): void {
     if (error) {
       toast(error, { type: "error", autoClose: false });
@@ -99,6 +102,7 @@ class Service_TTS implements IServiceInterface, ITTSReceiver {
     this.#serviceInstance = undefined;
     this.#setStatus(ServiceNetworkState.disconnected);
   }
+
   onFilePlayRequest(data: ArrayBuffer, options?: Record<string, any> | undefined): void {
   }
 
@@ -112,14 +116,12 @@ class Service_TTS implements IServiceInterface, ITTSReceiver {
   start() {
     this.stop();
     this.serviceState.error = "";
-
     let backend = this.data.backend;
-    if (!(backend in backends)) {
-      return;
+    if (backend in backends) {
+      this.#serviceInstance = new backends[backend](this);
+      this.#setStatus(ServiceNetworkState.connecting);
+      this.#serviceInstance.start(this.data);
     }
-    this.#serviceInstance = new backends[backend](this);
-    this.#setStatus(ServiceNetworkState.connecting);
-    this.#serviceInstance.start(this.data);
   }
 }
 
