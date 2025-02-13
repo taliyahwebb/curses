@@ -611,25 +611,22 @@ export const InputShortcut: FC<ShortuctProps> = ({ shortcut, label, onChange, ..
   </InputContainer>
 }
 
-type WindowsToken = {
-  id: string;
-  label: string;
-}
-type WindowsConfig = { devices: WindowsToken[], voices: WindowsToken[] };
 interface AudioOutputProps extends InputBaseProps {
   value: string,
   onChange: (value: string) => void
 }
 export const InputNativeAudioOutput: FC<AudioOutputProps> = memo(({ label, value, onChange }) => {
-  const [config, setConfig] = useState<WindowsConfig>();
+  const [config, setConfig] = useState<string[]>();
+
   useEffect(() => {
-    invoke<WindowsConfig>("plugin:windows_tts|get_voices").then(setConfig);
+    invoke<string[]>("plugin:audio|get_output_devices")
+        .then(devices => setConfig(devices));
   }, []);
 
   return <InputSelect
     value={value}
     onValueChange={onChange}
-    options={config?.devices.map(d => ({ ...d, value: d.label })) || []}
+    options={config?.map(d => ({ label: d, value: d })) || []}
     label={label} />
 });
 

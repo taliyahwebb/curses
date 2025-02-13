@@ -49,8 +49,15 @@ pub async fn play_async(data: RpcAudioPlayAsync) -> Result<(), String> {
     }
 }
 
+#[command]
+fn get_output_devices() -> Vec<String> {
+    let host = cpal::default_host();
+    let devices = host.output_devices().unwrap();
+    devices.map(|device| device.name().unwrap()).collect()
+}
+
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("audio")
-        .invoke_handler(tauri::generate_handler![play_async])
+        .invoke_handler(tauri::generate_handler![play_async, get_output_devices])
         .build()
 }
