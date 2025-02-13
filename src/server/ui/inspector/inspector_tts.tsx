@@ -73,7 +73,12 @@ const Native: FC = () => {
   const [voices, setVoices] = useState<{ label: string, value: string }[]>([]);
 
   useEffect(() => {
-    let voices = window.speechSynthesis.getVoices();
+    let voices: SpeechSynthesisVoice[];
+    try {
+        voices = window.speechSynthesis.getVoices();
+    } catch {
+        return;
+    }
 
     if (voices.length) {
       setVoices(voices.map(v => ({ label: v.name, value: v.voiceURI })));
