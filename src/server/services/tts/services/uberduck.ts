@@ -25,7 +25,7 @@ export class TTS_UberduckService implements ITTSService {
           secret_key: this.state.secret_key,
         },
         text: value,
-        device_name: "Headphones (Realtek(R) Audio)",
+        device_name: this.state.device,
         volume: parseFloat(this.state.volume) || 1,
         voicemodel_uuid: this.state.voice,
       },
