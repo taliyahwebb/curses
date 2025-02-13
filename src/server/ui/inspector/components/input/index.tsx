@@ -622,8 +622,10 @@ interface AudioOutputProps extends InputBaseProps {
 }
 export const InputNativeAudioOutput: FC<AudioOutputProps> = memo(({ label, value, onChange }) => {
   const [config, setConfig] = useState<WindowsConfig>();
+
   useEffect(() => {
-    invoke<WindowsConfig>("plugin:windows_tts|get_voices").then(setConfig);
+    invoke<WindowsToken[]>("plugin:audio|get_output_devices")
+        .then(devices => setConfig({devices, voices: []}));
   }, []);
 
   return <InputSelect
