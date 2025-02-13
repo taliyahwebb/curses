@@ -67,7 +67,7 @@ export const Service_TTS_Schema = z.object({
   piper: z.object({
     device: zSafe(z.coerce.string(), ""),
     voice: zSafe(z.coerce.string(), ""),
-    exe_location: zSafe(z.coerce.string(), ""),
+    exe_location: zSafe(z.coerce.string(), "piper"),
     voice_location: zSafe(z.coerce.string(), ""),
     speaker_id: zSafe(z.coerce.number(), 0),
   }).default({}),
