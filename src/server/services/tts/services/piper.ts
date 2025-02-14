@@ -19,8 +19,12 @@ export class TTS_PiperService implements ITTSService {
     }
 
     start(state: TTS_State): void {
-        if (Object.values(this.state).some(isEmptyValue))
-            return this.bindings.onStop("Options missing");
+        let i = 0;
+        for (var val in Object.values(this.state)) {
+            if (isEmptyValue(val))
+                return this.bindings.onStop(`Option '${Object.keys(state)[i]}' is missing`);
+            i += 1;
+        }
         this.bindings.onStart();
     }
 

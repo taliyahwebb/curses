@@ -321,7 +321,7 @@ const Piper: FC = () => {
     invoke<PiperVoice[]>("plugin:piper_tts|get_voices", { path }).then(res => {
       piperVoices.value = res.map(v => ({ value: v.path, label: v.name }));
     }).catch(err => {
-      toast.error(err)
+      toast.error(`could not load piper voices: '${err}'`);
       piperVoices.value = [];
     });
   }

@@ -86,7 +86,7 @@ fn create_temp_file() -> io::Result<tempfile::NamedTempFile> {
     tempfile::Builder::new()
         .suffix(".wav")
         .tempfile_in(&dir)
-        .with_context(|| format!("Failed to create temporary file in {}", dir.display()))
+        .with_context(|| format!("Failed to create temporary file in '{}'", dir.display()))
 }
 
 /// Invokes piper to generate a WAV file and returns it as a byte vector
@@ -123,7 +123,7 @@ async fn get_wav_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
 
     let mut process = command
         .spawn()
-        .with_context(|| format!("Failed to start {}", piper_path.display()))?;
+        .with_context(|| format!("Failed to start '{}'", piper_path.display()))?;
 
     write_to_stdin(&mut process, &args.value.as_bytes()).await?;
 
@@ -132,7 +132,7 @@ async fn get_wav_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
     if status.success() {
         tokio::fs::read(wav_file_path)
             .await
-            .with_context(|| format!("Failed to read temporary file at {}", wav_file_path.display()))
+            .with_context(|| format!("Failed to read temporary file at '{}'", wav_file_path.display()))
     } else {
         let error = match status.code() {
             Some(code) => format!("Piper exited with status code: {code}"),
@@ -144,6 +144,9 @@ async fn get_wav_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
 
 #[tauri::command]
 fn get_voices(path: PathBuf) -> Result<Vec<Voice>, String> {
+    if path.to_string_lossy().is_empty() {
+        return Ok(Vec::new());
+    }
     match scan_voice_directory(path) {
         Ok(vec) if vec.is_empty() => Err("No voices found. Voice files must come in pairs named '<file>.onnx' and '<file>.onnx.json'".into()),
         Ok(vec) => Ok(vec),
