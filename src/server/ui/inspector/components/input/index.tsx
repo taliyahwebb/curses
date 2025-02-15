@@ -635,11 +635,6 @@ export const InputNativeAudioOutput: FC<AudioOutputProps> = memo(({ label, value
     label={label} />
 });
 
-interface AudioOutputProps extends InputBaseProps {
-  value: string,
-  onChange: (value: string) => void
-}
-
 const getMedia = async () => {
   try {
     await navigator.mediaDevices.getUserMedia({audio: true,});
