@@ -37,7 +37,7 @@ const Inspector: FC<{ path?: InspectorTabPath }> = ({ path }) => {
         </div>
         {error.stack && <pre style={{ fontSize: 9 }} className="relative w-full text-xs rounded-box bg-base-200 h-24">
           <SimpleBar className="w-full h-full">
-            <pre className="px-2 truncate break-words whitespace-pre-wrap">{error.stack}</pre>
+            <pre className="px-2 truncate break-words whitespace-pre-wrap">{error.message + "\n" + error.stack}</pre>
           </SimpleBar>
           <button className="absolute right-2 top-0 btn btn-link btn-xs self-start" onClick={() => error.stack && handleCopyError(error.stack)}>
             Copy
