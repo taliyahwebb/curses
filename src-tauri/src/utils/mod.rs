@@ -1,5 +1,5 @@
-use std::io;
 use std::fmt::Display;
+use std::io;
 
 /// Little helper extension to add a better error message to an io::Error
 pub trait ResultExt {

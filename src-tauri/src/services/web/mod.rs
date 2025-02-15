@@ -37,7 +37,7 @@ struct WebConfig {
 #[command]
 async fn config(config: State<'_, AppConfiguration>) -> Result<WebConfig, String> {
     let Ok(ip) = local_ip() else {
-        return Err("Error retrieving local IP".to_string())
+        return Err("Error retrieving local IP".to_string());
     };
     return Ok(WebConfig {
         local_ip: ip.to_string(),
@@ -83,7 +83,9 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
                     .or(assets::path(a));
 
                 loop {
-                    warp::serve(routes.clone()).run(([0, 0, 0, 0], app_port)).await
+                    warp::serve(routes.clone())
+                        .run(([0, 0, 0, 0], app_port))
+                        .await
                 }
             });
             let handle = app.clone();

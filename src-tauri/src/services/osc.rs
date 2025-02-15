@@ -1,12 +1,11 @@
-use std::net::{SocketAddr, UdpSocket};
 use rosc::{encoder, OscMessage, OscPacket, OscType};
 use serde::{Deserialize, Serialize};
+use std::net::{SocketAddr, UdpSocket};
 use tauri::{
     command,
     plugin::{Builder, TauriPlugin},
     Manager, Runtime, State,
 };
-
 
 pub struct OscPlugin {
     socket: Option<UdpSocket>,
@@ -36,7 +35,7 @@ impl OscPlugin {
                     OscValue::Bool(v) => OscType::from(*v),
                     OscValue::Float(v) => OscType::Float(*v as f32),
                     OscValue::Int(v) => OscType::Int(*v as i32),
-                    OscValue::String(v) => OscType::from(v.to_string())
+                    OscValue::String(v) => OscType::from(v.to_string()),
                 };
                 tt
             })

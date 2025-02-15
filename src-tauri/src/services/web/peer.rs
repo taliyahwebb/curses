@@ -102,24 +102,28 @@ struct PeerMessageShort {
 }
 
 async fn handle_message(peer_id: &String, msg: Message, users: &Peers) {
-    let Ok(msg_str) = msg.to_str() else {return};
-    let Ok(mut msg) = serde_json::from_str::<PeerMessage>(msg_str) else {return};
+    let Ok(msg_str) = msg.to_str() else { return };
+    let Ok(mut msg) = serde_json::from_str::<PeerMessage>(msg_str) else {
+        return;
+    };
 
     let users = users.read().await;
 
     if msg.t == PeerMessageType::OFFER && !users.contains_key(msg.dst.as_str()) {
-        let Some(peer_tx) = users.get(peer_id) else {return};
-        let Ok(msg_str) = serde_json::to_string(&PeerMessage{
+        let Some(peer_tx) = users.get(peer_id) else { return };
+        let Ok(msg_str) = serde_json::to_string(&PeerMessage {
             t: PeerMessageType::EXPIRE,
             src: msg.dst,
             dst: peer_id.clone(),
             payload: msg.payload,
-        }) else {return};
+        }) else {
+            return;
+        };
         peer_tx.send(Ok(Message::text(msg_str))).unwrap();
     } else if msg.dst != "" && users.contains_key(&msg.dst) {
         msg.src = peer_id.clone();
-        let Some(peer_tx) = users.get(&msg.dst) else {return};
-        let Ok(msg_str) = serde_json::to_string(&msg) else {return};
+        let Some(peer_tx) = users.get(&msg.dst) else { return };
+        let Ok(msg_str) = serde_json::to_string(&msg) else { return };
         peer_tx.send(Ok(Message::text(msg_str))).unwrap();
     }
 }

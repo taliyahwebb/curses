@@ -64,11 +64,12 @@ pub async fn peer_handler(ws: WebSocket, peers: Peers, output: mpsc::Sender<Stri
         let Ok(msg) = result else {
             break;
         };
-        let Ok(msg_str) = msg.to_str() else {break};
+        let Ok(msg_str) = msg.to_str() else { break };
         output.send(msg_str.to_string()).await.ok();
         let p = peers.read().await;
         for (id, peer) in p.iter() {
-            if !query.id.eq(id) { // do not send to self
+            if !query.id.eq(id) {
+                // do not send to self
                 peer.send(Ok(Message::text(msg_str))).ok();
             }
         }

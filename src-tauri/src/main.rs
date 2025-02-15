@@ -64,12 +64,7 @@ fn main() {
                 use windows::Win32::UI::WindowsAndMessaging::{MessageBoxA, MB_ICONWARNING, MB_OK};
                 let message = format!("Port {} is not available!", args.port);
                 unsafe {
-                    MessageBoxA(
-                        None,
-                        windows::core::PCSTR(message.as_ptr()),
-                        s!("Curses error"),
-                        MB_OK | MB_ICONWARNING,
-                    );
+                    MessageBoxA(None, windows::core::PCSTR(message.as_ptr()), s!("Curses error"), MB_OK | MB_ICONWARNING);
                 }
             }
             return;

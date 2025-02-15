@@ -4,7 +4,7 @@ use rodio::{
     cpal::{self, traits::HostTrait},
     Decoder, DeviceTrait, OutputStream, OutputStreamHandle, Sink,
 };
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use tauri::{
     command,
     plugin::{Builder, TauriPlugin},
@@ -26,7 +26,7 @@ pub struct RpcAudioPlayAsync {
     pub device_name: String,
     pub data: Vec<u8>,
     pub volume: f32, // 1 - base
-    pub rate: f32, // 1 - base
+    pub rate: f32,   // 1 - base
 }
 
 #[command]
@@ -43,8 +43,7 @@ pub async fn play_async(data: RpcAudioPlayAsync) -> Result<(), String> {
         } else {
             Err("Unable to play file".into())
         }
-    }
-    else {
+    } else {
         Err("Invalid device".into())
     }
 }
