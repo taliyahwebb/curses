@@ -49,22 +49,11 @@ pub async fn play_async(data: RpcAudioPlayAsync) -> Result<(), String> {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct SpeechObject {
-    pub id: String,
-    pub label: String,
-}
 #[command]
-fn get_output_devices() -> Vec<SpeechObject> {
+fn get_output_devices() -> Vec<String> {
     let host = cpal::default_host();
     let devices = host.output_devices().unwrap();
-    devices.map(|device| {
-        let name = device.name().unwrap();
-        SpeechObject {
-            id: name.to_string(),
-            label: name.to_string(),
-        }
-    }).collect()
+    devices.map(|device| device.name().unwrap()).collect()
 }
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
