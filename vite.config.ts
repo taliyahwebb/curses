@@ -40,4 +40,8 @@ export default defineConfig({
     // produce sourcemaps for debug builds
     sourcemap: !!process.env.TAURI_DEBUG,
   },
+  define: {
+    // forced to define here because process.platform is not supported inside of vite
+    isWindows: process.platform === "win32",
+  },
 });

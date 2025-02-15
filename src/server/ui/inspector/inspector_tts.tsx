@@ -398,6 +398,21 @@ const Inspector_TTS: FC = () => {
     NiceModal.show('tts-replacements');
   }
 
+  let backends = [
+    { label: t('tts.azure_title'),      value: TTS_Backends.azure     },
+    { label: t('tts.tiktok_title'),     value: TTS_Backends.tiktok    },
+    { label: t('tts.uberduck_title'),   value: TTS_Backends.uberduck  },
+    { label: t('tts.piper_title'),      value: TTS_Backends.piper     },
+    { label: t('tts.custom_title'),     value: TTS_Backends.custom    },
+  ];
+  const windows_backends = [
+    { label: t('tts.native_title'),     value: TTS_Backends.native    },
+    { label: t('tts.windows_title'),    value: TTS_Backends.windows   },
+  ];
+  if (isWindows) {
+    backends = windows_backends.concat(backends);
+  }
+
   return <Inspector.Body>
     <Inspector.Header><RiChatVoiceFill /> {t('tts.title')}</Inspector.Header>
     <Inspector.Content>
@@ -408,16 +423,7 @@ const Inspector_TTS: FC = () => {
       <Inspector.Deactivatable active={state.status === ServiceNetworkState.disconnected}>
         <InputTextSource label="common.field_text_source" value={data.data.source} onChange={e => up("source", e)} />
         <InputCheckbox label="common.field_use_keyboard_input" value={data.data.inputField} onChange={e => up("inputField", e)} />
-        <InputSelect label="common.field_service" value={data.data.backend} options={[
-          { label: t('tts.native_title'),     value: TTS_Backends.native    },
-          { label: t('tts.windows_title'),    value: TTS_Backends.windows   },
-          { label: t('tts.azure_title'),      value: TTS_Backends.azure     },
-          { label: t('tts.tiktok_title'),     value: TTS_Backends.tiktok    },
-          { label: t('tts.uberduck_title'),   value: TTS_Backends.uberduck  },
-          { label: t('tts.piper_title'),      value: TTS_Backends.piper     },
-          { label: t('tts.custom_title'),     value: TTS_Backends.custom    },
-          // { label: "VoiceVox", value: TTS_Backends.voicevox },
-        ]} onValueChange={e => up("backend", e as TTS_Backends)} />
+        <InputSelect label="common.field_service" value={data.data.backend} options={backends} onValueChange={e => up("backend", e as TTS_Backends)} />
       </Inspector.Deactivatable>
       {data.data.backend === TTS_Backends.windows && <Windows />}
       {data.data.backend === TTS_Backends.azure && <Azure />}
