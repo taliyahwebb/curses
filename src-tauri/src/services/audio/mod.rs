@@ -55,8 +55,15 @@ fn get_output_devices() -> Vec<String> {
     devices.map(|device| device.name().unwrap()).collect()
 }
 
+#[command]
+fn get_input_devices() -> Vec<String> {
+    let host = cpal::default_host();
+    let devices = host.input_devices().unwrap();
+    devices.map(|device| device.name().unwrap()).collect()
+}
+
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("audio")
-        .invoke_handler(tauri::generate_handler![play_async, get_output_devices])
+        .invoke_handler(tauri::generate_handler![play_async, get_output_devices, get_input_devices])
         .build()
 }

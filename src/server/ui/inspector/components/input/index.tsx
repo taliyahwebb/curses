@@ -630,26 +630,18 @@ export const InputNativeAudioOutput: FC<AudioOutputProps> = memo(({ label, value
     label={label} />
 });
 
-const getMedia = async () => {
-  try {
-    await navigator.mediaDevices.getUserMedia({audio: true,});
-    const list = await navigator.mediaDevices.enumerateDevices();
-    return list.filter(d => d.kind === "audioinput").map(d => ({ ...d, label: d.label, value: d.deviceId }))
-  } catch (error) {
-    return []
-  }
-}
 
 export const InputWebAudioInput: FC<AudioOutputProps> = memo(({ label, value, onChange }) => {
-  const [devices, setDevices] = useState<InputSelectOption[]>([]);
+  const [devices, setDevices] = useState<string[]>([]);
   
   useEffect(() => {
-    getMedia().then(setDevices);
+    invoke<string[]>("plugin:audio|get_input_devices")
+        .then(devices => setDevices(devices));
   }, []);
 
   return <InputSelect
     value={value}
     onValueChange={onChange}
-    options={devices || []}
+    options={devices?.map(d => ({ label: d, value: d })) || []}
     label={label} />
 });
