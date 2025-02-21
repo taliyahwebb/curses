@@ -77,6 +77,8 @@
     "speechly_title": "Speechly",
     "speechly_appid": "App ID",
 
+    "whisper_model_path": "Whisper Model",
+
     "deepgram_title": "Deepgram",
     "deepgram_key": "Key",
     "deepgram_quality": "Quality",

@@ -8,7 +8,7 @@ import { useSnapshot } from "valtio";
 import { azureLanguages, deepGramLangs, nativeLangs } from "../../services/stt/stt_data";
 import ServiceButton from "../service-button";
 import Inspector from "./components";
-import { InputCheckbox, InputMapObject, InputMappedGroupSelect, InputSelect, InputText, InputWebAudioInput } from "./components/input";
+import { InputCheckbox, InputMapObject, InputMappedGroupSelect, InputSelect, InputText, InputWebAudioInput, InputFilePath } from "./components/input";
 import NiceModal from "@ebay/nice-modal-react";
 import Modal from "../Modal";
 import { useTranslation } from 'react-i18next';
@@ -172,6 +172,24 @@ const Speechly: FC = () => {
   </>
 }
 
+const Whisper: FC = () => {
+  const {t} = useTranslation();
+  const data = useSnapshot(window.ApiServer.state.services.stt.data.whisper);
+  const handleUpdate = <K extends keyof STT_State["whisper"]>(key: K, v: STT_State["whisper"][K]) => window.ApiServer.state.services.stt.data.whisper[key] = v;
+
+  return <>
+    <Inspector.SubHeader>{t('stt.speechly_title')}</Inspector.SubHeader>
+    <InputWebAudioInput value={data.device} onChange={e => handleUpdate("device", e)} label="common.field_input_device"/>
+      <InputFilePath
+        label="stt.whisper_model_path"
+        value={data.modelPath}
+        onChange={e => handleUpdate("modelPath", e.target.value)}
+        dialogOptions={{ filters: [{ name: "ggml bins", extensions: ["bin"] }] }}
+      />
+  </>
+}
+
+
 const WordsReplacementModal: FC = () => {
   const {t} = useTranslation();
   const data = useSnapshot(window.ApiServer.state.services.stt);
@@ -219,13 +237,15 @@ const Inspector_STT: FC = () => {
           { label: "Browser", value: STT_Backends.browser },
           { label: "Azure", value: STT_Backends.azure },
           { label: "Deepgram", value: STT_Backends.deepgram },
-          { label: "Speechly", value: STT_Backends.speechly }
+          { label: "Speechly", value: STT_Backends.speechly },
+          { label: "Whisper", value: STT_Backends.whisper }
         ]} label="common.field_service" value={data.data.backend} onValueChange={e => up("backend", e as STT_Backends)} />
 
         {data.data.backend === STT_Backends.browser && <Browser />}
         {data.data.backend === STT_Backends.azure && <Azure />}
         {data.data.backend === STT_Backends.deepgram && <Deepgram />}
         {data.data.backend === STT_Backends.speechly && <Speechly />}
+        {data.data.backend === STT_Backends.whisper && <Whisper />}
         {data.data.backend === STT_Backends.native && <Native />}
       </Inspector.Deactivatable>
 

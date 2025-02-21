@@ -29,6 +29,9 @@ rodio = "^0.20"
 reqwest = { version = "0.12.12", features = ["json"] }
 tempfile = "3.15.0"
 which = "7.0.1"
+ringbuf = "0.4.7"
+earshot = "0.1.0"
+whisper-rs = "0.13.2"
 
 [dependencies.tauri]
 version = "^1"
@@ -61,9 +64,10 @@ codegen-units = 1
 strip = true
 
 [features]
-default = ["custom-protocol"]
+default = ["custom-protocol", "vulkan"]
 background_input = []
 custom-protocol = ["tauri/custom-protocol"]
+vulkan = ["whisper-rs/vulkan"]
 
 [profile.dev.package."*"]
 opt-level = 3

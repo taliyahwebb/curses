@@ -43,6 +43,11 @@
             gobject-introspection
             cargo-tauri
             nodejs
+
+            # whisper deps
+            cmake
+            # pkg-config
+            shaderc
           ];
           buildInputs = with pkgs; [
             at-spi2-atk
@@ -61,7 +66,12 @@
             alsa-lib
 
             piper-tts
+            # whisper deps
+            # alsa-lib
+            vulkan-headers
+            vulkan-loader
           ];
+          LIBCLANG_PATH = "${pkgs.libclang.lib}/lib/"; # (whisper-rs), bindgen needs this
           shellHook = ''
             # export WEBKIT_DISABLE_COMPOSITING_MODE=1
           '';
@@ -79,6 +89,7 @@
               fenixChannel.rust-analyzer
               fenixChannel.clippy
               fenixChannel.rustfmt
+              pkgs.cargo-watch
               pkgs.typescript-language-server
             ];
           }
