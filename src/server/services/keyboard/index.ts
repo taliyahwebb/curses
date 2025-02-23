@@ -1,12 +1,13 @@
-import { globalShortcut } from "@tauri-apps/api";
+import {  } from "@tauri-apps/api";
 import { listen } from "@tauri-apps/api/event";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import hotkeys from "hotkeys-js";
 import uniqBy from "lodash/uniqBy";
 import { toast } from "react-toastify";
 import { proxy }                                             from "valtio";
 import { IServiceInterface, TextEventSource, TextEventType } from "@/types";
 import { BackendState }                                      from "../../schema";
+import * as globalShortcut from "@tauri-apps/plugin-global-shortcut"
 
 type ShortcutKeys = keyof BackendState["shortcuts"];
 type InputCommands = "submit" | "delete" | "cancel";

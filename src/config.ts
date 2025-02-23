@@ -1,4 +1,4 @@
-import {invoke} from "@tauri-apps/api/tauri";
+import {invoke} from "@tauri-apps/api/core";
 
 enum AppMode {
   server,
@@ -46,7 +46,9 @@ class AppConfiguration {
 
   // region ---INITIALIZERS---
   private loadBase() {
-    this.platform = window.__TAURI_METADATA__ ? AppPlatform.app : AppPlatform.web;
+    // __TAURI_METADATA__ was deprecated in tauri@2, this ternary doesn't work anymore.
+    // this.platform = window.__TAURI_METADATA__ ? AppPlatform.app : AppPlatform.web;
+    this.platform = AppPlatform.app;
     this.mode     = window.location.pathname.startsWith('/client') ? AppMode.client : AppMode.server;
   }
 

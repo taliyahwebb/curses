@@ -1,6 +1,6 @@
 import { ISTTReceiver, ISTTService } from "../types";
 import { listen } from "@tauri-apps/api/event";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import { isEmptyValue } from "../../../../utils";
 import { STT_State } from "../schema";
 import { toast } from "react-toastify";

@@ -21,8 +21,8 @@ import styles           from "./style.module.css";
 import produce          from "immer";
 import { BackendState } from "../../../../schema";
 import Tooltip          from "../../../dropdown/Tooltip";
-import { invoke }       from "@tauri-apps/api/tauri";
-import { open, OpenDialogOptions } from '@tauri-apps/api/dialog';
+import { invoke }       from "@tauri-apps/api/core";
+import { open, OpenDialogOptions } from '@tauri-apps/plugin-dialog';
 const cx = classNames.bind(styles);
 import { useTranslation } from 'react-i18next';
 

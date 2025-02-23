@@ -72,6 +72,11 @@ fn main() {
     };
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_shell::init())
         .setup(app_setup)
         .invoke_handler(tauri::generate_handler![get_port, get_native_features, app_close])
         .plugin(tauri_plugin_window_state::Builder::default().build())
