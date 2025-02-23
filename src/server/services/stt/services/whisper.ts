@@ -42,8 +42,11 @@ export class STT_WhisperService implements ISTTService {
         },
     }).catch(err => {
         this.#initialized = false;
-        toast.error(err)
+        toast.error(JSON.stringify(err));
+        // needed as the rust part can't reset itself when it errored
+        invoke<void>("plugin:whisper_stt|stop");
     }).finally(() => {
+      this.#initialized = false;
       this.bindings.onStop();
       stop_final_callback();
       stop_interim_callback();
