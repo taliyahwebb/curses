@@ -23,7 +23,7 @@ use rodio::{
     Device, DeviceTrait,
 };
 use serde::{Deserialize, Serialize};
-use tauri::{plugin, AppHandle, Manager, Runtime, State};
+use tauri::{plugin, AppHandle, Emitter, Manager, Runtime, State};
 use tokio::select;
 use vad::{NSamples, Vad, VadStatus, VAD_FRAME};
 use whisper::{Whisper, WhisperSetupError, MAX_WHISPER_FRAME, SAMPLE_RATE};
@@ -66,7 +66,7 @@ enum VadActivity {
 pub fn init<R: Runtime>() -> plugin::TauriPlugin<R> {
     plugin::Builder::new("whisper_stt")
         .invoke_handler(tauri::generate_handler![start, stop])
-        .setup(|app| {
+        .setup(|app, _api| {
             app.manage(WhisperState::default());
             Ok(())
         })
@@ -151,7 +151,7 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
                 event = activity_rx.next() => {
                     match event {
                         Some(VadActivity::SpeechStart) => {
-                            if app.emit_all("whisper_stt_interim", "[speaking]").is_err() {
+                            if app.emit("whisper_stt_interim", "[speaking]").is_err() {
                                 eprintln!("wasn't able to emit to frontend {}:{}", file!(), line!());
                             }
                         },
@@ -160,7 +160,7 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
                                 return Err(WhisperError::AudioStreamError("logic error: not enough samples could be fetched".into()));
                             }
                             if let Some(final_text) = whisper.transcribe() {
-                                if app.emit_all("whisper_stt_final", final_text).is_err() {
+                                if app.emit("whisper_stt_final", final_text).is_err() {
                                     eprintln!("wasn't able to emit to frontend {}:{}", file!(), line!());
                                 }
                             }

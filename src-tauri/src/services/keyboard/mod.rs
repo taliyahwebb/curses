@@ -1,5 +1,7 @@
 use tauri::plugin::{Builder, TauriPlugin};
 use tauri::Runtime;
+#[cfg(feature = "background_input")]
+use tauri::Emitter;
 
 #[cfg(feature = "background_input")]
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
@@ -154,7 +156,7 @@ mod background_input {
         let (pubsub_output_tx, mut pubsub_output_rx) = mpsc::unbounded_channel::<String>(); // to js
         Builder::new("keyboard")
             .invoke_handler(tauri::generate_handler![start_tracking, stop_tracking])
-            .setup(|app| {
+            .setup(|app, _api| {
                 app.manage(BgInput {
                     tx: pubsub_output_tx,
                     listen_hook_id: RwLock::new(None),
@@ -163,7 +165,7 @@ mod background_input {
                 tauri::async_runtime::spawn(async move {
                     loop {
                         if let Some(output) = pubsub_output_rx.recv().await {
-                            handle.emit_all("keyboard", output).unwrap();
+                            handle.emit("keyboard", output).unwrap();
                         }
                     }
                 });

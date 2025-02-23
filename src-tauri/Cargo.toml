@@ -14,7 +14,6 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri-plugin-window-state = { version = "2" }
 window-shadows = "^0.2"
 uwuify = "^0.2"
 itertools = "0.14"
@@ -32,6 +31,7 @@ which = "7.0.1"
 ringbuf = "0.4.7"
 earshot = "0.1.0"
 whisper-rs = "0.13.2"
+tauri-plugin-window-state = { version = "2" }
 tauri-plugin-shell = "2"
 tauri-plugin-process = "2"
 tauri-plugin-dialog = "2"
@@ -40,6 +40,7 @@ tauri-plugin-fs = "2"
 [dependencies.tauri]
 version = "2"
 features = [
+  "unstable"
 ]
 
 [dependencies.windows]

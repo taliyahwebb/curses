@@ -27,19 +27,19 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@tauri-apps/plugin-dialog':
-        specifier: ~2
+        specifier: ^2.2.0
         version: 2.2.0
       '@tauri-apps/plugin-fs':
-        specifier: ~2
+        specifier: ^2.2.0
         version: 2.2.0
       '@tauri-apps/plugin-global-shortcut':
-        specifier: ~2
+        specifier: ^2.2.0
         version: 2.2.0
       '@tauri-apps/plugin-process':
-        specifier: ~2
+        specifier: ^2.2.0
         version: 2.2.0
       '@tauri-apps/plugin-shell':
-        specifier: ~2
+        specifier: ^2.2.0
         version: 2.2.0
       '@twurple/api':
         specifier: ^7.2.1
