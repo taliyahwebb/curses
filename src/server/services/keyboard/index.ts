@@ -1,4 +1,3 @@
-import {  } from "@tauri-apps/api";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import hotkeys from "hotkeys-js";
