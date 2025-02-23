@@ -616,17 +616,17 @@ interface AudioOutputProps extends InputBaseProps {
   onChange: (value: string) => void
 }
 export const InputNativeAudioOutput: FC<AudioOutputProps> = memo(({ label, value, onChange }) => {
-  const [config, setConfig] = useState<string[]>();
+  const [devices, setDevices] = useState<string[]>();
 
   useEffect(() => {
     invoke<string[]>("plugin:audio|get_output_devices")
-        .then(devices => setConfig(devices));
+        .then(setDevices);
   }, []);
 
   return <InputSelect
     value={value}
     onValueChange={onChange}
-    options={config?.map(d => ({ label: d, value: d })) || []}
+    options={devices?.map(d => ({ label: d, value: d })) || []}
     label={label} />
 });
 
@@ -636,7 +636,7 @@ export const InputWebAudioInput: FC<AudioOutputProps> = memo(({ label, value, on
   
   useEffect(() => {
     invoke<string[]>("plugin:audio|get_input_devices")
-        .then(devices => setDevices(devices));
+        .then(setDevices);
   }, []);
 
   return <InputSelect
