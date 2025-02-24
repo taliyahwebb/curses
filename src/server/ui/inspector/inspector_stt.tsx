@@ -178,14 +178,14 @@ const Whisper: FC = () => {
   const handleUpdate = <K extends keyof STT_State["whisper"]>(key: K, v: STT_State["whisper"][K]) => window.ApiServer.state.services.stt.data.whisper[key] = v;
 
   return <>
-    <Inspector.SubHeader>{t('stt.speechly_title')}</Inspector.SubHeader>
+    <Inspector.SubHeader>{t('stt.whisper_title')}</Inspector.SubHeader>
     <InputWebAudioInput value={data.device} onChange={e => handleUpdate("device", e)} label="common.field_input_device"/>
-      <InputFilePath
-        label="stt.whisper_model_path"
-        value={data.modelPath}
-        onChange={e => handleUpdate("modelPath", e.target.value)}
-        dialogOptions={{ filters: [{ name: "ggml bins", extensions: ["bin"] }] }}
-      />
+    <InputFilePath
+      label="stt.whisper_model_path"
+      value={data.modelPath}
+      onChange={e => handleUpdate("modelPath", e.target.value)}
+      dialogOptions={{ filters: [{ name: "ggml bins", extensions: ["bin"] }] }}
+    />
   </>
 }
 
