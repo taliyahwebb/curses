@@ -26,7 +26,7 @@ use serde::{Deserialize, Serialize};
 use tauri::{plugin, AppHandle, Manager, Runtime, State};
 use tokio::select;
 use vad::{NSamples, Vad, VadStatus, VAD_FRAME};
-use whisper::{Whisper, WhisperSetupError, MAX_WHISPER_FRAME, SAMPLE_RATE};
+use whisper::{Whisper, WhisperOptions, WhisperSetupError, MAX_WHISPER_FRAME, SAMPLE_RATE};
 
 mod vad;
 mod whisper;
@@ -56,6 +56,8 @@ pub struct WhisperState {
 pub struct WhisperArgs {
     model_path: String,
     input_device: String,
+    lang: String,
+    translate_to_english: bool,
 }
 
 enum VadActivity {
@@ -75,6 +77,11 @@ pub fn init<R: Runtime>() -> plugin::TauriPlugin<R> {
 
 #[tauri::command]
 pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(), WhisperError> {
+    let whisper_opt = WhisperOptions {
+        translate_en: args.translate_to_english,
+        language: args.lang,
+    };
+
     let state = app.state::<WhisperState>();
     let mut stop = {
         let mut stop = state.stop.lock().expect("should be able to lock mutex");
@@ -86,7 +93,7 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
         tx
     };
     let ring = HeapRb::<i16>::try_new(MAX_WHISPER_FRAME * 2).expect("cannot allocate audio ring");
-    let mut whisper = Whisper::new(args.model_path)?;
+    let mut whisper = Whisper::with_options(args.model_path, whisper_opt)?;
     let (mut producer, mut consumer) = ring.split();
     let (mut activity_tx, mut activity_rx) = mpsc::unbounded::<VadActivity>();
 
