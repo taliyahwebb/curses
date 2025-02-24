@@ -233,11 +233,12 @@ fn get_microphone_by_name(name: &str) -> Result<(Device, StreamConfig), WhisperE
                     config.with_sample_rate(config.max_sample_rate())
                 }
             });
-        let buffer_size = match config.buffer_size() {
-            cpal::SupportedBufferSize::Range { min, max } => (config.sample_rate().0 / 30).max(*min).min(*max),
-            cpal::SupportedBufferSize::Unknown => config.sample_rate().0 / 30,
-        };
-        let buffer_size = BufferSize::Fixed(buffer_size);
+        let buffer_size = BufferSize::Fixed(match config.buffer_size() {
+            cpal::SupportedBufferSize::Range { min, max } => ((config.sample_rate().0 / 30).next_multiple_of(48))
+                .max(*min)
+                .min(*max),
+            cpal::SupportedBufferSize::Unknown => (config.sample_rate().0 / 30).next_multiple_of(48),
+        });
         let sample_rate = config.sample_rate();
         let channels = config.channels();
         let config = StreamConfig {
