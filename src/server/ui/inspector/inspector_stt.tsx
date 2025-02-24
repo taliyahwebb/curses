@@ -182,6 +182,7 @@ const Whisper: FC = () => {
     <InputWebAudioInput value={data.device} onChange={e => handleUpdate("device", e)} label="common.field_input_device"/>
     <InputText label="stt.whisper_lang" type="text" value={data.lang} onChange={e => handleUpdate("lang", e.target.value)}/>
     <Inspector.Description>{t('stt.whisper_lang_desc')}</Inspector.Description>
+    <Inspector.Description>{t('stt.whisper_lang_desc_note')}</Inspector.Description>
     <InputCheckbox label="stt.whisper_translate_to_english" onChange={e => handleUpdate("translateToEnglish", e)} value={data.translateToEnglish}/>
     <InputFilePath
       label="stt.whisper_model_path"

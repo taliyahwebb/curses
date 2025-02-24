@@ -82,6 +82,7 @@
     "whisper_translate_to_english": "Translate to english",
     "whisper_lang": "Spoken language",
     "whisper_lang_desc": "input a language code like 'en','fr','de','es' (or 'auto' wich tries to automatically detect the spoken language)",
+    "whisper_lang_desc_note": "Note: Quality differs between the languages and the model selected",
 
     "deepgram_title": "Deepgram",
     "deepgram_key": "Key",
