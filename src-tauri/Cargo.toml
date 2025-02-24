@@ -32,6 +32,7 @@ which = "7.0.1"
 ringbuf = "0.4.7"
 earshot = "0.1.0"
 whisper-rs = "0.13.2"
+wav_io = "0.1.15"
 
 [dependencies.tauri]
 version = "^1"

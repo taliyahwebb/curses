@@ -111,12 +111,17 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
                 return;
             }
         };
+        let resample_from = if config.sample_rate.0 != SAMPLE_RATE as u32 {
+            Some(config.sample_rate.0)
+        } else {
+            None
+        };
         let result = || -> Result<Stream, WhisperError> {
             let stream = device
                 .build_input_stream(
                     &config,
                     move |data: &[i16], _info| {
-                        audio_loop(data, &mut producer, &mut vad, &mut activity_tx);
+                        audio_loop(data, &resample_from, &mut producer, &mut vad, &mut activity_tx);
                     },
                     move |err| {
                         // only try send because we might have had an earlier error
@@ -217,12 +222,20 @@ fn get_microphone_by_name(name: &str) -> Result<(Device, StreamConfig), WhisperE
             .supported_input_configs()
             .map_err(|err| WhisperError::InputDeviceUnavailable(format!("{name}: '{err}'")))?
             .next()
-            .ok_or_else(|| WhisperError::InputDeviceUnavailable(format!("{name}: 'does not have any valid input configurations'")))?
+            .ok_or_else(|| WhisperError::InputDeviceUnavailable(format!("{name}: 'does not have any valid input configurations'")))?;
+        let config = config
             .try_with_sample_rate(SampleRate(SAMPLE_RATE as u32))
-            .ok_or_else(|| WhisperError::InputDeviceUnavailable("16kHz sample rate unavailable".into()))?;
+            .unwrap_or_else(|| {
+                eprintln!("running with resampling");
+                if config.min_sample_rate().0 > SAMPLE_RATE as u32 {
+                    config.with_sample_rate(config.min_sample_rate())
+                } else {
+                    config.with_sample_rate(config.max_sample_rate())
+                }
+            });
         let buffer_size = match config.buffer_size() {
-            cpal::SupportedBufferSize::Range { min, max } => (VAD_FRAME as u32).max(*min).min(*max),
-            cpal::SupportedBufferSize::Unknown => VAD_FRAME as u32,
+            cpal::SupportedBufferSize::Range { min, max } => (config.sample_rate().0 / 30).max(*min).min(*max),
+            cpal::SupportedBufferSize::Unknown => config.sample_rate().0 / 30,
         };
         let buffer_size = BufferSize::Fixed(buffer_size);
         let sample_rate = config.sample_rate();
@@ -238,7 +251,24 @@ fn get_microphone_by_name(name: &str) -> Result<(Device, StreamConfig), WhisperE
     }
 }
 
-fn audio_loop(data: &[i16], ring_buffer: &mut impl Producer<Item = i16>, vad: &mut Vad, activity: &mut UnboundedSender<VadActivity>) {
+fn audio_loop(
+    data: &[i16],
+    resample_from: &Option<u32>,
+    ring_buffer: &mut impl Producer<Item = i16>,
+    vad: &mut Vad,
+    activity: &mut UnboundedSender<VadActivity>,
+) {
+    // TODO: move resampling out of audio loop and replace this incredibly inefficent 4x copy pipeline
+    let data = match resample_from {
+        None => data,
+        Some(src_rate) => &wav_io::convert_samples_f32_to_i16(&wav_io::resample::linear(
+            wav_io::convert_samples_i16_to_f32(&data.to_vec()),
+            1,
+            *src_rate,
+            SAMPLE_RATE as u32,
+        ))[..],
+    };
+
     vad.input(data);
     loop {
         let status = vad.output_to(ring_buffer);
