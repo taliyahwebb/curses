@@ -45,6 +45,8 @@ export class TTS_PiperService implements ITTSService {
     }
 
     stop(): void {
-        this.bindings.onStop();
+        invoke<void>("plugin:piper_tts|stop").finally(() => {
+            this.bindings.onStop();
+        });
     }
 }

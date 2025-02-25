@@ -2,6 +2,7 @@ use core::str;
 use std::io;
 use std::path::PathBuf;
 
+use futures::TryFutureExt;
 use serde::{Deserialize, Serialize};
 use tauri::{Manager, Runtime, State, plugin};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
@@ -124,7 +125,7 @@ async fn get_wav_bytes(args: &SpeakArgs, state: State<'_, PiperInstance>) -> io:
 
         #[cfg(windows)]
         {
-            // console applications on windows have the annoying habbit of spawning a
+            // console applications on windows have the annoying habit of spawning a
             // terminal window. we need to explicitly tell CreateProcess not to
             // do that.
             command.creation_flags(0x08000000); // CREATE_NO_WINDOW
@@ -227,9 +228,17 @@ async fn speak(args: SpeakArgs, state: State<'_, PiperInstance>) -> Result<(), S
     play_async(play_async_args).await
 }
 
+#[tauri::command]
+async fn stop(state: State<'_, PiperInstance>) -> Result<(), String> {
+    if let Some(mut child) = state.process.lock().await.take() {
+        child.0.kill().map_err(|err| err.to_string()).await?
+    }
+    Ok(())
+}
+
 pub fn init<R: Runtime>() -> plugin::TauriPlugin<R> {
     plugin::Builder::new("piper-tts")
-        .invoke_handler(tauri::generate_handler![speak, get_voices])
+        .invoke_handler(tauri::generate_handler![speak, get_voices, stop])
         .setup(|app, _api| {
             app.manage(PiperInstance::default());
             Ok(())
