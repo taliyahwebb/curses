@@ -1,8 +1,12 @@
+use core::str;
 use std::io;
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
-use tauri::{Runtime, plugin};
+use tauri::{Manager, Runtime, State, plugin};
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
+use tokio::process::ChildStderr;
+use tokio::sync::Mutex;
 
 use crate::utils::*;
 
@@ -92,71 +96,100 @@ fn add_arg_if_some(
     }
 }
 
-/// Tries to create a new temporary WAV file; Gives an error with some context
-/// if that fails.
-fn create_temp_file() -> io::Result<tempfile::NamedTempFile> {
-    let dir = tempfile::env::temp_dir();
-    tempfile::Builder::new()
-        .suffix(".wav")
-        .tempfile_in(&dir)
-        .with_context(|| format!("Failed to create temporary file in '{}'", dir.display()))
-}
-
 /// Invokes piper to generate a WAV file and returns it as a byte vector
-async fn get_wav_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
+async fn get_wav_bytes(args: &SpeakArgs, state: State<'_, PiperInstance>) -> io::Result<Vec<u8>> {
     // at first i tried to read the wav data from stdout, but that didn't work,
     // so now i just use a regular file here.
-    let wav_file = create_temp_file()?;
-    let wav_file_path = wav_file.path();
     let model_path = &args.voice_path;
     let piper_path = &args.exe_path;
 
-    let mut command = tokio::process::Command::new(piper_path);
-    command.stdin(std::process::Stdio::piped());
-    command.stdout(std::process::Stdio::null());
-    command.stderr(std::process::Stdio::null());
-    command.arg("-q"); // quiet
-    command.arg("-m");
-    command.arg(model_path);
-    command.arg("-f");
-    command.arg(wav_file_path);
-
-    add_arg_if_some(&mut command, "--speaker", args.speaker_id);
-    add_arg_if_some(&mut command, "--noise_scale", args.noise_scale);
-    add_arg_if_some(&mut command, "--noise_w", args.noise_width);
-    add_arg_if_some(&mut command, "--length_scale", args.length_scale);
-    add_arg_if_some(&mut command, "--sentence_silence", args.sentence_silence);
-
-    #[cfg(windows)]
-    {
-        // console applications on windows have the annoying habit of spawning a
-        // terminal window. we need to explicitly tell CreateProcess not to do
-        // that.
-        command.creation_flags(0x08000000); // CREATE_NO_WINDOW
-    }
-
-    let mut process = command
-        .spawn()
-        .with_context(|| format!("Failed to start '{}'", piper_path.display()))?;
-
-    write_to_stdin(&mut process, args.value.as_bytes()).await?;
-
-    let status = process.wait().await?;
-
-    if status.success() {
-        tokio::fs::read(wav_file_path).await.with_context(|| {
-            format!(
-                "Failed to read temporary file at '{}'",
-                wav_file_path.display()
-            )
-        })
+    let mut lock = state.process.lock().await;
+    let child = if let Some(child) = lock.as_mut() {
+        child
     } else {
-        let error = match status.code() {
-            Some(code) => format!("Piper exited with status code: {code}"),
-            None => "Piper terminated by signal".into(),
-        };
-        Err(io::Error::other(error))
+        let mut command = tokio::process::Command::new(piper_path);
+        command.stdin(std::process::Stdio::piped());
+        command.stdout(std::process::Stdio::piped());
+        command.stderr(std::process::Stdio::piped());
+        command.arg("-m");
+        command.arg(model_path);
+        command.arg("-f");
+        command.arg("-");
+
+        add_arg_if_some(&mut command, "--speaker", args.speaker_id);
+        add_arg_if_some(&mut command, "--noise_scale", args.noise_scale);
+        add_arg_if_some(&mut command, "--noise_w", args.noise_width);
+        add_arg_if_some(&mut command, "--length_scale", args.length_scale);
+        add_arg_if_some(&mut command, "--sentence_silence", args.sentence_silence);
+
+        #[cfg(windows)]
+        {
+            // console applications on windows have the annoying habbit of spawning a
+            // terminal window. we need to explicitly tell CreateProcess not to
+            // do that.
+            command.creation_flags(0x08000000); // CREATE_NO_WINDOW
+        }
+
+        let mut process = command
+            .spawn()
+            .with_context(|| format!("Failed to start '{}'", piper_path.display()))?;
+
+        let mut buffered_error = BufReader::new(
+            process
+                .stderr
+                .take()
+                .expect("stderr should have been captured"),
+        );
+        // expected piper output
+        // ```
+        // [yyyy-mm-dd hh:mm:ss.nnn] [piper] [info] Loaded voice in <time> second(s)
+        // [yyyy-mm-dd hh:mm:ss.nnn] [piper] [info] Initialized piper
+        // ```
+        let mut buf = String::new();
+        loop {
+            buf.clear();
+            buffered_error.read_line(&mut buf).await?;
+
+            if buf.contains("Initialized piper") {
+                break;
+            } else if buf.contains("Loaded voice") {
+                continue;
+            } else {
+                process.kill().await?;
+                return Err(io::Error::other("piper exec error: '{buf}'"));
+            }
+        }
+        lock.insert((process, buffered_error))
+    };
+
+    write_to_stdin(&mut child.0, &format!("{}\n", args.value).as_bytes()).await?;
+    let mut str_buf = Vec::new();
+    let mut wav_file = Vec::new();
+    let mut buf = [0u8; 1024]; // common os buffer size
+    loop {
+        tokio::select! {
+            biased;
+            Ok(read) = child.0.stdout.as_mut().expect("stdout").read(&mut buf) => {
+                wav_file.extend_from_slice(&buf[..read]);
+            }
+            _ = child.1.read_until(b"\n"[0], &mut str_buf) => {break;},
+        }
     }
+    let str_buf = str::from_utf8(&str_buf).expect("stderr should only output utf8 valid");
+    if str_buf.contains("Real-time factor") {
+        // noop, we matched on success
+    } else {
+        let mut child = lock.take().expect("there should have been a child process");
+        child.0.kill().await?;
+        return Err(io::Error::other("piper exec error: '{buf}'"));
+    }
+
+    Ok(wav_file)
+}
+
+#[derive(Default)]
+struct PiperInstance {
+    process: Mutex<Option<(tokio::process::Child, BufReader<ChildStderr>)>>,
 }
 
 #[tauri::command]
@@ -172,7 +205,7 @@ fn get_voices(path: PathBuf) -> Result<Vec<Voice>, String> {
 }
 
 #[tauri::command]
-async fn speak(args: SpeakArgs) -> Result<(), String> {
+async fn speak(args: SpeakArgs, state: State<'_, PiperInstance>) -> Result<(), String> {
     use crate::services::audio::{RpcAudioPlayAsync, play_async};
 
     // fast path for empty string
@@ -180,7 +213,9 @@ async fn speak(args: SpeakArgs) -> Result<(), String> {
         return Ok(());
     }
 
-    let bytes = get_wav_bytes(&args).await.map_err(|e| e.to_string())?;
+    let bytes = get_wav_bytes(&args, state)
+        .await
+        .map_err(|e| e.to_string())?;
 
     let play_async_args = RpcAudioPlayAsync {
         device_name: args.device,
@@ -195,5 +230,9 @@ async fn speak(args: SpeakArgs) -> Result<(), String> {
 pub fn init<R: Runtime>() -> plugin::TauriPlugin<R> {
     plugin::Builder::new("piper-tts")
         .invoke_handler(tauri::generate_handler![speak, get_voices])
+        .setup(|app, _api| {
+            app.manage(PiperInstance::default());
+            Ok(())
+        })
         .build()
 }
