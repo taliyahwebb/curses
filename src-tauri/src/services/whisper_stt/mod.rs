@@ -25,7 +25,7 @@ use rodio::{
 use serde::{Deserialize, Serialize};
 use tauri::{plugin, AppHandle, Emitter, Manager, Runtime, State};
 use tokio::select;
-use vad::{NSamples, Vad, VadStatus, VAD_FRAME};
+use vad::{NSamples, Vad, VadStatus};
 use whisper::{Whisper, WhisperOptions, WhisperSetupError, MAX_WHISPER_FRAME, SAMPLE_RATE};
 
 mod vad;
