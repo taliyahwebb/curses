@@ -4,6 +4,7 @@
     "main"
   ],
   "permissions": [
+    "audio:default",
     "web:default"
   ]
 }
