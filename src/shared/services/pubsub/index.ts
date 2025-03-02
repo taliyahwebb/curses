@@ -1,6 +1,6 @@
 import { BaseEvent, IServiceInterface, PartialWithRequired, ServiceNetworkState, TextEvent, TextEventSchema, TextEventSource, TextEventType } from "@/types";
 import { listen } from '@tauri-apps/api/event';
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import { nanoid } from "nanoid";
 import PubSub from "pubsub-js";
 import { toast } from "react-toastify";

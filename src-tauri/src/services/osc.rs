@@ -68,7 +68,7 @@ fn send(rpc: RpcOscMessage, state: State<OscPlugin>) {
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("osc")
         .invoke_handler(tauri::generate_handler![send])
-        .setup(|app| {
+        .setup(|app, _api| {
             app.manage(OscPlugin::default());
             Ok(())
         })

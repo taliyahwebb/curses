@@ -45,8 +45,10 @@ fn app_close(app_handle: tauri::AppHandle) {
     }
 }
 fn app_setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-    let window = app.get_window("main").unwrap();
-    window_shadows::set_shadow(&window, true).ok(); // ignore failure
+    let window = app.get_webview_window("main").unwrap();
+    // This gives a compilation error if not called directly from window.
+    // window_shadows::set_shadow(&window, true).ok(); // ignore failure
+    window.set_shadow( true).ok(); // ignore failure
     Ok(())
 }
 
@@ -72,6 +74,11 @@ fn main() {
     };
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_shell::init())
         .setup(app_setup)
         .invoke_handler(tauri::generate_handler![get_port, get_native_features, app_close])
         .plugin(tauri_plugin_window_state::Builder::default().build())

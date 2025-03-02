@@ -9,7 +9,7 @@ import { STT_DeepgramService } from "./services/deepgram";
 import { STT_NativeService } from "./services/native";
 import { STT_SpeechlyService } from "./services/speechly";
 import { STT_WhisperService } from "./services/whisper";
-import {invoke} from "@tauri-apps/api/tauri";
+import {invoke} from "@tauri-apps/api/core";
 import {
   ISTTReceiver,
   ISTTServiceConstructor,

@@ -6,8 +6,8 @@ import { createDocumentFile, FileState, FileType } from "./schema";
 import { fileOpen }                                from "browser-fs-access";
 import { nanoid } from "nanoid";
 import { toast } from "react-toastify";
-import { save, open } from "@tauri-apps/api/dialog";
-import { readBinaryFile } from "@tauri-apps/api/fs";
+import { save, open } from "@tauri-apps/plugin-dialog";
+import { readFile } from "@tauri-apps/plugin-fs";
 
 export interface GoogleFont {
   category: string
@@ -182,7 +182,7 @@ class Service_Files implements IServiceInterface {
     if (!extension)
       return;
 
-    const data = await readBinaryFile(path);
+    const data = await readFile(path);
 
     let fileType = `${type}/${extension}`;
     if (type === "font") {

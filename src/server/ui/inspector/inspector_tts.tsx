@@ -1,7 +1,7 @@
 import { TTS_Backends, TTS_State } from "@/server/services/tts/schema";
 import { ServiceNetworkState } from "@/types";
 import NiceModal from "@ebay/nice-modal-react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import { FC, useEffect, useState } from "react";
 import { RiCharacterRecognitionFill, RiChatVoiceFill } from "react-icons/ri";
 import { proxy, useSnapshot } from "valtio";

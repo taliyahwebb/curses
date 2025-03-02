@@ -1,5 +1,5 @@
 import { IServiceInterface } from "@/types";
-import { BaseDirectory, createDir, exists, readBinaryFile, writeBinaryFile } from "@tauri-apps/api/fs";
+import { BaseDirectory, mkdir, exists, readFile, writeFile } from "@tauri-apps/plugin-fs";
 import debounce from "lodash/debounce";
 import { proxy, subscribe } from "valtio";
 import { BackendState, BackendSchema } from "../../schema";
@@ -32,11 +32,11 @@ class Service_State implements IServiceInterface {
 
   async #load_state(): Promise<Record<string, any> | undefined> {
     const decoder = new TextDecoder();
-    const fileExists = await exists("user/settings", {dir: BaseDirectory.AppData});
+    const fileExists = await exists("user/settings", {baseDir: BaseDirectory.AppData});
     if (!fileExists)
       return;
     try {
-      const data = await readBinaryFile("user/settings", {dir: BaseDirectory.AppData});
+      const data = await readFile("user/settings", {baseDir: BaseDirectory.AppData});
       return this.tryParseState(decoder.decode(data));
     } catch (error) {
       return;
@@ -45,11 +45,11 @@ class Service_State implements IServiceInterface {
 
   #save_state = debounce(async () => {
     const encoder = new TextEncoder();
-    const bExists = await exists("user", { dir: BaseDirectory.AppData });
+    const bExists = await exists("user", { baseDir: BaseDirectory.AppData });
     if (!bExists)
-      await createDir("user", { dir: BaseDirectory.AppData, recursive: true });
+      await mkdir("user", { baseDir: BaseDirectory.AppData, recursive: true });
     const value = JSON.stringify(this.state);
-    await writeBinaryFile("user/settings", encoder.encode(value), {append: false, dir: BaseDirectory.AppData});
+    await writeFile("user/settings", encoder.encode(value), {append: false, baseDir: BaseDirectory.AppData});
   }, 1000);
 }
 export default Service_State;
