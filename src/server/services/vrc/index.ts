@@ -49,7 +49,7 @@ class Service_VRC implements IServiceInterface {
   }
 
   sendOsc(path: string, args: any[]) {
-    invoke("plugin:osc|send", {
+    invoke<void>("plugin:osc|send", {
       rpc: {
         path,
         args,

@@ -102,7 +102,7 @@ class Service_PubSub implements IServiceInterface {
   }
   #publishPubSub(msg: BaseEvent) {
     window.Config.isApp() &&
-      invoke("plugin:web|pubsub_broadcast", { value: JSON.stringify(msg) });
+      invoke<void | string>("plugin:web|pubsub_broadcast", { value: JSON.stringify(msg) });
   }
   #publishLink(msg: BaseEvent) {
     if (this.#socket && this.#socket.readyState === this.#socket.OPEN)

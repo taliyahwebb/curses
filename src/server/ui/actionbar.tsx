@@ -144,8 +144,7 @@ const WindowActions: FC = () => {
   }
 
   const handleClose = () => {
-
-    invoke("app_close")
+    invoke<void>("app_close")
     .catch(() => exit()); // try to close anyway
   }
 
