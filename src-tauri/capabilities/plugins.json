@@ -1,0 +1,9 @@
+{
+  "identifier": "plugin-capability",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "web:default"
+  ]
+}
