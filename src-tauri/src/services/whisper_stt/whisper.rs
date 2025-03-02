@@ -10,9 +10,17 @@ pub const MAX_WHISPER_FRAME: usize = (SAMPLE_RATE * 30) - WHISPER_PREPEND_SILENC
 /// prepend 700ms of silence to each whisper frame so the first word gets picked up better
 const WHISPER_PREPEND_SILENCE: usize = 1600 * 7;
 
+pub struct WhisperOptions {
+    /// whether whisper should translate all speech to english
+    pub translate_en: bool,
+    /// the language whisper should transcribe (can be "auto" for auto detection)
+    pub language: String,
+}
+
 pub struct Whisper {
     state: WhisperState,
     params: FullParams<'static, 'static>,
+    language: String, // set language later in params because it wants a ref
     buf: Box<[i16; WHISPER_PREPEND_SILENCE + MAX_WHISPER_FRAME]>,
     samples_in_buf: usize,
 }
@@ -24,7 +32,7 @@ pub enum WhisperSetupError {
 }
 
 impl Whisper {
-    pub fn new(model: impl AsRef<Path>) -> Result<Whisper, WhisperSetupError> {
+    pub fn with_options(model: impl AsRef<Path>, opt: WhisperOptions) -> Result<Whisper, WhisperSetupError> {
         let params = WhisperContextParameters::default();
         let ctx = WhisperContext::new_with_params(
             model
@@ -42,6 +50,7 @@ impl Whisper {
         // create a params object
         let mut params = FullParams::new(SamplingStrategy::Greedy { best_of: 1 });
         params.set_n_threads(4);
+        params.set_translate(opt.translate_en);
         params.set_no_timestamps(true);
         params.set_suppress_non_speech_tokens(true);
         params.set_single_segment(true);
@@ -49,6 +58,7 @@ impl Whisper {
         Ok(Whisper {
             state,
             params,
+            language: opt.language,
             buf: Box::new([0i16; MAX_WHISPER_FRAME + WHISPER_PREPEND_SILENCE]),
             samples_in_buf: 0,
         })
@@ -75,8 +85,10 @@ impl Whisper {
         let mut float_samples = Box::new([0f32; WHISPER_PREPEND_SILENCE + MAX_WHISPER_FRAME]);
         whisper_rs::convert_integer_to_float_audio(samples, &mut float_samples[..samples.len()]).expect("should be able to de-quantize data");
 
+        let mut params = self.params.clone();
+        params.set_language(Some(&self.language));
         self.state
-            .full(self.params.clone(), &float_samples[..samples.len()])
+            .full(params, &float_samples[..samples.len()])
             .expect("failed to run model");
 
         // fetch the results

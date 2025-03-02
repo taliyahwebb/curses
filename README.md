@@ -33,6 +33,24 @@
   <img alt="GitHub last commit]" src="https://img.shields.io/github/last-commit/mmpneo/curses?color=2EB87D"/>
 </p>
 
+<!--toc:start-->
+- [Features](#features)
+  - [Roadmap](#roadmap)
+- [Community](#community)
+- [Usage](#usage)
+  - [Runtime Dependencies](#runtime-dependencies)
+  - [Getting Started with OBS](#getting-started-with-obs)
+    - [1. Get the App](#1-get-the-app)
+    - [2. Open app and copy link for OBS](#2-open-app-and-copy-link-for-obs)
+    - [3. Create browser source in OBS](#3-create-browser-source-in-obs)
+- [Building](#building)
+  - [Prerequisites](#prerequisites)
+    - [NixOS](#nixos)
+    - [Other Linux](#other-linux)
+    - [Windows](#windows)
+  - [Build](#build)
+<!--toc:end-->
+
 # Features
 - **OBS Captions customization**: Colors, fonts, shadows, background textures, text typing animation, sound effects, particle effects and CSS
 - **Native OBS stream captions**
@@ -50,14 +68,32 @@
   - Save multiple designs and freely switch between them
   - Automatically switch design when OBS changes scene
 
+## Roadmap
+- [ ] STT - Vosk
+- [ ] TTS - VoiceVox
+
 # Community
 For help, feature requests, bug reports, release notifications, design templates [Join Discord](https://discord.gg/Sw6pw8fGYS)
 
 <a href="https://discord.gg/Sw6pw8fGYS"><img src="https://discordapp.com/api/guilds/856500849815060500/widget.png?style=banner2" /></a>
 
-# Getting Started with OBS
+# Usage
+## Runtime Dependencies
+If you want to use the Whisper STT module you will need a Vulkan ready graphics driver installed.
+
+- NixOS: if you are using a recent NixOS version and have a graphical user environment enabled, it will likely ✨just work✨ if your hardware supports vulkan.
+- Other Linux: check your distributions documentation or see [Arch Linux Wiki](https://wiki.archlinux.org/title/Vulkan) for more information
+- Windows: having up to date Graphics drivers should surfice if the hardware supports it
+> [!NOTE]
+> Whisper module on Windows has not been tested yet. 
+
+Here is a list of [Vulkan ready devices](https://vulkan.gpuinfo.org/). Most modern Graphics drivers should support Vulkan.
+
+## Getting Started with OBS
 ### 1. Get the App
 Get the latest [release here](https://github.com/mmpneo/curses/releases/latest). You can also [Join Discord](https://discord.gg/Sw6pw8fGYS) to get release notifications and download the new version from there as soon as it is published
+
+Or you can [build](#building) the application yourself.
 
 ### 2. Open app and copy link for OBS
 Or click "Set Up OBS" to have everything set up automatically with **obs-websocket** plugin
@@ -69,6 +105,54 @@ Paste the link and change window size to match app's canvas size (default is 500
 
 <img width="600" src="https://user-images.githubusercontent.com/3977499/218331723-721b69c5-a457-4dad-9658-f5232afc68f1.gif">
 
-## Roadmap
-- [ ] STT - Vosk
-- [ ] TTS - VoiceVox
+# Building
+## Prerequisites
+### NixOS
+This repository provides a [Nix flake](https://nixos.wiki/wiki/flakes) which provides:
+- [Development Environment](https://nixos.wiki/wiki/Development_environment_with_nix-shell) via `nix develop`
+- Nix Package as the default flake package output
+  - can be built with `nix build` (binary will be available as `./result/bin/whisper-real-time`)
+
+The Development Environment provides all needed libraries to build the project.
+
+Note: [Runtime Dependencies](#runtime-dependencies)
+
+### Other Linux
+For the frontend deps there is a good guide [here](https://v1.tauri.app/v1/guides/getting-started/prerequisites)
+
+Additionally the following are required for building:
+- [cmake](https://cmake.org/)
+- [shaderc](https://github.com/google/shaderc)
+- [clang](https://clang.llvm.org/)
+- [alsa-lib](https://github.com/alsa-project/alsa-lib)
+- [vulkan-headers](https://github.com/KhronosGroup/Vulkan-Headers)
+- [vulkan-loader](https://wiki.archlinux.org/title/Vulkan) (`vulkan-icd-loader` on arch-linux)
+
+List of additional packages for arch linux: `cmake shaderc alsa-lib vulkan-headers vulkan-icd-loader`
+
+Note: [Runtime Dependencies](#runtime-dependencies)
+
+### Windows
+- [rust](https://www.rust-lang.org/tools/install) (or `winget install rustup`)
+- [nodejs](https://nodejs.org/en/download) (or `winget install nodejs`)
+- [pnpm](https://pnpm.io/installation) (or `winget install pnpm.pnpm`)
+- [vulkansdk](https://vulkan.lunarg.com/) (or `winget install vulkansdk`)
+- [msvc](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2019)
+  - get the community visual studio installer (if you have it installed already, open the installer again and press 'modify' on your installed instance and make sure the shown below are checked)
+  - [x] 'Desktop development with C++'
+- [clang lib](https://clang.llvm.org/get_started.html) (or `winget install llvm`)
+- [cmake](https://cmake.org/) (or `winget install cmake`)
+
+Note: [Runtime Dependencies](#runtime-dependencies)
+
+## Build
+1. setup pnpm local dependencies
+  - `pnpm i --frozen-lockfile`
+2. choose from the following the action you want to perform
+  - `pnpm tauri dev` build and run a local development version that restarts on code changes
+  - `pnpm tauri dev --release` build and run the dev version with release settings
+  - `pnpm tauri build -b --debug` to create a development build
+    - binary will be produced at `./src-tauri/target/debug/<curses-bin>`
+  - `pnpm tauri build -b` to create a final build
+    - binary will be produced at `./src-tauri/target/build/<curses-bin>`
+

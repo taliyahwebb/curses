@@ -39,6 +39,8 @@ export class STT_WhisperService implements ISTTService {
         args: {
             inputDevice: this.state.device,
             modelPath: this.state.modelPath,
+            lang: this.state.lang,
+            translateToEnglish: this.state.translateToEnglish,
         },
     }).catch(err => {
         this.#initialized = false;

@@ -44,6 +44,8 @@ export const Service_STT_Schema = z.object({
   whisper: z.object({
     device: zSafe(z.coerce.string(), "default"),
     modelPath: zSafe(z.coerce.string(), ""),
+    lang: zSafe(z.coerce.string(), "auto"),
+    translateToEnglish: zSafe(z.coerce.boolean(), false),
   }).default({}),
   deepgram: z.object({
     device: zSafe(z.coerce.string(), "default"),
