@@ -5,6 +5,15 @@
   ],
   "permissions": [
     "audio:default",
-    "web:default"
+    "custom-tts:default",
+    "keyboard:default",
+    "osc:default",
+    "piper-tts:default",
+    "translate:default",
+    "uberduck-tts:default",
+    "uwu:default",
+    "web:default",
+    "whisper-stt:default",
+    "windows-tts:default"
   ]
 }
