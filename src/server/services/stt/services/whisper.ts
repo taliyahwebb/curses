@@ -35,7 +35,7 @@ export class STT_WhisperService implements ISTTService {
       this.bindings.onInterim(event.payload);
     });
     /// the rust backend function will only return when an error occured or stop() was issued
-    await invoke<void>("plugin:whisper_stt|start", {
+    await invoke<void>("plugin:whisper-stt|start", {
         args: {
             inputDevice: this.state.device,
             modelPath: this.state.modelPath,
@@ -46,7 +46,7 @@ export class STT_WhisperService implements ISTTService {
         this.#initialized = false;
         toast.error(JSON.stringify(err));
         // needed as the rust part can't reset itself when it errored
-        invoke<void>("plugin:whisper_stt|stop");
+        invoke<void>("plugin:whisper-stt|stop");
     }).finally(() => {
       this.#initialized = false;
       this.bindings.onStop();
@@ -56,6 +56,6 @@ export class STT_WhisperService implements ISTTService {
   }
 
   stop(): void {
-    invoke<void>("plugin:whisper_stt|stop");
+    invoke<void>("plugin:whisper-stt|stop");
   }
 }

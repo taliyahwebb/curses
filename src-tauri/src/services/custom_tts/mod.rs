@@ -141,7 +141,7 @@ async fn speak(args: SpeakArgs) -> Result<(), String> {
 }
 
 pub fn init<R: Runtime>() -> plugin::TauriPlugin<R> {
-    plugin::Builder::new("custom_tts")
+    plugin::Builder::new("custom-tts")
         .invoke_handler(tauri::generate_handler![speak])
         .build()
 }

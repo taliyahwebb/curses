@@ -176,7 +176,7 @@ async fn speak(args: SpeakArgs) -> Result<(), String> {
 }
 
 pub fn init<R: Runtime>() -> plugin::TauriPlugin<R> {
-    plugin::Builder::new("piper_tts")
+    plugin::Builder::new("piper-tts")
         .invoke_handler(tauri::generate_handler![speak, get_voices])
         .build()
 }

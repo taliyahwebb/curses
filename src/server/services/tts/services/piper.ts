@@ -30,7 +30,7 @@ export class TTS_PiperService implements ITTSService {
 
     async play(value: string) {
         this.mutex = this.mutex.then(async () => {
-            await invoke<void>("plugin:piper_tts|speak", {
+            await invoke<void>("plugin:piper-tts|speak", {
                 args: {
                     device: this.state.device,
                     exe_path: this.state.exe_location,

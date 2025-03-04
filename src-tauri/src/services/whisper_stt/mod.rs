@@ -66,7 +66,7 @@ enum VadActivity {
 }
 
 pub fn init<R: Runtime>() -> plugin::TauriPlugin<R> {
-    plugin::Builder::new("whisper_stt")
+    plugin::Builder::new("whisper-stt")
         .invoke_handler(tauri::generate_handler![start, stop])
         .setup(|app, _api| {
             app.manage(WhisperState::default());

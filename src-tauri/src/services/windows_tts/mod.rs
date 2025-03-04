@@ -5,7 +5,7 @@ pub use windows::init;
 
 #[cfg(not(windows))]
 pub fn init<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
-    tauri::plugin::Builder::new("windows_tts")
+    tauri::plugin::Builder::new("windows-tts")
         .invoke_handler(tauri::generate_handler![])
         .build()
 }

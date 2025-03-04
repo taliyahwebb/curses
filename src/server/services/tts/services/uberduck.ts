@@ -18,7 +18,7 @@ export class TTS_UberduckService implements ITTSService {
     this.bindings.onStart();
   }
   async play(value: string) {
-    invoke<void>("plugin:uberduck_tts|speak", {
+    invoke<void>("plugin:uberduck-tts|speak", {
       data: {
         auth: {
           api_key: this.state.api_key,

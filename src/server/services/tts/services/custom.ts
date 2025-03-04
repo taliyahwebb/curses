@@ -26,7 +26,7 @@ export class TTS_CustomService implements ITTSService {
 
     async play(value: string) {
         this.mutex = this.mutex.then(async () => {
-            await invoke<void>("plugin:custom_tts|speak", {
+            await invoke<void>("plugin:custom-tts|speak", {
                 args: {
                     device: this.state.device,
                     exe_path: this.state.exe_location,

@@ -272,7 +272,7 @@ const UberDuck: FC = () => {
     if (!data.api_key || !data.secret_key)
       return;
     setLoadingVoices(true);
-    invoke<UberduckVoice[] | string>("plugin:uberduck_tts|get_voices", {auth: {
+    invoke<UberduckVoice[] | string>("plugin:uberduck-tts|get_voices", {auth: {
       api_key: data.api_key,
       secret_key: data.secret_key,
     }}).then(res => {
@@ -320,7 +320,7 @@ const Piper: FC = () => {
   const loadVoices = () => loadVoicesFrom(data.voice_location);
   const loadVoicesFrom = (path: string) => {
     type PiperVoice = { name: string; path: string; }
-    invoke<PiperVoice[]>("plugin:piper_tts|get_voices", { path }).then(res => {
+    invoke<PiperVoice[]>("plugin:piper-tts|get_voices", { path }).then(res => {
       piperVoices.value = res.map(v => ({ value: v.path, label: v.name }));
     }).catch(err => {
       toast.error(`could not load piper voices: '${err}'`);
