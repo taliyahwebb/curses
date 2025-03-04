@@ -17,7 +17,7 @@ export class TTS_WindowsService implements ITTSService {
     this.bindings.onStart();
   }
   play(value: string): void {
-    invoke<void>("plugin:windows_tts|speak", {
+    invoke<void>("plugin:windows-tts|speak", {
       data: {
         voice: this.state.voice,
         device: this.state.device,

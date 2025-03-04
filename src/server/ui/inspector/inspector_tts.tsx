@@ -27,7 +27,7 @@ const Windows: FC = () => {
   const [config, setConfig] = useState<WindowsConfig>();
 
   useEffect(() => {
-    invoke<WindowsConfig>("plugin:windows_tts|get_voices").then(setConfig);
+    invoke<WindowsConfig>("plugin:windows-tts|get_voices").then(setConfig);
   }, []);
 
   return <>
