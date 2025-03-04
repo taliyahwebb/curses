@@ -48,7 +48,7 @@ fn app_setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let window = app.get_webview_window("main").unwrap();
     // This gives a compilation error if not called directly from window.
     // window_shadows::set_shadow(&window, true).ok(); // ignore failure
-    window.set_shadow( true).ok(); // ignore failure
+    window.set_shadow(true).ok(); // ignore failure
     Ok(())
 }
 
