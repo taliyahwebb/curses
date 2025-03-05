@@ -12,6 +12,7 @@ import { InputCheckbox, InputMapObject, InputMappedGroupSelect, InputSelect, Inp
 import NiceModal from "@ebay/nice-modal-react";
 import Modal from "../Modal";
 import { useTranslation } from 'react-i18next';
+import { toast } from "react-toastify";
 
 const WebSpeechAPI: FC = () => {
   const {t} = useTranslation();
@@ -38,27 +39,24 @@ const WebSpeechAPI: FC = () => {
 
 const Browser: FC = () => {
   const {t} = useTranslation();
-  const handleOpen = () => {
+
+  const handleOpenMic = (possibleNames: string[]) => {
     invoke<void>("plugin:web|open_browser", {
       data: {
-        browser: "chrome",
+        browserNames: possibleNames,
         url: `http://localhost:${window.Config.serverNetwork.port}/mic.html`
       }
-    });
+    }).catch(err => toast.error(err));
   };
 
-  const handleOpenEdge = () => {
-    invoke<void>("plugin:web|open_browser", {
-      data: {
-        browser: "msedge",
-        url: `http://localhost:${window.Config.serverNetwork.port}/mic.html`
-      }
-    });
-  };
+  const handleOpenChrome = () =>
+    handleOpenMic(["chrome", "google-chrome", "google-chrome-stable"]);
+  const handleOpenEdge = () =>
+    handleOpenMic(["msedge", "microsoft-edge", "microsoft-edge-stable"]);
 
   return <>
     <Inspector.SubHeader>{t('stt.browser_title')}</Inspector.SubHeader>
-    <button className="btn btn-sm btn-neutral gap-2" onClick={handleOpen}><SiGooglechrome/> Open Chrome</button>
+    <button className="btn btn-sm btn-neutral gap-2" onClick={handleOpenChrome}><SiGooglechrome/> Open Chrome</button>
     <button className="btn btn-sm btn-neutral gap-2" onClick={handleOpenEdge}><SiMicrosoftedge/> Open Edge</button>
   </>
 }

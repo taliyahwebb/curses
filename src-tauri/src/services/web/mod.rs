@@ -1,6 +1,6 @@
 use local_ip_address::local_ip;
 use serde::{Deserialize, Serialize};
-use std::{process::Command, sync::Arc};
+use std::{process::Command, process::Stdio, sync::Arc};
 use tauri::{
     async_runtime::Mutex,
     command,
@@ -48,18 +48,36 @@ async fn config(config: State<'_, AppConfiguration>) -> Result<WebConfig, String
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct OpenBrowserCommand {
-    browser: String,
+    browser_names: Vec<String>,
     url: String,
 }
 #[command]
-fn open_browser(data: OpenBrowserCommand) {
-    if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .args(&["/C", format!("start {} {}", &data.browser, &data.url).as_str()])
-            .output()
-            .ok();
+fn open_browser(data: OpenBrowserCommand) -> Result<(), String> {
+    for browser in &data.browser_names {
+        let status = if cfg!(target_os = "windows") {
+            Command::new("cmd")
+                .stderr(Stdio::null()) // errors are expected, don't print to terminal
+                .args(&["/C", format!("start {} {}", &browser, &data.url).as_str()])
+                .status()
+                .expect("failed to execute process")
+        } else if cfg!(target_os = "linux") {
+            Command::new("sh")
+                .stderr(Stdio::null())
+                .args(&["-c", format!("{} {}", &browser, &data.url).as_str()])
+                .status()
+                .expect("failed to execute process")
+        } else {
+            return Err("Action not supported on your operating system".to_string());
+        };
+
+        if status.success() {
+            return Ok(());
+        }
     }
+    println!("failed");
+    Err("Could not find browser executable".to_string())
 }
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {

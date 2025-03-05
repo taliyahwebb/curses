@@ -255,8 +255,6 @@ const VoiceVox: FC = () => {
   </>
 }
 
-type UberduckVoice = { model_id: string, voicemodel_uuid: string, display_name: string };
-
 const uberduckVoices = proxy<{value: InputSelectOption[]}>({
   value: []
 });
@@ -273,7 +271,8 @@ const UberDuck: FC = () => {
     if (!data.api_key || !data.secret_key)
       return;
     setLoadingVoices(true);
-    invoke<UberduckVoice[] | string>("plugin:uberduck-tts|get_voices", {auth: {
+    type UberDuckVoice = { model_id: string, voicemodel_uuid: string, display_name: string };
+    invoke<UberDuckVoice[] | string>("plugin:uberduck-tts|get_voices", {auth: {
       api_key: data.api_key,
       secret_key: data.secret_key,
     }}).then(res => {
