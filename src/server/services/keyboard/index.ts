@@ -114,14 +114,6 @@ class Service_Keyboard implements IServiceInterface {
     invoke<void>("plugin:keyboard|stop_tracking");
   }
 
-  async start() {
-    invoke<void>("plugin:bg_input|start");
-
-  }
-  stop() {
-    invoke<void>("plugin:bg_input|stop");
-  }
-
   private rebindShortcuts() {
     this.rebindShortcutsTauri();
   }
