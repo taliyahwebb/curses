@@ -340,7 +340,7 @@ const Piper: FC = () => {
         label="tts.piper_exe_location"
         value={data.exe_location}
         onChange={e => handleUpdate("exe_location", e.target.value)}
-        dialogOptions={{ filters: [{ name: "piper.exe", extensions: ["exe"] }] }}
+        dialogOptions={{ filters: isWindows ? [{ name: "piper.exe", extensions: ["exe"] }] : [] }}
       />
       <InputFilePath
         label="tts.piper_voice_location"
