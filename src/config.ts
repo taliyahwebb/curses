@@ -46,9 +46,7 @@ class AppConfiguration {
 
   // region ---INITIALIZERS---
   private loadBase() {
-    // __TAURI_METADATA__ was deprecated in tauri@2, this ternary doesn't work anymore.
-    // this.platform = window.__TAURI_METADATA__ ? AppPlatform.app : AppPlatform.web;
-    this.platform = AppPlatform.app;
+    this.platform = '__TAURI_INTERNALS__' in window ? AppPlatform.app : AppPlatform.web;
     this.mode     = window.location.pathname.startsWith('/client') ? AppMode.client : AppMode.server;
   }
 

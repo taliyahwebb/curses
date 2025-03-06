@@ -35,7 +35,7 @@ fn get_port(state: State<'_, InitArguments>) -> u16 {
 
 #[command]
 fn app_close(app_handle: tauri::AppHandle) {
-    let Some(window) = app_handle.get_window("main") else {
+    let Some(window) = app_handle.get_webview_window("main") else {
         return app_handle.exit(0);
     };
     app_handle.save_window_state(StateFlags::all()).ok(); // don't really care if it saves it
@@ -46,8 +46,6 @@ fn app_close(app_handle: tauri::AppHandle) {
 }
 fn app_setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let window = app.get_webview_window("main").unwrap();
-    // This gives a compilation error if not called directly from window.
-    // window_shadows::set_shadow(&window, true).ok(); // ignore failure
     window.set_shadow(true).ok(); // ignore failure
     Ok(())
 }

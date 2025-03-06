@@ -143,16 +143,6 @@ class Service_Keyboard implements IServiceInterface {
     // });
   }
 
-  /* Unused
-  private rebindShortcutsNative() {
-    const shortcuts =  Object
-      .entries(window.ApiServer.state.shortcuts)
-      .filter(sc => !!sc[1])
-      .map(([key, value]) => ({name: key, keys: value.split("+")}));
-    // apply_shortcuts doesn't exist
-    invoke("plugin:keyboard|apply_shortcuts", {shortcuts});
-  } */
-
   clearShortcut(shortcut: ShortcutKeys) {
     window.ApiServer.state.shortcuts[shortcut] = "";
   }
