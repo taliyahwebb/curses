@@ -48,7 +48,7 @@ class Service_State implements IServiceInterface {
     const bExists = await exists("user", { baseDir: BaseDirectory.AppData });
     if (!bExists)
       await mkdir("user", { baseDir: BaseDirectory.AppData, recursive: true });
-    const value = JSON.stringify(this.state);
+    const value = JSON.stringify(this.state, null, 4);
     await writeFile("user/settings", encoder.encode(value), {append: false, baseDir: BaseDirectory.AppData});
   }, 1000);
 }
