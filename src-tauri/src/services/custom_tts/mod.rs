@@ -9,7 +9,7 @@ use tokio::process::Command;
 
 use crate::utils::*;
 
-/// arguments to the `speak` function. most of these get passed straight to piper.exe
+/// arguments to the `speak` function. most of these get passed straight to the executable
 #[derive(Serialize, Deserialize, Debug)]
 struct SpeakArgs {
     /// audio output device
