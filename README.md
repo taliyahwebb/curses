@@ -27,10 +27,10 @@
 
 <p align="center"><b>Repo Stats</b></p>
 <p align="center">
-  <img alt="GitHub repo size]" src="https://img.shields.io/github/repo-size/mmpneo/curses?color=2EB87D"/>
-  <img alt="GitHub language count" src="https://img.shields.io/github/languages/count/mmpneo/curses?color=2EB87D"/>
-  <img alt="GitHub top language" src="https://img.shields.io/github/languages/top/mmpneo/curses?color=2EB87D"/>
-  <img alt="GitHub last commit]" src="https://img.shields.io/github/last-commit/mmpneo/curses?color=2EB87D"/>
+  <img alt="GitHub repo size]" src="https://img.shields.io/github/repo-size/taliyahwebb/curses?color=2EB87D"/>
+  <img alt="GitHub language count" src="https://img.shields.io/github/languages/count/taliyahwebb/curses?color=2EB87D"/>
+  <img alt="GitHub top language" src="https://img.shields.io/github/languages/top/taliyahwebb/curses?color=2EB87D"/>
+  <img alt="GitHub last commit]" src="https://img.shields.io/github/last-commit/taliyahwebb/curses?color=2EB87D"/>
 </p>
 
 <!--toc:start-->
@@ -52,6 +52,7 @@
 <!--toc:end-->
 
 # Features
+[Instructions and details](#usage)
 - **OBS Captions customization**: Colors, fonts, shadows, background textures, text typing animation, sound effects, particle effects and CSS
 - **Native OBS stream captions**
 - **Google Fonts**: more than 1000 free fonts for OBS captions
@@ -69,19 +70,21 @@
   - Automatically switch design when OBS changes scene
 
 ## Roadmap
+> [!NOTE]
+> Outdated
 - [ ] STT - Vosk
 - [ ] TTS - VoiceVox
 
 # Community
 For help, feature requests, bug reports, release notifications, design templates [Join Discord](https://discord.gg/Sw6pw8fGYS)
 
-<a href="https://discord.gg/Sw6pw8fGYS"><img src="https://discordapp.com/api/guilds/856500849815060500/widget.png?style=banner2" /></a>
+<a href="https://discord.gg/Sw6pw8fGYS"><img src="https://discordapp.com/api/guilds/856500849815060500/widget.png?style=banner2"/></a>
 
 # Usage
 ## Runtime Dependencies
 If you want to use the Whisper STT module you will need a Vulkan ready graphics driver installed.
 
-- NixOS: if you are using a recent NixOS version and have a graphical user environment enabled, it will likely ✨just work✨ if your hardware supports vulkan.
+- NixOS: if you are using a recent NixOS version and have a graphical user environment enabled, it will likely ✨just work✨ if your hardware supports Vulkan.
 - Other Linux: check your distributions documentation or see [Arch Linux Wiki](https://wiki.archlinux.org/title/Vulkan) for more information
 - Windows: having up to date Graphics drivers should surfice if the hardware supports it
 > [!NOTE]
@@ -89,7 +92,87 @@ If you want to use the Whisper STT module you will need a Vulkan ready graphics 
 
 Here is a list of [Vulkan ready devices](https://vulkan.gpuinfo.org/). Most modern Graphics drivers should support Vulkan.
 
+## STT services
+**Every service has its pros and cons. I'd advice to read about them all before making your choice.**
+
+### Web Speech API (STT)
+TODO
+> [!NOTE]
+> It should not incorporate a profanity filter, but if it does we can't do anything about it, so check if your installation is up to date and report it to [Edge WebView2](https://github.com/MicrosoftEdge/WebView2Feedback?tab=readme-ov-file#-how-to-report-a-bug).
+
+## TTS services
+**Every service has its pros and cons. I'd advice to read about them all before making your choice.**
+
+### Web Speech API (TTS)
+Web Speech API is a general specification for web browsers to support both speech synthesis and recognition. It is bundled inside the app, but its implementation and voices available change depending on your operating system.
+
+<details>
+<summary>Windows</summary>
+We get the Web Speech API through Edge Webview2.
+
+Edge WebView2 only supports local voices ([due to the cost constraints](https://github.com/MicrosoftEdge/WebView2Feedback/issues/2660#issuecomment-1212616745)). Afaik, it only uses the Windows voice packs for now, so here's [how to add new voice packs to Windows](https://support.microsoft.com/en-us/topic/download-languages-and-voices-for-immersive-reader-read-mode-and-read-aloud-4c83a8d8-7486-42f7-8e46-2b0fdf753130) (you might need to reboot after following these instructions).
+</details>
+
+<details>
+<summary>Linux</summary>
+We get the Web Speech API through WebKitGTK.
+
+**WebKitGTK does not officially support the speech synthesis part of Web Speech API yet**, but everything should work as soon as the feature gets released.
+> [!NOTE]
+> In the mean time, you can try [building WebKitGtk yourself](https://trac.webkit.org/wiki/BuildingGtk) with the additional CMake arguments `-DUSE_SPIEL=ON -DUSE_FLITE=OFF`.
+
+It should use any locally installed speech provider like eSpeak, Piper or Mimic.
+</details>
+
+### Piper
+Piper is a Free and Open Source TTS synthesizer. It generates the sound locally, and the voices are usually Public Domain (do check the license when downloading voices though).
+
+You will need to follow these few steps to get it up and running, but don't be scared!
+
+> [!NOTE]
+> On Linux, Piper might be in your package manager of choice. Make sure you install the TTS executable, and not the mouse configuration app! (e.g. `piper-tts-{bin,git}` for the AUR on Arch and not `piper`)
+- Download the [latest release of Piper](https://github.com/rhasspy/piper/releases/latest), un-zip it and select it in Curses in the *Executable* field.
+- Create a directory (folder) where you will put your voices and select it in Curses in the *Voice directory* field.
+- Find a voice you like on https://rhasspy.github.io/piper-samples/, and download both the `.onnx` and `.onnx.json` files into the directory you created. Make sure both files have the same name (e.g. `en_US-kristin-medium.onnx` and `en_US-kristin-medium.onnx.json`).
+- Select said voice in Curses and you're good to go :)
+
+### Windows
+The classic Windows voices.
+Not much more to say ahah.
+
+There might be some differences in the voice list with Web Speech API, no idea why lol
+
+And of course, this service is only available on Windows for obvious reason.
+
+### Azure (TTS)
+Azure is Microsoft's cloud computing service.
+It uses AI-powered voices, and usually uses per character billing ([learn more](https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services/)).
+
+You will need to find [how to create an API key](https://ttsvoicewizard.com/docs/TTSMethods/AzureTTS) and paste it in the *Key* field.
+
+### TikTok
+Fast and high quality voices obtained through an unofficial TikTok TTS API.
+
+Not recommended for anything important (anything non-joke tbh), since **TikTok might shutdown the API at any point** ([learn more](https://github.com/agusibrahim/tiktok-tts-api?tab=readme-ov-file#important-notice-use-of-private-tiktok-api)).
+
+### Uberduck
+AI voices paid with a [subscription](https://www.uberduck.ai/pricing). **API access is needed to use Uberduck through Curses**.
+
+You will need to find [how to create an API key](https://ttsvoicewizard.com/docs/TTSMethods/Uberduck) and paste it in the *Api key* field.
+
+### Custom TTS
+Custom TTS isn't a service, but it allows you to plug in pretty much any TTS service.
+
+You will probably need to create a wrapper script to make it work though.
+
+It executes the given file as a command and passes 2 arguments:
+- the path to a file containing the text to synthesize in UTF-8 format.
+- the path to an output file that should containing the audio to play back once the executable finishes.
+
 ## Getting Started with OBS
+> [!NOTE]
+> Outdated
+
 ### 1. Get the App
 Get the latest [release here](https://github.com/mmpneo/curses/releases/latest). You can also [Join Discord](https://discord.gg/Sw6pw8fGYS) to get release notifications and download the new version from there as soon as it is published
 
