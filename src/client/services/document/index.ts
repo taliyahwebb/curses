@@ -160,7 +160,7 @@ class Service_Document implements IServiceInterface {
       // write author to original doc on success
       this.fileBinder.update(a => {a.author = authorName});
     } catch (error) {
-      toast.error(`Error writing file: ${error}`);
+      toast.error(`Error saving template: ${error}`);
     }
   }
 

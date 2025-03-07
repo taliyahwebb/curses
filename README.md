@@ -98,6 +98,9 @@ Web Speech API is a general specification for web browsers to support both speec
 We get the Web Speech API through Edge Webview2.
 
 Edge WebView2 only supports local voices ([due to the cost constraints](https://github.com/MicrosoftEdge/WebView2Feedback/issues/2660#issuecomment-1212616745)). Afaik, it only uses the Windows voice packs for now, so here's [how to add new voice packs to Windows](https://support.microsoft.com/en-us/topic/download-languages-and-voices-for-immersive-reader-read-mode-and-read-aloud-4c83a8d8-7486-42f7-8e46-2b0fdf753130) (you might need to reboot after following these instructions).
+
+#### Changing output device
+You can't change the output device of this service inside Curses, but you change the system-wide output device of Edge WebView2 somewhere in your Windows settings. The instructions differ a bit on Windows 10/11 but you should be able to find instructions online. 
 </details>
 
 <details>
@@ -117,7 +120,8 @@ Piper is a Free and Open Source TTS synthesizer. It generates the sound locally,
 You will need to follow these few steps to get it up and running, but don't be scared!
 
 > [!NOTE]
-> On Linux, Piper might be in your package manager of choice. Make sure you install the TTS executable, and not the mouse configuration app! (e.g. `piper-tts-{bin,git}` for the AUR on Arch and not `piper`)
+> On Linux, Piper might be in your package manager of choice. Make sure you install the TTS executable, and not the mouse configuration app! (e.g. [`piper-tts-{bin,git}`](https://aur.archlinux.org/packages?K=piper-tts-) from the AUR on Arch and not `piper` from extra)
+
 - Download the [latest release of Piper](https://github.com/rhasspy/piper/releases/latest), un-zip it and select it in Curses in the *Executable* field.
 - Create a directory (folder) where you will put your voices and select it in Curses in the *Voice directory* field.
 - Find a voice you like on https://rhasspy.github.io/piper-samples/, and download both the `.onnx` and `.onnx.json` files into the directory you created. Make sure both files have the same name (e.g. `en_US-kristin-medium.onnx` and `en_US-kristin-medium.onnx.json`).
@@ -155,6 +159,20 @@ You will probably need to create a wrapper script to make it work though.
 It executes the given file as a command and passes 2 arguments:
 - the path to a file containing the text to synthesize in UTF-8 format.
 - the path to an output file that should containing the audio to play back once the executable finishes.
+
+<details open>
+<summary>Windows</summary>
+There are more advanced options for Windows users depending on the extension of the file.
+
+| Extension     | Command executed                                    |
+| ------------- | --------------------------------------------------- |
+| .exe or .com  | `%script%`                                          |
+| .py           | `python %script%`                                   |
+| .ps1          | `powershell -ExecutionPolicy Bypass -File %script%` |
+| .*            | `cmd /c %script%`                                   |
+(where `%script%` is the absolute path to the script)
+
+</details>
 
 ## Getting Started with OBS
 > [!NOTE]
