@@ -2,22 +2,9 @@
 <img height="60" src="https://user-images.githubusercontent.com/3977499/218317016-0ebd9936-4065-4b6b-a0a0-1199d43c0024.svg">
 </p>
 <p align="center">
-  <a href="https://GitHub.com/mmpneo/curses/releases/"><img src="https://img.shields.io/github/release/mmpneo/curses.svg?color=FC6471&label" alt="Node.js CI"></a>
+  <a href="https://github.com/taliyahwebb/curses/releases/"><img src="https://img.shields.io/github/release/taliyahwebb/curses.svg?color=FC6471&label" alt="Node.js CI"></a>
 </p>
 <p align="center">Speech to Text Captions for OBS, VRChat, Twitch chat and Discord</p>
-
-<p align="center"><b>Socials</b></p>
-<p align="center">
-  <a href="https://www.twitch.tv/mmpcode"><img alt="Twitch Status" src="https://img.shields.io/twitch/status/mmpcode?label=Dev Streams&logo=twitch&logoColor=white"></a>
-  <a href="https://discord.gg/Sw6pw8fGYS"><img src="https://img.shields.io/discord/856500849815060500?label=Join Discord&color=blue&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="https://twitter.com/mmpneo"><img src="https://img.shields.io/badge/Receive Updates-%231DA1F2.svg?label=Follow&logo=twitter&logoColor=white"></a> 
-</p>
-
-<p align="center">
-<span class="badge-patreon">
-  <a href="https://patreon.com/mmpcode"><img src="https://img.shields.io/badge/patreon-Donate-yellow.svg?label=&logo=patreon&logoColor=white" alt="Patreon donate button" /></a>
-</span>
-</p>
 
 <p align="center">
 <!-- static -->
@@ -27,10 +14,10 @@
 
 <p align="center"><b>Repo Stats</b></p>
 <p align="center">
-  <img alt="GitHub repo size]" src="https://img.shields.io/github/repo-size/taliyahwebb/curses?color=2EB87D"/>
+  <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/taliyahwebb/curses?color=2EB87D"/>
   <img alt="GitHub language count" src="https://img.shields.io/github/languages/count/taliyahwebb/curses?color=2EB87D"/>
   <img alt="GitHub top language" src="https://img.shields.io/github/languages/top/taliyahwebb/curses?color=2EB87D"/>
-  <img alt="GitHub last commit]" src="https://img.shields.io/github/last-commit/taliyahwebb/curses?color=2EB87D"/>
+  <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/taliyahwebb/curses?color=2EB87D"/>
 </p>
 
 <!--toc:start-->
