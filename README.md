@@ -83,19 +83,66 @@ Here is a list of [Vulkan ready devices](https://vulkan.gpuinfo.org/). Most mode
 **Every service has its pros and cons. I'd advice to read about them all before making your choice.**
 
 ### Web Speech API (STT)
-TODO
+Web Speech API is a general specification for web browsers to support both speech synthesis and recognition. Its implementation and voices available change depending on your operating system.
+
+<details>
+<summary>Windows</summary>
+We get the Web Speech API through Edge WebView2.
+
+Edge WebView2 (probably) uses cloud services to provide Speech-To-Text to the Web Speech API (can't be sure because it's closed-source).
+
 > [!NOTE]
 > It should not incorporate a profanity filter, but if it does we can't do anything about it, so check if your installation is up to date and report it to [Edge WebView2](https://github.com/MicrosoftEdge/WebView2Feedback?tab=readme-ov-file#-how-to-report-a-bug).
+</details>
+
+<details>
+<summary>Linux</summary>
+We get the Web Speech API through WebKitGTK.
+
+**WebKitGTK does not support the speech recognition of Web Speech API yet**, but everything should work as soon as the feature gets released.
+
+There have been experimentations by the WebKitGTK team to use Whisper.cpp, but ["that is much farther down the roadmap"](https://matrix.to/#/#webkitgtk:matrix.org/$PQpUpl13RWnMzowuj9Ylk_zJ_0-5uajLDa20n0vCs1o) (2025/03/08).
+</details>
+
+### Whisper
+[`whisper.cpp`](https://github.com/ggerganov/whisper.cpp) is a port OpenAI's Whisper.
+
+It works locally, without going through OpenAI's servers, and also supports GPU acceleration, with a pretty small performance cost.
+You can also automatically translate to english at the same time.
+
+You're going to need to [download a model (`.bin`)](https://github.com/ggerganov/whisper.cpp) (or [learn how to download more models](https://github.com/ggerganov/whisper.cpp)), and select it in the *Whisper Model* field.
+
+Smaller models have a smaller performance impact, but larger models are more accurate. There are also english-only models (files with `.en`), all others being multilingual. `-q5_0` models take less memory and disk space and *can* be more efficient. `-tdrz` models can detect speaker changes but are more resource-intensive.
+
+### Browser
+Browser allows you to open a browser (Chrome or Edge for now), and use the page it opens on as an input. It also uses the [Web Speech API](#web-speech-api-stt), but the provider is the web browser.
+
+Chrome uses Google's cloud computing services, and Edge probably does something similar.
+> [!NOTE]
+> These implementations are experimental and update with your browser, so it might stop using cloud computing at some point.
+
+### Azure (STT)
+Azure is Microsoft's cloud computing service. It uses [per second billing](https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services/).
+
+You will need to find how to create an API key and paste it in the *Key* field.
+
+### Deepgram
+Deepgram is a cloud service. It uses [per minute billing](https://deepgram.com/pricing) for free accounts.
+
+You will need to find how to create an API key and paste it in the *Key* field.
+
+### Speechly
+TODO
 
 ## TTS services
 **Every service has its pros and cons. I'd advice to read about them all before making your choice.**
 
 ### Web Speech API (TTS)
-Web Speech API is a general specification for web browsers to support both speech synthesis and recognition. It is bundled inside the app, but its implementation and voices available change depending on your operating system.
+Web Speech API is a general specification for web browsers to support both speech synthesis and recognition. Its implementation and voices available change depending on your operating system.
 
 <details>
 <summary>Windows</summary>
-We get the Web Speech API through Edge Webview2.
+We get the Web Speech API through Edge WebView2.
 
 Edge WebView2 only supports local voices ([due to the cost constraints](https://github.com/MicrosoftEdge/WebView2Feedback/issues/2660#issuecomment-1212616745)). Afaik, it only uses the Windows voice packs for now, so here's [how to add new voice packs to Windows](https://support.microsoft.com/en-us/topic/download-languages-and-voices-for-immersive-reader-read-mode-and-read-aloud-4c83a8d8-7486-42f7-8e46-2b0fdf753130) (you might need to reboot after following these instructions).
 
