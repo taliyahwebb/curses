@@ -5,7 +5,7 @@ import { FC } from "react";
 import { RiCharacterRecognitionFill, RiUserVoiceFill } from "react-icons/ri";
 import { SiGooglechrome, SiMicrosoftedge } from "react-icons/si";
 import { useSnapshot } from "valtio";
-import { azureLanguages, deepGramLangs, webspeechapiLangs } from "../../services/stt/stt_data";
+import { azureLanguages, deepGramLangs, webspeechapiLangs , whisperLangs } from "../../services/stt/stt_data";
 import ServiceButton from "../service-button";
 import Inspector from "./components";
 import { InputCheckbox, InputMapObject, InputMappedGroupSelect, InputSelect, InputText, InputWebAudioInput, InputFilePath } from "./components/input";
@@ -174,12 +174,20 @@ const Whisper: FC = () => {
   const data = useSnapshot(window.ApiServer.state.services.stt.data.whisper);
   const handleUpdate = <K extends keyof STT_State["whisper"]>(key: K, v: STT_State["whisper"][K]) => window.ApiServer.state.services.stt.data.whisper[key] = v;
 
+  const updateLanguage = (value: { group: string, option: string }) => {
+    handleUpdate("lang", value.option);
+    handleUpdate("language_group", value.group);
+  };
+
   return <>
     <Inspector.SubHeader>{t('stt.whisper_title')}</Inspector.SubHeader>
     <InputWebAudioInput value={data.device} onChange={e => handleUpdate("device", e)} label="common.field_input_device"/>
-    <InputText label="stt.whisper_lang" type="text" value={data.lang} onChange={e => handleUpdate("lang", e.target.value)}/>
-    <Inspector.Description>{t('stt.whisper_lang_desc')}</Inspector.Description>
-    <Inspector.Description>{t('stt.whisper_lang_desc_note')}</Inspector.Description>
+    <InputMappedGroupSelect
+      labelGroup="common.field_language"
+      labelOption="common.field_dialect"
+      value={{ option: data.lang, group: data.language_group }}
+      onChange={updateLanguage}
+      library={whisperLangs} />
     <InputCheckbox label="stt.whisper_translate_to_english" onChange={e => handleUpdate("translateToEnglish", e)} value={data.translateToEnglish}/>
     <InputFilePath
       label="stt.whisper_model_path"
@@ -187,6 +195,7 @@ const Whisper: FC = () => {
       onChange={e => handleUpdate("modelPath", e.target.value)}
       dialogOptions={{ filters: [{ name: "ggml bins", extensions: ["bin"] }] }}
     />
+    <Inspector.Description>{t('stt.whisper_lang_desc_note')}</Inspector.Description>
   </>
 }
 
