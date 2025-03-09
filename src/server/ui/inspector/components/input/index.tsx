@@ -370,6 +370,7 @@ export const InputNetworkStatus: FC<NetworkStatusProps> = ({ label, value, conne
   </InputContainer>
 }
 
+// Group: English, Chinese, Japanese, etc.; Option: en-US, zn-CN, ja, etc.
 interface MappedGroupSelectProps {
   labelGroup: string,
   labelOption: string
