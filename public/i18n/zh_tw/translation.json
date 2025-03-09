@@ -67,7 +67,7 @@
     "state_muted": "靜音",
     "state_": "靜音",
 
-    "native_title": "本地",
+    "webspeechapi_title": "Web Speech API",
 
     "browser_title": "瀏覽器",
     "browser_open_edge": "打開 Edge",
@@ -122,7 +122,7 @@
     "piper_reload_voices": "Rescan voice directory",
     "piper_speaker_id": "Speaker ID",
 
-    "native_title": "本地",
+    "webspeechapi_title": "Web Speech API",
 
     "tiktok_title": "抖音",
     "windows_title": "Windows"

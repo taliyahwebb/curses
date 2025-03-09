@@ -2,7 +2,7 @@ import { zSafe, zStringNumber } from "@/utils";
 import { z } from "zod";
 
 export enum STT_Backends {
-  native = "native",
+  webspeechapi = "webspeechapi",
   browser = "browser",
   azure = "azure",
   deepgram = "deepgram",
@@ -13,14 +13,14 @@ export enum STT_Backends {
 export const zodSTT_Backends = z.nativeEnum(STT_Backends);
 
 export const Service_STT_Schema = z.object({
-  backend: zSafe(zodSTT_Backends, STT_Backends.native),
+  backend: zSafe(zodSTT_Backends, STT_Backends.webspeechapi),
   autoStart: zSafe(z.coerce.boolean(), false),
   uwu: zSafe(z.coerce.boolean(), false),
   stopWithStream: zSafe(z.coerce.boolean(), false),
   replaceWords: zSafe(z.record(z.coerce.string(), z.coerce.string()), {}),
   replaceWordsIgnoreCase: zSafe(z.coerce.boolean(), false),
   replaceWordsPreserveCase: zSafe(z.coerce.boolean(), false),
-  native: z.object({
+  webspeechapi: z.object({
     language_group: zSafe(z.coerce.string(), ""),
     language: zSafe(z.coerce.string(), ""),
   }).default({}),

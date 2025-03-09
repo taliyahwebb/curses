@@ -3,7 +3,7 @@ import { zSafe, zStringNumber } from "@/utils";
 import { z } from "zod";
 
 export enum TTS_Backends {
-  native = "native",
+  webspeechapi = "webspeechapi",
   windows = "windows",
   azure = "azure",
   tiktok = "tiktok",
@@ -18,12 +18,12 @@ const zodTTS_Backends = z.nativeEnum(TTS_Backends);
 export const Service_TTS_Schema = z.object({
   source: zSafe(zodTextEventSource, TextEventSource.stt),
   inputField: zSafe(z.coerce.boolean(), true),
-  backend: zSafe(zodTTS_Backends, TTS_Backends.native),
+  backend: zSafe(zodTTS_Backends, TTS_Backends.webspeechapi),
   autoStart: zSafe(z.coerce.boolean(), false),
   stopWithStream: zSafe(z.coerce.boolean(), false),
   replaceWords: zSafe(z.record(z.coerce.string(), z.coerce.string()), {}),
   replaceWordsIgnoreCase: zSafe(z.coerce.boolean(), true),
-  native: z.object({
+  webspeechapi: z.object({
     voice: zSafe(z.coerce.string(), ""),
     pitch: zSafe(zStringNumber(), "1"),
     rate: zSafe(zStringNumber(), "1"),
