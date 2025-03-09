@@ -234,12 +234,13 @@ const Inspector_STT: FC = () => {
       <span className="link link-accent link-hover font-semibold flex items-center gap-2 text-sm" onClick={handleShowReplacements}><RiCharacterRecognitionFill/>{t('common.btn_edit_replacements')}</span>
       <Inspector.Deactivatable active={state.status === ServiceNetworkState.disconnected}>
         <InputSelect options={[
-          { label: t("stt.webspeechapi_title"), value: STT_Backends.webspeechapi },
-          { label: t("stt.browser_title"), value: STT_Backends.browser },
-          { label: t("stt.azure_title"), value: STT_Backends.azure },
-          { label: t("stt.deepgram_title"), value: STT_Backends.deepgram },
-          { label: t("stt.speechly_title"), value: STT_Backends.speechly },
-          { label: t("stt.whisper_title"), value: STT_Backends.whisper }
+          ...(window.SpeechRecognition || window.webkitSpeechRecognition ?
+              [{ label: t("stt.webspeechapi_title"),  value: STT_Backends.webspeechapi }] : []),
+          { label: t("stt.browser_title"),    value: STT_Backends.browser },
+          { label: t("stt.azure_title"),      value: STT_Backends.azure },
+          { label: t("stt.deepgram_title"),   value: STT_Backends.deepgram },
+          { label: t("stt.speechly_title"),   value: STT_Backends.speechly },
+          { label: t("stt.whisper_title"),    value: STT_Backends.whisper }
         ]} label="common.field_service" value={data.data.backend} onValueChange={e => up("backend", e as STT_Backends)} />
 
         {data.data.backend === STT_Backends.browser && <Browser />}
