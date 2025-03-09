@@ -30,7 +30,9 @@ export class STT_WebSpeechAPIService implements ISTTService {
     if (Object.values(state.webspeechapi).some(isEmptyValue))
       return this.bindings.onStop("Options missing");
 
-    const sp = window.webkitSpeechRecognition || window.SpeechRecognition;
+    const sp = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+    if (!sp)
+      return this.bindings.onStop("SpeechRecognition not found");
 
     this.#instance = new sp();
     this.#instance.lang = state.webspeechapi.language;
