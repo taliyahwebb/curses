@@ -68,7 +68,7 @@
     "state_muted": "Muted",
     "state_": "Muted",
 
-    "native_title": "Native",
+    "webspeechapi_title": "Web Speech API",
 
     "browser_title": "Browser",
     "browser_open_edge": "Open Edge",
@@ -136,7 +136,7 @@
     "custom_title": "Custom",
     "custom_exe_location": "Executable",
     
-    "native_title": "Native",
+    "webspeechapi_title": "Web Speech API",
 
     "tiktok_title": "TikTok",
     "windows_title": "Windows"

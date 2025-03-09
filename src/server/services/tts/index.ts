@@ -5,7 +5,7 @@ import { proxy } from "valtio";
 import { subscribeKey } from "valtio/utils";
 import { TTS_Backends } from "./schema";
 import { TTS_AzureService } from "./services/azure";
-import { TTS_NativeService } from "./services/native";
+import { TTS_WebSpeechAPIService } from "./services/webspeechapi";
 import { TTS_TikTokService } from "./services/tiktok";
 import { TTS_WindowsService } from "./services/windows";
 import { TTS_UberduckService } from "./services/uberduck";
@@ -20,7 +20,7 @@ import {
 const backends: {
   [k in TTS_Backends]: ITTSServiceConstructor;
 } = {
-  [TTS_Backends.native]: TTS_NativeService,
+  [TTS_Backends.webspeechapi]: TTS_WebSpeechAPIService,
   [TTS_Backends.windows]: TTS_WindowsService,
   [TTS_Backends.azure]: TTS_AzureService,
   [TTS_Backends.tiktok]: TTS_TikTokService,

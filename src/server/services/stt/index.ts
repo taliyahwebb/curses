@@ -6,7 +6,7 @@ import { subscribeKey } from "valtio/utils";
 import { STT_Backends } from "./schema";
 import { STT_AzureService } from "./services/azure";
 import { STT_DeepgramService } from "./services/deepgram";
-import { STT_NativeService } from "./services/native";
+import { STT_WebSpeechAPIService } from "./services/webspeechapi";
 import { STT_SpeechlyService } from "./services/speechly";
 import { STT_WhisperService } from "./services/whisper";
 import {invoke} from "@tauri-apps/api/core";
@@ -20,7 +20,7 @@ import {
 const backends: {
   [k in STT_Backends]?: ISTTServiceConstructor;
 } = {
-  [STT_Backends.native]: STT_NativeService,
+  [STT_Backends.webspeechapi]: STT_WebSpeechAPIService,
   [STT_Backends.browser]: undefined,
   [STT_Backends.azure]: STT_AzureService,
   [STT_Backends.deepgram]: STT_DeepgramService,
@@ -125,8 +125,8 @@ class Service_STT implements IServiceInterface, ISTTReceiver {
       }
     });
     
-    // native is bugged
-    if (this.data.autoStart && this.data.backend !== STT_Backends.native)
+    // webspeechapi is bugged
+    if (this.data.autoStart && this.data.backend !== STT_Backends.webspeechapi)
       this.start();
   }
 

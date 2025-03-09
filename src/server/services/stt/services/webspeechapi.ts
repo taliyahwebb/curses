@@ -5,7 +5,7 @@ import {
   ISTTService
 } from "../types";
 
-export class STT_NativeService implements ISTTService {
+export class STT_WebSpeechAPIService implements ISTTService {
   constructor(private bindings: ISTTReceiver) {}
   
   #instance?: SpeechRecognition;
@@ -27,13 +27,13 @@ export class STT_NativeService implements ISTTService {
   };
   
   start(state: STT_State): void {
-    if (Object.values(state.native).some(isEmptyValue))
+    if (Object.values(state.webspeechapi).some(isEmptyValue))
       return this.bindings.onStop("Options missing");
 
     const sp = window.webkitSpeechRecognition || window.SpeechRecognition;
 
     this.#instance = new sp();
-    this.#instance.lang = state.native.language;
+    this.#instance.lang = state.webspeechapi.language;
     this.#instance.continuous = true;
     this.#instance.interimResults = true;
 

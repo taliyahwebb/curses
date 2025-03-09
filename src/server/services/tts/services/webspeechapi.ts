@@ -1,7 +1,7 @@
 import { TTS_State } from "../schema";
 import { ITTSReceiver, ITTSService } from "../types";
 
-export class TTS_NativeService implements ITTSService {
+export class TTS_WebSpeechAPIService implements ITTSService {
   constructor(private bindings: ITTSReceiver) {}
   #instance?: SpeechSynthesisUtterance;
 
@@ -36,7 +36,7 @@ export class TTS_NativeService implements ITTSService {
   }
 
   get state() {
-    return window.ApiServer.state.services.tts.data.native;
+    return window.ApiServer.state.services.tts.data.webspeechapi;
   }
   play(value: string): void {
     if (!this.#instance)

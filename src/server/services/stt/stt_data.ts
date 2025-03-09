@@ -177,7 +177,7 @@ export const azureLanguages: MappedGroupDictionary = {
   "Zulu": [["zu-ZA"]],
 };
 
-export const nativeLangs: MappedGroupDictionary = {
+export const webspeechapiLangs: MappedGroupDictionary = {
   "Afrikaans": [["af-ZA"]],
   "አማርኛ": [["am-ET"]],
   "Azərbaycanca": [["az-AZ"]],

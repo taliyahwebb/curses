@@ -65,10 +65,11 @@ const TikTok: FC = () => {
   </>
 }
 
-const Native: FC = () => {
+const WebSpeechAPI: FC = () => {
   const {t} = useTranslation();
-  const data = useSnapshot(window.ApiServer.state.services.tts.data.native);
-  const handleUpdate = <K extends keyof TTS_State["native"]>(key: K, v: TTS_State["native"][K]) => window.ApiServer.patchService("tts", s => s.data.native[key] = v);
+  const data = useSnapshot(window.ApiServer.state.services.tts.data.webspeechapi);
+  const handleUpdate = <K extends keyof TTS_State["webspeechapi"]>(key: K, v: TTS_State["webspeechapi"][K]) =>
+    window.ApiServer.patchService("tts", s => s.data.webspeechapi[key] = v);
   const state = useSnapshot(window.ApiServer.tts.serviceState);
   const [voices, setVoices] = useState<{ label: string, value: string }[]>([]);
 
@@ -93,7 +94,7 @@ const Native: FC = () => {
   }, []);
 
   return <>
-    <Inspector.SubHeader>{t('tts.native_title')}</Inspector.SubHeader>
+    <Inspector.SubHeader>{t('tts.webspeechapi_title')}</Inspector.SubHeader>
     <Inspector.Deactivatable active={state.status === ServiceNetworkState.disconnected}>
       <InputSelect
         value={data.voice}
@@ -412,9 +413,9 @@ const Inspector_TTS: FC = () => {
         <InputCheckbox label="common.field_use_keyboard_input" value={data.data.inputField} onChange={e => up("inputField", e)} />
         <InputSelect label="common.field_service" value={data.data.backend} options={[
           ...(window.speechSynthesis ?
-              [{ label: t('tts.native_title'),     value: TTS_Backends.native    }] : []),
+              [{ label: t('tts.webspeechapi_title'),  value: TTS_Backends.webspeechapi }] : []),
           ...(isWindows ?
-              [{ label: t('tts.windows_title'),    value: TTS_Backends.windows   }] : []),
+              [{ label: t('tts.windows_title'),       value: TTS_Backends.windows      }] : []),
           { label: t('tts.azure_title'),      value: TTS_Backends.azure     },
           { label: t('tts.tiktok_title'),     value: TTS_Backends.tiktok    },
           { label: t('tts.uberduck_title'),   value: TTS_Backends.uberduck  },
@@ -424,7 +425,7 @@ const Inspector_TTS: FC = () => {
       </Inspector.Deactivatable>
       {data.data.backend === TTS_Backends.windows && <Windows />}
       {data.data.backend === TTS_Backends.azure && <Azure />}
-      {data.data.backend === TTS_Backends.native && <Native />}
+      {data.data.backend === TTS_Backends.webspeechapi && <WebSpeechAPI />}
       {data.data.backend === TTS_Backends.tiktok && <TikTok />}
       {data.data.backend === TTS_Backends.uberduck && <UberDuck />}
       {data.data.backend === TTS_Backends.piper && <Piper />}

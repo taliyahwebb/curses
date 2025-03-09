@@ -5,7 +5,7 @@ import { FC } from "react";
 import { RiCharacterRecognitionFill, RiUserVoiceFill } from "react-icons/ri";
 import { SiGooglechrome, SiMicrosoftedge } from "react-icons/si";
 import { useSnapshot } from "valtio";
-import { azureLanguages, deepGramLangs, nativeLangs } from "../../services/stt/stt_data";
+import { azureLanguages, deepGramLangs, webspeechapiLangs } from "../../services/stt/stt_data";
 import ServiceButton from "../service-button";
 import Inspector from "./components";
 import { InputCheckbox, InputMapObject, InputMappedGroupSelect, InputSelect, InputText, InputWebAudioInput, InputFilePath } from "./components/input";
@@ -13,21 +13,21 @@ import NiceModal from "@ebay/nice-modal-react";
 import Modal from "../Modal";
 import { useTranslation } from 'react-i18next';
 
-const Native: FC = () => {
+const WebSpeechAPI: FC = () => {
   const {t} = useTranslation();
-  const pr = useSnapshot(window.ApiServer.state.services.stt.data.native);
+  const pr = useSnapshot(window.ApiServer.state.services.stt.data.webspeechapi);
   const updateLanguage = (value: { group: string, option: string }) => {
-    window.ApiServer.state.services.stt.data.native.language       = value.option;
-    window.ApiServer.state.services.stt.data.native.language_group = value.group;
+    window.ApiServer.state.services.stt.data.webspeechapi.language       = value.option;
+    window.ApiServer.state.services.stt.data.webspeechapi.language_group = value.group;
   };
   return <>
-    <Inspector.SubHeader>{t('stt.native_title')}</Inspector.SubHeader>
+    <Inspector.SubHeader>{t('stt.webspeechapi_title')}</Inspector.SubHeader>
     <InputMappedGroupSelect
       labelGroup="common.field_language"
       labelOption="common.field_dialect"
       value={{ option: pr.language, group: pr.language_group }}
       onChange={updateLanguage}
-      library={nativeLangs} />
+      library={webspeechapiLangs} />
     {/* <div className="p-2 border-2 border-error rounded-lg text-xs space-y-2 flex flex-col">
       <span className="font-bold text-error">Experimental. Might be unstable on some PCs.</span>
       <span className="font-bold text-error">Auto start is disabled.</span>
@@ -234,12 +234,12 @@ const Inspector_STT: FC = () => {
       <span className="link link-accent link-hover font-semibold flex items-center gap-2 text-sm" onClick={handleShowReplacements}><RiCharacterRecognitionFill/>{t('common.btn_edit_replacements')}</span>
       <Inspector.Deactivatable active={state.status === ServiceNetworkState.disconnected}>
         <InputSelect options={[
-          { label: "Native", value: STT_Backends.native },
-          { label: "Browser", value: STT_Backends.browser },
-          { label: "Azure", value: STT_Backends.azure },
-          { label: "Deepgram", value: STT_Backends.deepgram },
-          { label: "Speechly", value: STT_Backends.speechly },
-          { label: "Whisper", value: STT_Backends.whisper }
+          { label: t("stt.webspeechapi_title"), value: STT_Backends.webspeechapi },
+          { label: t("stt.browser_title"), value: STT_Backends.browser },
+          { label: t("stt.azure_title"), value: STT_Backends.azure },
+          { label: t("stt.deepgram_title"), value: STT_Backends.deepgram },
+          { label: t("stt.speechly_title"), value: STT_Backends.speechly },
+          { label: t("stt.whisper_title"), value: STT_Backends.whisper }
         ]} label="common.field_service" value={data.data.backend} onValueChange={e => up("backend", e as STT_Backends)} />
 
         {data.data.backend === STT_Backends.browser && <Browser />}
@@ -247,7 +247,7 @@ const Inspector_STT: FC = () => {
         {data.data.backend === STT_Backends.deepgram && <Deepgram />}
         {data.data.backend === STT_Backends.speechly && <Speechly />}
         {data.data.backend === STT_Backends.whisper && <Whisper />}
-        {data.data.backend === STT_Backends.native && <Native />}
+        {data.data.backend === STT_Backends.webspeechapi && <WebSpeechAPI />}
       </Inspector.Deactivatable>
 
       {data.data.backend !== STT_Backends.browser && <ServiceButton status={state.status} onStart={() => window.ApiServer.stt.start()} onStop={() => window.ApiServer.stt.stop()} />}
