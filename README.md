@@ -69,6 +69,13 @@ For help, feature requests, bug reports, release notifications, design templates
 
 # Usage
 ## Runtime Dependencies
+### Web renderer
+**On Windows, Edge WebView2 is required to render the app**. This is done to make the app smaller on disk.
+
+If you're not running an old Windows version and didn't accidentally remove it trying to debloat your computer, **it should already be installed**.
+Otherwise, you can download it from [here](https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download).
+
+### Whisper STT
 If you want to use the Whisper STT module you will need a Vulkan ready graphics driver installed.
 
 - NixOS: if you are using a recent NixOS version and have a graphical user environment enabled, it will likely ✨just work✨ if your hardware supports Vulkan.
@@ -156,7 +163,7 @@ We get the Web Speech API through WebKitGTK.
 
 **WebKitGTK does not officially support the speech synthesis part of Web Speech API yet**, but everything should work as soon as the feature gets released.
 > [!NOTE]
-> In the mean time, you can try [building WebKitGtk yourself](https://trac.webkit.org/wiki/BuildingGtk) with the additional CMake arguments `-DUSE_SPIEL=ON -DUSE_FLITE=OFF`.
+> In the mean time, you can try [building WebKitGtk yourself](https://trac.webkit.org/wiki/BuildingGtk) with the additional CMake arguments `-DUSE_SPIEL=ON -DUSE_FLITE=OFF`. You might also need to edit `Source/cmake/OptionsGTK.cmake` to make `DUSE_SPIEL` a `PUBLIC` option.
 
 It should use any locally installed speech provider like eSpeak, Piper or Mimic.
 </details>
