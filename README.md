@@ -249,6 +249,11 @@ Paste the link and change window size to match app's canvas size (default is 500
 
 # Building
 ## Prerequisites
+**Application framework dependencies**:
+- [Tauri](https://v2.tauri.app/start/prerequisites/)
+> [!NOTE]
+> You can skip this step when using [NixOS](#nixos) with the included Nix Flake.
+
 ### NixOS
 This repository provides a [Nix flake](https://nixos.wiki/wiki/flakes) which provides:
 - [Development Environment](https://nixos.wiki/wiki/Development_environment_with_nix-shell) via `nix develop`
@@ -260,8 +265,6 @@ The Development Environment provides all needed libraries to build the project.
 Note: [Runtime Dependencies](#runtime-dependencies)
 
 ### Other Linux
-For the frontend deps there is a good guide [here](https://v1.tauri.app/v1/guides/getting-started/prerequisites)
-
 Additionally the following are required for building:
 - [cmake](https://cmake.org/)
 - [shaderc](https://github.com/google/shaderc)
