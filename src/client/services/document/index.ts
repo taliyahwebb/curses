@@ -7,6 +7,7 @@ import {
   readFile,
   writeFile,
 } from "@tauri-apps/plugin-fs";
+import { appDataDir } from '@tauri-apps/api/path';
 import { Binder, bind } from "immer-yjs";
 import debounce from "lodash/debounce";
 import { toast } from "react-toastify";
@@ -109,6 +110,7 @@ class Service_Document implements IServiceInterface {
           extensions: ["cursestmp"],
         },
       ],
+      defaultPath: await appDataDir(),
     });
     if (!path || Array.isArray(path)) return;
     const data = await readFile(path);
@@ -141,15 +143,18 @@ class Service_Document implements IServiceInterface {
     tempDoc.getMap("template").set("author", authorName);
 
     const tempEncodedUpdate = Y.encodeStateAsUpdate(tempDoc);
-    const path = await save({
+    let path = await save({
       filters: [
         {
           name: "Curses template",
           extensions: ["cursestmp"],
         },
       ],
+      defaultPath: await appDataDir(),
     });
     if (path) try {
+      if (!path.endsWith(".cursestmp"))
+        path += ".cursestmp";
       await writeFile(path, tempEncodedUpdate, {append: false});
       // write author to original doc on success
       this.fileBinder.update(a => {a.author = authorName});
