@@ -127,11 +127,11 @@ class Service_Document implements IServiceInterface {
             this.#saveDocumentNative(tempDoc).then(() => window.location.reload())
           }
           else
-            toast.error("Invalid template");
+            toast.error("Couldn't parse template");
         })
       });
     } catch (error) {
-      toast.error("Invalid template");
+      toast.error(`Invalid template: ${error}`);
     }
   }
   async exportDocument(authorName: string) {
@@ -155,11 +155,12 @@ class Service_Document implements IServiceInterface {
     if (path) try {
       if (!path.endsWith(".cursestmp"))
         path += ".cursestmp";
+
       await writeFile(path, tempEncodedUpdate, {append: false});
       // write author to original doc on success
       this.fileBinder.update(a => {a.author = authorName});
     } catch (error) {
-
+      toast.error(`Error writing file: ${error}`);
     }
   }
 
