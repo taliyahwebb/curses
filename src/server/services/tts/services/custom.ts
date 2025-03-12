@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import { isEmptyValue } from "../../../../utils";
 import { TTS_State } from "../schema";
 import { ITTSReceiver, ITTSService } from "../types";
@@ -26,7 +26,7 @@ export class TTS_CustomService implements ITTSService {
 
     async play(value: string) {
         this.mutex = this.mutex.then(async () => {
-            await invoke<void>("plugin:custom_tts|speak", {
+            await invoke<void>("plugin:custom-tts|speak", {
                 args: {
                     device: this.state.device,
                     exe_path: this.state.exe_location,

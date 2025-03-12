@@ -1,6 +1,6 @@
 import { STT_Backends, STT_State } from "@/server/services/stt/schema";
 import { ServiceNetworkState } from "@/types";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import { FC } from "react";
 import { RiCharacterRecognitionFill, RiUserVoiceFill } from "react-icons/ri";
 import { SiGooglechrome, SiMicrosoftedge } from "react-icons/si";
@@ -39,7 +39,7 @@ const Native: FC = () => {
 const Browser: FC = () => {
   const {t} = useTranslation();
   const handleOpen = () => {
-    invoke("plugin:web|open_browser", {
+    invoke<void>("plugin:web|open_browser", {
       data: {
         browser: "chrome",
         url: `http://localhost:${window.Config.serverNetwork.port}/mic.html`
@@ -48,7 +48,7 @@ const Browser: FC = () => {
   };
 
   const handleOpenEdge = () => {
-    invoke("plugin:web|open_browser", {
+    invoke<void>("plugin:web|open_browser", {
       data: {
         browser: "msedge",
         url: `http://localhost:${window.Config.serverNetwork.port}/mic.html`
@@ -56,9 +56,6 @@ const Browser: FC = () => {
     });
   };
 
-  const handleStartStt = () => {
-    invoke("plugin:windows_stt|start");
-  };
   return <>
     <Inspector.SubHeader>{t('stt.browser_title')}</Inspector.SubHeader>
     <button className="btn btn-sm btn-neutral gap-2" onClick={handleOpen}><SiGooglechrome/> Open Chrome</button>

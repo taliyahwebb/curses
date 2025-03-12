@@ -79,7 +79,7 @@ async fn speak(data: UberduckRequest) -> Result<(), String> {
 }
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("uberduck_tts")
+    Builder::new("uberduck-tts")
         .invoke_handler(tauri::generate_handler![speak, get_voices])
         .build()
 }

@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import { isEmptyValue } from "../../../../utils";
 import { TTS_State } from "../schema";
 import { ITTSReceiver, ITTSService } from "../types";
@@ -17,7 +17,7 @@ export class TTS_WindowsService implements ITTSService {
     this.bindings.onStart();
   }
   play(value: string): void {
-    invoke("plugin:windows_tts|speak", {
+    invoke<void>("plugin:windows-tts|speak", {
       data: {
         voice: this.state.voice,
         device: this.state.device,

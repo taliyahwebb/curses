@@ -9,12 +9,11 @@ edition = "2021"
 rust-version = "1.65"
 
 [build-dependencies]
-tauri-build = { version = "1.4", features = [] }
+tauri-build = { version = "2", features = [] }
 
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri-plugin-window-state = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 window-shadows = "^0.2"
 uwuify = "^0.2"
 itertools = "0.14"
@@ -32,17 +31,16 @@ which = "7.0.1"
 ringbuf = "0.4.7"
 earshot = "0.1.0"
 whisper-rs = "0.13.2"
+tauri-plugin-window-state = { version = "2" }
+tauri-plugin-shell = "2"
+tauri-plugin-process = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
 wav_io = "0.1.15"
 
 [dependencies.tauri]
-version = "^1"
-features = [
-  "dialog-all",
-  "fs-all",
-  "global-shortcut-all",
-  "shell-open",
-  "window-all",
-]
+version = "2"
+features = []
 
 [dependencies.windows]
 version = "0.59"
@@ -69,6 +67,9 @@ default = ["custom-protocol", "vulkan"]
 background_input = []
 custom-protocol = ["tauri/custom-protocol"]
 vulkan = ["whisper-rs/vulkan"]
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-global-shortcut = "2"
 
 [profile.dev.package."*"]
 opt-level = 3

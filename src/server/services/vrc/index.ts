@@ -1,4 +1,4 @@
-import { invoke }                                          from "@tauri-apps/api/tauri";
+import { invoke }                                          from "@tauri-apps/api/core";
 import { IServiceInterface, TextEventType }                from "@/types";
 import { serviceSubscibeToInput, serviceSubscibeToSource } from "../../../utils";
 import { VRC_Backends }                                    from "./schema";
@@ -49,7 +49,7 @@ class Service_VRC implements IServiceInterface {
   }
 
   sendOsc(path: string, args: any[]) {
-    invoke("plugin:osc|send", {
+    invoke<void>("plugin:osc|send", {
       rpc: {
         path,
         args,

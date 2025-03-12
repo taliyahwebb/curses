@@ -177,9 +177,9 @@ fn speak(data: RpcWindowsTTSSpeak, state: State<WindowsTTSPlugin>) -> Result<(),
 }
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("windows_tts")
+    Builder::new("windows-tts")
         .invoke_handler(tauri::generate_handler![speak, get_voices])
-        .setup(|app| {
+        .setup(|app, _api| {
             app.manage(WindowsTTSPlugin::new());
             Ok(())
         })

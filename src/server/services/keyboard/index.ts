@@ -1,12 +1,12 @@
-import { globalShortcut } from "@tauri-apps/api";
 import { listen } from "@tauri-apps/api/event";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import hotkeys from "hotkeys-js";
 import uniqBy from "lodash/uniqBy";
 import { toast } from "react-toastify";
 import { proxy }                                             from "valtio";
 import { IServiceInterface, TextEventSource, TextEventType } from "@/types";
 import { BackendState }                                      from "../../schema";
+import * as globalShortcut from "@tauri-apps/plugin-global-shortcut"
 
 type ShortcutKeys = keyof BackendState["shortcuts"];
 type InputCommands = "submit" | "delete" | "cancel";
@@ -97,7 +97,7 @@ class Service_Keyboard implements IServiceInterface {
   }
   private startBackgroundInput() {
     if (!this.ui.backgroundInputActive) {
-      invoke("plugin:keyboard|start_tracking");
+      invoke<void>("plugin:keyboard|start_tracking");
       this.ui.backgroundInputActive = true;
     }
     this.triggerBackgroundTimer();
@@ -111,15 +111,15 @@ class Service_Keyboard implements IServiceInterface {
     this.ui.backgroundInputActive = false;
     this.backgroundTimer = null;
     this.ui.backgroundInputValue = "";
-    invoke("plugin:keyboard|stop_tracking");
+    invoke<void>("plugin:keyboard|stop_tracking");
   }
 
   async start() {
-    invoke("plugin:bg_input|start");
+    invoke<void>("plugin:bg_input|start");
 
   }
   stop() {
-    invoke("plugin:bg_input|stop");
+    invoke<void>("plugin:bg_input|stop");
   }
 
   private rebindShortcuts() {
@@ -141,14 +141,6 @@ class Service_Keyboard implements IServiceInterface {
     // globalShortcut.registerAll(Object.entries(window.API.state.shortcuts), shortcut => {
 
     // });
-  }
-
-  private rebindShortcutsNative() {
-    const shortcuts =  Object
-      .entries(window.ApiServer.state.shortcuts)
-      .filter(sc => !!sc[1])
-      .map(([key, value]) => ({name: key, keys: value.split("+")}));
-    invoke("plugin:keyboard|apply_shortcuts", {shortcuts});
   }
 
   clearShortcut(shortcut: ShortcutKeys) {

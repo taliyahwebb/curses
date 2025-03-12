@@ -1,7 +1,7 @@
 import { TTS_Backends, TTS_State } from "@/server/services/tts/schema";
 import { ServiceNetworkState } from "@/types";
 import NiceModal from "@ebay/nice-modal-react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import { FC, useEffect, useState } from "react";
 import { RiCharacterRecognitionFill, RiChatVoiceFill } from "react-icons/ri";
 import { proxy, useSnapshot } from "valtio";
@@ -27,7 +27,7 @@ const Windows: FC = () => {
   const [config, setConfig] = useState<WindowsConfig>();
 
   useEffect(() => {
-    invoke<WindowsConfig>("plugin:windows_tts|get_voices").then(setConfig);
+    invoke<WindowsConfig>("plugin:windows-tts|get_voices").then(setConfig);
   }, []);
 
   return <>
@@ -254,6 +254,8 @@ const VoiceVox: FC = () => {
   </>
 }
 
+type UberduckVoice = { model_id: string, voicemodel_uuid: string, display_name: string };
+
 const uberduckVoices = proxy<{value: InputSelectOption[]}>({
   value: []
 });
@@ -270,7 +272,7 @@ const UberDuck: FC = () => {
     if (!data.api_key || !data.secret_key)
       return;
     setLoadingVoices(true);
-    invoke("plugin:uberduck_tts|get_voices", {auth: {
+    invoke<UberduckVoice[] | string>("plugin:uberduck-tts|get_voices", {auth: {
       api_key: data.api_key,
       secret_key: data.secret_key,
     }}).then(res => {
@@ -318,7 +320,7 @@ const Piper: FC = () => {
   const loadVoices = () => loadVoicesFrom(data.voice_location);
   const loadVoicesFrom = (path: string) => {
     type PiperVoice = { name: string; path: string; }
-    invoke<PiperVoice[]>("plugin:piper_tts|get_voices", { path }).then(res => {
+    invoke<PiperVoice[]>("plugin:piper-tts|get_voices", { path }).then(res => {
       piperVoices.value = res.map(v => ({ value: v.path, label: v.name }));
     }).catch(err => {
       toast.error(`could not load piper voices: '${err}'`);
