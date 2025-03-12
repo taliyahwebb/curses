@@ -1,0 +1,96 @@
+name: 'build'
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+      - master
+      - 'releases/**'
+  pull_request:
+    branches:
+      - dev
+      - master
+      - 'releases/**'
+
+jobs:
+  build-tauri:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # - platform: 'macos-latest' # for Arm based macs (M1 and above).
+          #   args: '--target aarch64-apple-darwin'
+          # - platform: 'macos-latest' # for Intel based macs.
+          #   args: '--target x86_64-apple-darwin'
+          - platform: 'ubuntu-22.04'
+            args: ''
+          - platform: 'windows-latest'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libasound2-dev libvulkan-dev
+ 
+      - name: Install Vulkan SDK and Runtime
+        uses: jakoch/install-vulkan-sdk-action@v1.1.1
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          cache: 'pnpm' # Set this to npm, yarn or pnpm.
+
+      - uses: SebRollen/toml-action@v1.0.1
+        id: version
+        with:
+          file: 'src-tauri/Cargo.toml'
+          field: 'package.version'
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable # Set this to dtolnay/rust-toolchain@nightly
+        with:
+          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: install frontend dependencies
+        # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
+        run: pnpm i --frozen-lockfile # change this to npm or pnpm depending on which one you use.
+
+      - id: tauri-artifacts
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ startsWith(github.ref, 'refs/heads/releases/') && (endsWith(github.ref, '-pre') && 'v__VERSION__-pre' || 'v__VERSION__') || null }}  # the action automatically replaces \_\_VERSION\_\_ with the app version.
+          releaseName: ${{ startsWith(github.ref, 'refs/heads/releases/') && (endsWith(github.ref, '-pre') && 'curses-v__VERSION__-pre' || 'curses-v__VERSION__' ) || null }}
+          releaseBody: 'See the assets to download this version and install.'
+          releaseDraft: true
+          prerelease: ${{ startsWith(github.ref, 'refs/heads/releases/') && endsWith(github.ref, '-pre')}}
+          args: ${{ matrix.args }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AppImage
+          path: src-tauri/target/release/bundle/appimage/curses_${{steps.version.outputs.value}}_amd64.AppImage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WindowsEXE
+          path: src-tauri/target/release/curses.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WindowsInstaller
+          path: src-tauri/target/release/bundle/msi/curses_${{steps.version.outputs.value}}_x64_en-US.msi
