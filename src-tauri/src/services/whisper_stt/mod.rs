@@ -226,12 +226,13 @@ fn get_microphone_by_name(name: &str) -> Result<(Device, StreamConfig), WhisperE
         let config = config
             .try_with_sample_rate(SampleRate(SAMPLE_RATE as u32))
             .unwrap_or_else(|| {
-                eprintln!("running with resampling");
-                if config.min_sample_rate().0 > SAMPLE_RATE as u32 {
-                    config.with_sample_rate(config.min_sample_rate())
+                let dev_rate = if config.min_sample_rate().0 > SAMPLE_RATE as u32 {
+                    config.min_sample_rate()
                 } else {
-                    config.with_sample_rate(config.max_sample_rate())
-                }
+                    config.max_sample_rate()
+                };
+                eprintln!("running with resampling src{dev_rate:?}->dest{SAMPLE_RATE}",);
+                config.with_sample_rate(dev_rate)
             });
         let buffer_size = BufferSize::Fixed(match config.buffer_size() {
             cpal::SupportedBufferSize::Range { min, max } => ((config.sample_rate().0 / 30).next_multiple_of(48))
