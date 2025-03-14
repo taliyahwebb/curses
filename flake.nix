@@ -58,9 +58,9 @@
             gtk3
             harfbuzz
             librsvg
-            libsoup_2_4
+            libsoup_3
             pango
-            webkitgtk_4_0
+            webkitgtk_4_1
             openssl
 
             alsa-lib
