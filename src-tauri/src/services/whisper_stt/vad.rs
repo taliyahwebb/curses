@@ -1,16 +1,17 @@
-use core::panic;
-use std::{
-    mem::{self, MaybeUninit},
-    time::Duration,
-};
+use std::mem::{self, MaybeUninit};
+use std::time::Duration;
 
+use cpal::traits::{DeviceTrait, HostTrait};
+use cpal::{BufferSize, Device, SampleRate, StreamConfig};
 use earshot::{VoiceActivityDetector, VoiceActivityModel, VoiceActivityProfile};
-use ringbuf::{
-    storage::Heap,
-    traits::{Consumer, Observer, Producer},
-    LocalRb,
-};
-use rodio::cpal::{BufferSize, StreamConfig};
+use futures::channel::mpsc::UnboundedSender;
+use ringbuf::storage::Heap;
+use ringbuf::traits::{Consumer, Observer, Producer};
+use ringbuf::LocalRb;
+use rodio::cpal;
+use samplerate::Samplerate;
+use serde::Serialize;
+use wav_io::utils::stereo_to_mono;
 
 use super::whisper::SAMPLE_RATE;
 
@@ -22,6 +23,11 @@ pub const SEGMENT_SEPARATOR_SILENCE: Duration = Duration::from_millis(240);
 pub const LINGER_FRAMES: usize = (SPEECH_DETECTION_LINGER.as_millis() as usize * SAMPLE_RATE) / 1000 / VAD_FRAME;
 pub const SILENCE_FRAMES: usize = (SEGMENT_SEPARATOR_SILENCE.as_millis() as usize * SAMPLE_RATE) / 1000 / VAD_FRAME;
 
+/// selectable alsa buffer sizes follow a weird pattern 32 seems to work as a
+/// quantum over a wide range of buffer sizes
+const ALSA_BUFFER_QAUANTUM: u32 = 32;
+const ALSA_BUFFER_MIN: u32 = 32;
+
 pub type NSamples = usize;
 pub enum VadStatus {
     Silence,
@@ -30,10 +36,21 @@ pub enum VadStatus {
     SpeechEnd(NSamples),
 }
 
+#[derive(Debug, Serialize)]
+pub enum AudioError {
+    InputDeviceUnavailable(String),
+    ResamplingUnavailable(String),
+}
+
+pub enum VadActivity {
+    SpeechStart,
+    SpeechEnd(NSamples),
+}
+
 pub struct Vad {
     vad: VoiceActivityDetector,
     ring: LocalRb<Heap<i16>>,
-    // TODO: build controll structure
+    // TODO: build control structure
     /// reading this while `last_speech_frame = None` is undefined behavior
     current_frame: usize,
     last_speech_frame: Option<usize>,
@@ -42,18 +59,18 @@ pub struct Vad {
 }
 
 impl Vad {
-    pub fn try_new(config: &StreamConfig) -> Result<Vad, &'static str> {
+    pub fn new(config: &StreamConfig) -> Vad {
         let BufferSize::Fixed(buffer_size) = config.buffer_size else {
-            return Err("config doesnt allow safe vad setup");
+            panic!("config doesnt allow safe vad setup");
         };
-        let ring = LocalRb::new(buffer_size.max(VAD_FRAME as u32 * 2) as usize);
-        Ok(Vad {
+        let ring = LocalRb::new((buffer_size * 2).max(VAD_FRAME as u32 * 2) as usize);
+        Vad {
             vad: VoiceActivityDetector::new_with_model(VoiceActivityModel::ES_ALPHA, VoiceActivityProfile::VERY_AGGRESSIVE),
             ring,
             current_frame: 0,
             last_speech_frame: None,
             current_speech_samples: 0,
-        })
+        }
     }
 
     pub fn input(&mut self, samples: &[i16]) {
@@ -68,7 +85,8 @@ impl Vad {
             if VAD_FRAME != self.ring.pop_slice_uninit(&mut frame) {
                 panic!("vad ring should have enough data for at least one frame");
             }
-            // SAFETY: this is safe because the panic above makes sure that all i16 were initialized
+            // SAFETY: this is safe because the panic above makes sure that all i16 were
+            // initialized
             let frame = unsafe { mem::transmute::<[MaybeUninit<i16>; VAD_FRAME], [i16; VAD_FRAME]>(frame) };
 
             let is_speech = self
@@ -90,7 +108,9 @@ impl Vad {
                 self.last_speech_frame = Some(0);
                 self.current_speech_samples = n;
                 self.current_frame = 0;
-                return VadStatus::SpeechStart; // it's ok to return here since the upper level will poll again until `Speech`
+                return VadStatus::SpeechStart; // it's ok to return here since
+                                               // the upper level will poll
+                                               // again until `Speech`
             };
             // we are inside a speech window
             self.current_frame += 1;
@@ -118,5 +138,109 @@ impl Vad {
             Some(_) => VadStatus::Speech,
             None => VadStatus::Silence,
         }
+    }
+}
+
+pub fn audio_loop(
+    data: &[f32],
+    channels: u16,
+    resample_from: &Option<Samplerate>,
+    ring_buffer: &mut impl Producer<Item = i16>,
+    vad: &mut Vad,
+    activity: &mut UnboundedSender<VadActivity>,
+) {
+    let data = match channels {
+        1 => data,
+        2 => &stereo_to_mono(data.to_vec()),
+        n => panic!("configs with {n} channels are not supported"),
+    };
+
+    let data = match resample_from {
+        None => data,
+        Some(resampler) => &resampler.process(data).expect("should be able to resample"),
+    };
+    let data = wav_io::convert_samples_f32_to_i16(&data.to_vec());
+
+    vad.input(&data);
+    loop {
+        let status = vad.output_to(ring_buffer);
+        match status {
+            VadStatus::Silence => (),
+            VadStatus::Speech => (),
+            VadStatus::SpeechEnd(samples) => {
+                // can safely drop the error case here as it only happens when the receiver has
+                // hung up (which means the stream is bound to stop soon too)
+                let _ = activity.unbounded_send(VadActivity::SpeechEnd(samples));
+                continue; // make sure we run this input to completion
+            }
+            VadStatus::SpeechStart => {
+                // can safely drop the error case here as it only happens when the receiver has
+                // hung up (which means the stream is bound to stop soon too)
+                let _ = activity.unbounded_send(VadActivity::SpeechStart);
+                continue; // make sure we run this input to completion
+            }
+        }
+        break;
+    }
+}
+
+pub fn get_microphone_by_name(name: &str) -> Result<(Device, StreamConfig), AudioError> {
+    let host = cpal::default_host();
+    let mut devices = host.input_devices().unwrap();
+    if let Some(device) = devices.find(|device| device.name().unwrap() == name) {
+        let config = device
+            .supported_input_configs()
+            .map_err(|err| AudioError::InputDeviceUnavailable(format!("{name}: '{err}'")))?
+            .next()
+            .ok_or_else(|| AudioError::InputDeviceUnavailable(format!("{name}: 'does not have any valid input configurations'")))?;
+        let config = config
+            .try_with_sample_rate(SampleRate(SAMPLE_RATE as u32))
+            .unwrap_or_else(|| {
+                let dev_rate = if config.min_sample_rate().0 > SAMPLE_RATE as u32 {
+                    config.min_sample_rate()
+                } else {
+                    config.max_sample_rate()
+                };
+                config.with_sample_rate(dev_rate)
+            });
+        let buffer_size = BufferSize::Fixed(match config.buffer_size() {
+            cpal::SupportedBufferSize::Range { min, max } => ((config.sample_rate().0 / 30)
+                .next_multiple_of(ALSA_BUFFER_QAUANTUM)
+                .max(ALSA_BUFFER_MIN))
+            .max(*min)
+            .min(*max),
+            cpal::SupportedBufferSize::Unknown => (config.sample_rate().0 / 30)
+                .next_multiple_of(ALSA_BUFFER_QAUANTUM)
+                .max(ALSA_BUFFER_MIN),
+        });
+        println!("using bufffer size {buffer_size:?}");
+        let sample_rate = config.sample_rate();
+        let channels = config.channels();
+        if channels > 2 {
+            return Err(AudioError::InputDeviceUnavailable(format!(
+                "{} has more then two channels. Only Mono and Stereo audio is supported",
+                name
+            )));
+        }
+        let config = StreamConfig {
+            channels,
+            sample_rate,
+            buffer_size,
+        };
+        Ok((device, config))
+    } else {
+        Err(AudioError::InputDeviceUnavailable(name.into()))
+    }
+}
+
+pub fn get_resampler(src_rate: u32) -> Result<Option<Samplerate>, AudioError> {
+    if src_rate != SAMPLE_RATE as u32 {
+        eprintln!("running with resampling src{:?}->dest{SAMPLE_RATE}", src_rate);
+        let resampler = Samplerate::new(samplerate::ConverterType::SincFastest, src_rate, SAMPLE_RATE as u32, 1)
+            .map_err(|err| AudioError::ResamplingUnavailable(err.to_string()))?;
+        Ok(Some(resampler))
+    } else {
+        eprintln!("running at native {SAMPLE_RATE}Hz sample rate");
+        Ok(None)
     }
 }

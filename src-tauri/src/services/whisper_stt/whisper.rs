@@ -7,13 +7,15 @@ use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextPar
 pub const SAMPLE_RATE: usize = 16000;
 /// Wait for at most 30s before dispatching to whisper
 pub const MAX_WHISPER_FRAME: usize = (SAMPLE_RATE * 30) - WHISPER_PREPEND_SILENCE;
-/// prepend 700ms of silence to each whisper frame so the first word gets picked up better
+/// prepend 700ms of silence to each whisper frame so the first word gets picked
+/// up better
 const WHISPER_PREPEND_SILENCE: usize = 1600 * 7;
 
 pub struct WhisperOptions {
     /// whether whisper should translate all speech to english
     pub translate_en: bool,
-    /// the language whisper should transcribe (can be "auto" for auto detection)
+    /// the language whisper should transcribe (can be "auto" for auto
+    /// detection)
     pub language: String,
 }
 
@@ -67,7 +69,8 @@ impl Whisper {
     /// Obtain access to `sample_count` audio samples of the internal buffer
     ///
     /// # Note
-    /// - make sure to write the entire len of the slice, otherwise it COULD contain junk audio
+    /// - make sure to write the entire len of the slice, otherwise it COULD
+    ///   contain junk audio
     /// - panics if sample count is bigger then MAX_WHISPER_FRAME
     pub fn audio_buf(&mut self, sample_count: usize) -> &mut [i16] {
         assert!(sample_count < MAX_WHISPER_FRAME);
@@ -103,11 +106,10 @@ impl Whisper {
             // this should not happen as we have enabled the single segment option
             eprintln!("more then one text segment received from whisper, dropping others");
         }
-        return self
-            .state
+        self.state
             .full_get_segment_text(0)
             .ok()
             // filter hallucination
-            .and_then(|text| if text.eq_ignore_ascii_case(" you") { None } else { Some(text) });
+            .and_then(|text| if text.eq_ignore_ascii_case(" you") { None } else { Some(text) })
     }
 }

@@ -5,28 +5,24 @@ use std::{
 
 use futures::{
     channel::{
-        mpsc::{self, UnboundedSender},
+        mpsc::{self},
         oneshot::{self, Receiver},
     },
     StreamExt,
 };
 use ringbuf::{
-    traits::{Consumer, Producer, Split},
+    traits::{Consumer, Split},
     HeapRb,
 };
 use rodio::{
-    cpal::{
-        self,
-        traits::{HostTrait, StreamTrait},
-        BufferSize, SampleRate, Stream, StreamConfig,
-    },
-    Device, DeviceTrait,
+    cpal::{traits::StreamTrait, Stream},
+    DeviceTrait,
 };
 use serde::{Deserialize, Serialize};
 use tauri::{plugin, AppHandle, Emitter, Manager, Runtime, State};
 use tokio::select;
-use vad::{NSamples, Vad, VadStatus};
-use whisper::{Whisper, WhisperOptions, WhisperSetupError, MAX_WHISPER_FRAME, SAMPLE_RATE};
+use vad::{audio_loop, get_microphone_by_name, get_resampler, AudioError, Vad, VadActivity};
+use whisper::{Whisper, WhisperOptions, WhisperSetupError, MAX_WHISPER_FRAME};
 
 mod vad;
 mod whisper;
@@ -34,10 +30,8 @@ mod whisper;
 #[derive(Debug, Serialize)]
 pub enum WhisperError {
     AlreadyRunning,
-    InputDeviceUnavailable(String),
+    AudioSetupError(AudioError),
     AudioStreamError(String),
-    /// a config without fixed buffer size has been used
-    VadSetupError,
     WhisperSetupError(WhisperSetupError),
 }
 impl From<WhisperSetupError> for WhisperError {
@@ -58,11 +52,6 @@ pub struct WhisperArgs {
     input_device: String,
     lang: String,
     translate_to_english: bool,
-}
-
-enum VadActivity {
-    SpeechStart,
-    SpeechEnd(NSamples),
 }
 
 pub fn init<R: Runtime>() -> plugin::TauriPlugin<R> {
@@ -101,59 +90,80 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
     // cancellation using the condvar pattern https://doc.rust-lang.org/std/sync/struct.Condvar.html
     let cancel_pair = Arc::new((Mutex::new(false), Condvar::new()));
     let cancellation_pair = cancel_pair.clone();
-    let (device, config) = get_microphone_by_name(&args.input_device)?;
+
+    let (device, config) = get_microphone_by_name(&args.input_device).map_err(WhisperError::AudioSetupError)?;
+    let mut vad = Vad::new(&config);
+    let (audio_tx, audio_rx) = std::sync::mpsc::sync_channel(10);
+    // audio processing thread
     thread::spawn(move || {
         let mut start_err = err_tx.clone();
-        let mut vad = match Vad::try_new(&config) {
-            Ok(vad) => vad,
-            Err(_) => {
-                let _ = start_err.try_send(WhisperError::VadSetupError);
-                return;
+        let channels = match config.channels {
+            n @ 1..=2 => {
+                eprintln!("running with {n} channels");
+                n
+            }
+            invalid => {
+                panic!("configs with {invalid} channels are not supported");
             }
         };
-        let resample_from = if config.sample_rate.0 != SAMPLE_RATE as u32 {
-            Some(config.sample_rate.0)
-        } else {
-            None
-        };
-        let result = || -> Result<Stream, WhisperError> {
-            let stream = device
-                .build_input_stream(
-                    &config,
-                    move |data: &[i16], _info| {
-                        audio_loop(data, &resample_from, &mut producer, &mut vad, &mut activity_tx);
-                    },
-                    move |err| {
-                        // only try send because we might have had an earlier error
-                        let _ = err_tx.try_send(WhisperError::AudioStreamError(err.to_string()));
-                    },
-                    None,
-                )
-                .map_err(|err| WhisperError::AudioStreamError(err.to_string()))?;
-            stream
-                .play()
-                .map_err(|err| WhisperError::AudioStreamError(err.to_string()))?;
-            Ok(stream)
-        };
-        let stream = match result() {
-            Ok(v) => v,
+        // we need to build the resampler in here because it cannot be send across threads
+        let resample_with = match get_resampler(config.sample_rate.0) {
+            Ok(resampler) => resampler,
             Err(err) => {
-                // only try send because we might have had an earlier error
-                let _ = start_err.try_send(err);
+                let _ = start_err.try_send(WhisperError::AudioSetupError(err));
                 return;
             }
         };
-        let (lock, cvar) = &*cancellation_pair;
-        let mut cancelled = lock.lock().expect("should be able to lock cancellation");
-        while !*cancelled {
-            // wait until we get cancelled
-            cancelled = cvar
-                .wait(cancelled)
-                .expect("should be able to wait for cancellation");
-        }
-        if let Err(err) = stream.pause() {
-            // only try send because we might have had an earlier error
-            let _ = start_err.try_send(WhisperError::AudioStreamError(err.to_string()));
+
+        // audio fetching thread
+        // start this thread after setup was successfull to reduce cleanup work
+        thread::spawn(move || {
+            let mut start_err = err_tx.clone();
+            let result = || -> Result<Stream, WhisperError> {
+                let stream = device
+                    .build_input_stream(
+                        &config,
+                        move |data: &[f32], _info| {
+                            if audio_tx.try_send(data.to_vec()).is_err() {
+                                eprintln!("audio is being dropped");
+                            }
+                        },
+                        move |err| {
+                            // only try send because we might have had an earlier error
+                            let _ = err_tx.try_send(WhisperError::AudioStreamError(err.to_string()));
+                        },
+                        None,
+                    )
+                    .map_err(|err| WhisperError::AudioStreamError(err.to_string()))?;
+                stream
+                    .play()
+                    .map_err(|err| WhisperError::AudioStreamError(err.to_string()))?;
+                Ok(stream)
+            };
+            let stream = match result() {
+                Ok(v) => v,
+                Err(err) => {
+                    // only try send because we might have had an earlier error
+                    let _ = start_err.try_send(err);
+                    return;
+                }
+            };
+            let (lock, cvar) = &*cancellation_pair;
+            let mut cancelled = lock.lock().expect("should be able to lock cancellation");
+            while !*cancelled {
+                // wait until we get cancelled
+                cancelled = cvar
+                    .wait(cancelled)
+                    .expect("should be able to wait for cancellation");
+            }
+            if let Err(err) = stream.pause() {
+                // only try send because we might have had an earlier error
+                let _ = start_err.try_send(WhisperError::AudioStreamError(err.to_string()));
+            }
+        });
+
+        while let Ok(data) = audio_rx.recv() {
+            audio_loop(&data, channels, &resample_with, &mut producer, &mut vad, &mut activity_tx);
         }
     });
 
@@ -198,9 +208,8 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
         cvar.notify_all();
     }
     result?;
-    match err_rx.next().await {
-        Some(err) => return Err(err),
-        None => (),
+    if let Some(err) = err_rx.next().await {
+        return Err(err);
     }
     Ok(())
 }
@@ -212,82 +221,4 @@ pub fn stop(state: State<'_, WhisperState>) {
         .lock()
         .expect("should be able to obtain a lock")
         .take();
-}
-
-fn get_microphone_by_name(name: &str) -> Result<(Device, StreamConfig), WhisperError> {
-    let host = cpal::default_host();
-    let mut devices = host.input_devices().unwrap();
-    if let Some(device) = devices.find(|device| device.name().unwrap() == name) {
-        let config = device
-            .supported_input_configs()
-            .map_err(|err| WhisperError::InputDeviceUnavailable(format!("{name}: '{err}'")))?
-            .next()
-            .ok_or_else(|| WhisperError::InputDeviceUnavailable(format!("{name}: 'does not have any valid input configurations'")))?;
-        let config = config
-            .try_with_sample_rate(SampleRate(SAMPLE_RATE as u32))
-            .unwrap_or_else(|| {
-                let dev_rate = if config.min_sample_rate().0 > SAMPLE_RATE as u32 {
-                    config.min_sample_rate()
-                } else {
-                    config.max_sample_rate()
-                };
-                eprintln!("running with resampling src{dev_rate:?}->dest{SAMPLE_RATE}",);
-                config.with_sample_rate(dev_rate)
-            });
-        let buffer_size = BufferSize::Fixed(match config.buffer_size() {
-            cpal::SupportedBufferSize::Range { min, max } => ((config.sample_rate().0 / 30).next_multiple_of(48))
-                .max(*min)
-                .min(*max),
-            cpal::SupportedBufferSize::Unknown => (config.sample_rate().0 / 30).next_multiple_of(48),
-        });
-        let sample_rate = config.sample_rate();
-        let channels = config.channels();
-        let config = StreamConfig {
-            channels,
-            sample_rate,
-            buffer_size,
-        };
-        Ok((device, config))
-    } else {
-        Err(WhisperError::InputDeviceUnavailable(name.into()))
-    }
-}
-
-fn audio_loop(
-    data: &[i16],
-    resample_from: &Option<u32>,
-    ring_buffer: &mut impl Producer<Item = i16>,
-    vad: &mut Vad,
-    activity: &mut UnboundedSender<VadActivity>,
-) {
-    // TODO: move resampling out of audio loop and replace this incredibly inefficent 4x copy pipeline
-    let data = match resample_from {
-        None => data,
-        Some(src_rate) => &wav_io::convert_samples_f32_to_i16(&wav_io::resample::linear(
-            wav_io::convert_samples_i16_to_f32(&data.to_vec()),
-            1,
-            *src_rate,
-            SAMPLE_RATE as u32,
-        ))[..],
-    };
-
-    vad.input(data);
-    loop {
-        let status = vad.output_to(ring_buffer);
-        match status {
-            VadStatus::Silence => (),
-            VadStatus::Speech => (),
-            VadStatus::SpeechEnd(samples) => {
-                // can safely drop the error case here as it only happens when the receiver has hung up (which means the stream is bound to stop soon too)
-                let _ = activity.unbounded_send(VadActivity::SpeechEnd(samples));
-                continue; // make sure we run this input to completion
-            }
-            VadStatus::SpeechStart => {
-                // can safely drop the error case here as it only happens when the receiver has hung up (which means the stream is bound to stop soon too)
-                let _ = activity.unbounded_send(VadActivity::SpeechStart);
-                continue; // make sure we run this input to completion
-            }
-        }
-        break;
-    }
 }

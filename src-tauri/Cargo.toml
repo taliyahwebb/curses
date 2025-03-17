@@ -6,7 +6,7 @@ authors = ["mmpneo@gmail.com"]
 license = ""
 repository = ""
 edition = "2021"
-rust-version = "1.65"
+rust-version = "1.73"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -37,6 +37,7 @@ tauri-plugin-process = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 wav_io = "0.1.15"
+samplerate = "0.2.4"
 
 [dependencies.tauri]
 version = "2"
