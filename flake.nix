@@ -1,103 +1,138 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    # nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     flake-utils.url = "github:numtide/flake-utils";
-    fenix = {
-      url = "github:nix-community/fenix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    flakebox.url = "github:rustshop/flakebox";
+    flakebox.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
     {
       nixpkgs,
       flake-utils,
-      fenix,
+      flakebox,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = import nixpkgs {
-          inherit system;
+        projectName = "curses";
+        pkgs = nixpkgs.legacyPackages.${system};
+        pnpm = pkgs.pnpm_9;
+        flakeboxLib = flakebox.lib.${system} {
+          config = {
+            github.ci.enable = false;
+            semgrep.enable = false;
+          };
         };
-        fenixChannel = fenix.packages.${system}.stable;
-        fenixToolchain = (
-          fenixChannel.withComponents [
-            "rustc"
-            "cargo"
-            # "rustfmt"
-            # "clippy"
-            # "rust-analyzer"
-            # "rust-src"
-            # "llvm-tools-preview"
-          ]
-        );
 
-        commonArgs = {
-          nativeBuildInputs = with pkgs; [
-            fenixToolchain
-            nodePackages.pnpm
-
-            pkg-config
-            gobject-introspection
-            cargo-tauri
-            nodejs
-
-            # whisper deps
-            cmake
-            # pkg-config
-            shaderc
+        buildSrc = flakeboxLib.filterSubPaths {
+          root = builtins.path {
+            name = projectName;
+            path = ./.;
+          };
+          paths = [
+            "src-tauri"
+            "src"
+            "public"
+            "tests"
+            "index.html"
+            "package.json"
+            "playwright.config.ts"
+            "pnpm-lock.yaml"
+            "postcss.config.cjs"
+            "tailwind.config.cjs"
+            "tsconfig.json"
+            "tsconfig.node.json"
+            "vite.config.ts"
           ];
-          buildInputs = with pkgs; [
-            at-spi2-atk
-            atkmm
-            cairo
-            gdk-pixbuf
-            glib
-            gtk3
-            harfbuzz
-            librsvg
-            libsoup_3
-            pango
-            webkitgtk_4_1
-            openssl
-
-            alsa-lib
-
-            piper-tts
-            # whisper deps
-            # alsa-lib
-            vulkan-headers
-            vulkan-loader
-          ];
-          LIBCLANG_PATH = "${pkgs.libclang.lib}/lib/"; # (whisper-rs), bindgen needs this
-          shellHook = ''
-            # export WEBKIT_DISABLE_COMPOSITING_MODE=1
-          '';
         };
-      in
-      {
-        devShells.default = pkgs.mkShell (
-          commonArgs
-          // {
-            RUST_SRC_PATH = "${fenix.packages.${system}.stable.rust-src}/lib/rustlib/src/rust/library";
 
-            RUST_LOG = "curses";
+        multiBuild = (flakeboxLib.craneMultiBuild { }) (
+          craneLib':
+          let
+            craneLib = (
+              craneLib'.overrideArgs {
+                pname = projectName;
+                src = buildSrc;
+                cargoLock = ./src-tauri/Cargo.lock;
+                cargoToml = ./src-tauri/Cargo.toml;
+                postConfigure = ''
+                  # cargo lock is filtered out and a stripped version is placed at src root
+                  mv Cargo.lock src-tauri/
+                  cd src-tauri
+                '';
 
-            packages = [
-              fenixChannel.rust-analyzer
-              fenixChannel.clippy
-              fenixChannel.rustfmt
-              pkgs.cargo-watch
-              pkgs.typescript-language-server
-            ];
+                # libclang_path is needed when not using flakebox
+                # LIBCLANG_PATH = "${pkgs.libclang.lib}/lib/"; # (whisper-rs), bindgen needs this
+                nativeBuildInputs = [
+                  # tauri deps
+                  pkgs.pkg-config
+                  pkgs.gobject-introspection
+                  pkgs.cargo-tauri
+                  pkgs.nodejs
+                  pnpm
+
+                  # whisper extra deps
+                  pkgs.cmake
+                  pkgs.shaderc
+                ];
+                buildInputs = [
+                  # tauri deps
+                  pkgs.at-spi2-atk
+                  pkgs.atkmm
+                  pkgs.cairo
+                  pkgs.gdk-pixbuf
+                  pkgs.glib
+                  pkgs.gtk3
+                  pkgs.harfbuzz
+                  pkgs.librsvg
+                  pkgs.libsoup_3
+                  pkgs.pango
+                  pkgs.webkitgtk_4_1
+                  pkgs.openssl
+
+                  # whisper extra deps
+                  pkgs.vulkan-headers
+                  pkgs.vulkan-loader
+
+                  pkgs.alsa-lib
+
+                  # piper binary pre-shipped
+                  pkgs.piper-tts
+                ];
+              }
+            );
+          in
+          rec {
+            deps = craneLib.buildDepsOnly { src = buildSrc; };
+            ${projectName} = craneLib.buildPackage {
+              cargoArtifacts = deps;
+              nativeBuildInputs = [ pnpm.configHook ];
+              preBuild = ''
+                mv ../target target
+              '';
+              pnpmDeps = pnpm.fetchDeps {
+                pname = projectName;
+                src = buildSrc;
+                hash = "sha256-pdHVo9iqTSPOjaeMxndFXS6vNhg7+EHLTGnImCgoKpQ=";
+              };
+              cargoBuildCommand = "cargo tauri build --no-bundle --";
+            };
           }
         );
-
-        # packages.default = craneLib.buildPackage ( commonArgs // {
-        #   src = craneLib.cleanCargoSource ./.;
-        # });
+      in
+      {
+        packages.default = multiBuild.${projectName};
+        legacyPackages = multiBuild;
+        devShells = flakeboxLib.mkShells {
+          inputsFrom = [ multiBuild.${projectName} ];
+          packages = [
+            pkgs.typescript-language-server
+          ];
+          RUST_LOG = "curses";
+        };
       }
     );
 }
