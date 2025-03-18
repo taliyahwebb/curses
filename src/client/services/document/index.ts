@@ -170,11 +170,11 @@ class Service_Document implements IServiceInterface {
     }
 
     const bExists = await exists("user/template", {
-      baseDir: BaseDirectory.AppData,
+      baseDir: BaseDirectory.AppConfig,
     });
     if (bExists) try {
       const data = await readFile("user/template", {
-        baseDir: BaseDirectory.AppData,
+        baseDir: BaseDirectory.AppConfig,
       });
       return data;
     } catch (error) {
@@ -183,11 +183,11 @@ class Service_Document implements IServiceInterface {
   }
 
   async #saveDocumentNative(doc: Y.Doc) {
-    const bExists = await exists("user", { baseDir: BaseDirectory.AppData });
+    const bExists = await exists("user", { baseDir: BaseDirectory.AppConfig });
     if (!bExists)
-      await mkdir("user", { baseDir: BaseDirectory.AppData, recursive: true });
+      await mkdir("user", { baseDir: BaseDirectory.AppConfig, recursive: true });
     const data = Y.encodeStateAsUpdate(doc);
-    await writeFile("user/template", data, {append: false, baseDir: BaseDirectory.AppData});
+    await writeFile("user/template", data, {append: false, baseDir: BaseDirectory.AppConfig});
   }
 
   saveDocument = debounce(() => {
