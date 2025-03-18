@@ -256,7 +256,10 @@ Paste the link and change window size to match app's canvas size (default is 500
 This repository provides a [Nix flake](https://nixos.wiki/wiki/flakes) which provides:
 - [Development Environment](https://nixos.wiki/wiki/Development_environment_with_nix-shell) via `nix develop`
 - Nix Package as the default flake package output
-  - can be built with `nix build` (binary will be available as `./result/bin/whisper-real-time`)
+  - can be built with `nix build` (binary will be available as `./result/bin/curses`)
+
+> [!WARNING]
+> The flake is not made for non-NixOS environments.
 
 The Development Environment provides all needed libraries to build the project.
 
@@ -294,8 +297,7 @@ Note: [Runtime Dependencies](#runtime-dependencies)
 2. choose from the following the action you want to perform
   - `pnpm tauri dev` build and run a local development version that restarts on code changes
   - `pnpm tauri dev --release` build and run the dev version with release settings
-  - `pnpm tauri build -b --debug` to create a development build
+  - `pnpm tauri build --no-bundle --debug` to create a development build
     - binary will be produced at `./src-tauri/target/debug/<curses-bin>`
-  - `pnpm tauri build -b` to create a final build
+  - `pnpm tauri build --no-bundle` to create a final build
     - binary will be produced at `./src-tauri/target/build/<curses-bin>`
-
