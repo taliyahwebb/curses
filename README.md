@@ -81,8 +81,6 @@ If you want to use the Whisper STT module you will need a Vulkan ready graphics 
 - NixOS: if you are using a recent NixOS version and have a graphical user environment enabled, it will likely ✨just work✨ if your hardware supports Vulkan.
 - Other Linux: check your distributions documentation or see [Arch Linux Wiki](https://wiki.archlinux.org/title/Vulkan) for more information
 - Windows: having up to date Graphics drivers should surfice if the hardware supports it
-> [!NOTE]
-> Whisper module on Windows has not been tested yet. 
 
 Here is a list of [Vulkan ready devices](https://vulkan.gpuinfo.org/). Most modern Graphics drivers should support Vulkan.
 
