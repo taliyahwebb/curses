@@ -32,11 +32,11 @@ class Service_State implements IServiceInterface {
 
   async #load_state(): Promise<Record<string, any> | undefined> {
     const decoder = new TextDecoder();
-    const fileExists = await exists("user/settings", {baseDir: BaseDirectory.AppData});
+    const fileExists = await exists("user/settings", {baseDir: BaseDirectory.AppConfig});
     if (!fileExists)
       return;
     try {
-      const data = await readFile("user/settings", {baseDir: BaseDirectory.AppData});
+      const data = await readFile("user/settings", {baseDir: BaseDirectory.AppConfig});
       return this.tryParseState(decoder.decode(data));
     } catch (error) {
       return;
@@ -45,11 +45,11 @@ class Service_State implements IServiceInterface {
 
   #save_state = debounce(async () => {
     const encoder = new TextEncoder();
-    const bExists = await exists("user", { baseDir: BaseDirectory.AppData });
+    const bExists = await exists("user", { baseDir: BaseDirectory.AppConfig });
     if (!bExists)
-      await mkdir("user", { baseDir: BaseDirectory.AppData, recursive: true });
+      await mkdir("user", { baseDir: BaseDirectory.AppConfig, recursive: true });
     const value = JSON.stringify(this.state, null, 4);
-    await writeFile("user/settings", encoder.encode(value), {append: false, baseDir: BaseDirectory.AppData});
+    await writeFile("user/settings", encoder.encode(value), {append: false, baseDir: BaseDirectory.AppConfig});
   }, 1000);
 }
 export default Service_State;
