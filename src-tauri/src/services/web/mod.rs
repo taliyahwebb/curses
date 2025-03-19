@@ -1,16 +1,10 @@
+use super::AppConfiguration;
 use local_ip_address::local_ip;
 use serde::{Deserialize, Serialize};
-use std::{process::Command, process::Stdio, sync::Arc};
-use tauri::{
-    async_runtime::Mutex,
-    command,
-    plugin::{Builder, TauriPlugin},
-    Emitter, Manager, Runtime, State,
-};
+use std::{process::{Command, ExitStatus, Stdio}, sync::Arc};
+use tauri::{async_runtime::Mutex, command, plugin::{Builder, TauriPlugin}, Emitter, Manager, Runtime, State};
 use tokio::sync::mpsc;
 use warp::Filter;
-
-use super::AppConfiguration;
 
 mod assets;
 mod peer;
@@ -53,30 +47,39 @@ struct OpenBrowserCommand {
     browser_names: Vec<String>,
     url: String,
 }
+
 #[command]
 fn open_browser(data: OpenBrowserCommand) -> Result<(), String> {
+    eprintln!("[open_browser] iterating browser binary names");
     for browser in &data.browser_names {
-        let status = if cfg!(target_os = "windows") {
-            Command::new("cmd")
+        if cfg!(target_os = "windows") {
+            if Command::new("cmd")
                 .stderr(Stdio::null()) // errors are expected, don't print to terminal
                 .args(&["/C", format!("start {} {}", &browser, &data.url).as_str()])
                 .status()
                 .expect("failed to execute process")
+                .success()
+            {
+                return Ok(());
+            } else {
+                eprintln!("[open_browser] failed to start '{browser}'");
+            }
         } else if cfg!(target_os = "linux") {
-            Command::new("sh")
+            if let Err(err) = Command::new(&browser)
                 .stderr(Stdio::null())
-                .args(&["-c", format!("{} {}", &browser, &data.url).as_str()])
-                .status()
-                .expect("failed to execute process")
+                .stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .arg(&data.url)
+                .spawn()
+            {
+                eprintln!("[open_browser] failed to start '{browser}', err: '{err}'");
+            } else {
+                return Ok(());
+            }
         } else {
             return Err("Action not supported on your operating system".to_string());
         };
-
-        if status.success() {
-            return Ok(());
-        }
     }
-    println!("failed");
     Err("Could not find browser executable".to_string())
 }
 
