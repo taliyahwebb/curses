@@ -1,27 +1,24 @@
-use std::mem::{self, MaybeUninit};
-use std::time::Duration;
-
-use cpal::traits::{DeviceTrait, HostTrait};
-use cpal::{BufferSize, Device, SampleRate, StreamConfig};
+use super::whisper::SAMPLE_RATE;
+use cpal::{traits::{DeviceTrait, HostTrait}, BufferSize, Device, SampleRate, StreamConfig};
 use earshot::{VoiceActivityDetector, VoiceActivityModel, VoiceActivityProfile};
 use futures::channel::mpsc::UnboundedSender;
-use ringbuf::storage::Heap;
-use ringbuf::traits::{Consumer, Observer, Producer};
-use ringbuf::LocalRb;
+use ringbuf::{storage::Heap, traits::{Consumer, Observer, Producer}, LocalRb};
 use rodio::cpal;
 use samplerate::Samplerate;
 use serde::Serialize;
+use std::{mem::{self, MaybeUninit}, time::Duration};
 use wav_io::utils::stereo_to_mono;
-
-use super::whisper::SAMPLE_RATE;
 
 /// ~30ms of audio
 pub const VAD_FRAME: usize = 480; // sample count
 pub const SPEECH_DETECTION_LINGER: Duration = Duration::from_millis(90);
-pub const SEGMENT_SEPARATOR_SILENCE: Duration = Duration::from_millis(240);
+pub const DEFAULT_SEGMENT_SEPARATOR_SILENCE: Duration = Duration::from_millis(240);
 
-pub const LINGER_FRAMES: usize = (SPEECH_DETECTION_LINGER.as_millis() as usize * SAMPLE_RATE) / 1000 / VAD_FRAME;
-pub const SILENCE_FRAMES: usize = (SEGMENT_SEPARATOR_SILENCE.as_millis() as usize * SAMPLE_RATE) / 1000 / VAD_FRAME;
+pub const LINGER_FRAMES: usize = to_frames(SPEECH_DETECTION_LINGER);
+
+pub const fn to_frames(duration: Duration) -> usize {
+    (duration.as_millis() as usize * SAMPLE_RATE) / 1000 / VAD_FRAME
+}
 
 /// selectable alsa buffer sizes follow a weird pattern 32 seems to work as a
 /// quantum over a wide range of buffer sizes
@@ -56,10 +53,12 @@ pub struct Vad {
     last_speech_frame: Option<usize>,
     /// reading this while `last_speech_frame = None` is undefined behavior
     current_speech_samples: NSamples,
+    // number of audio frames to wait before dispatching to whisper
+    silence_frames: usize,
 }
 
 impl Vad {
-    pub fn new(config: &StreamConfig) -> Vad {
+    pub fn with_silence_interval(config: &StreamConfig, silence_interval: Option<Duration>) -> Vad {
         let BufferSize::Fixed(buffer_size) = config.buffer_size else {
             panic!("config doesnt allow safe vad setup");
         };
@@ -70,6 +69,7 @@ impl Vad {
             current_frame: 0,
             last_speech_frame: None,
             current_speech_samples: 0,
+            silence_frames: to_frames(silence_interval.unwrap_or(DEFAULT_SEGMENT_SEPARATOR_SILENCE)),
         }
     }
 
@@ -115,7 +115,7 @@ impl Vad {
             // we are inside a speech window
             self.current_frame += 1;
             let silence_frames = self.current_frame - *last_speech_frame;
-            if !is_speech && silence_frames >= SILENCE_FRAMES {
+            if !is_speech && silence_frames >= self.silence_frames {
                 // if silence for 240ms
                 self.last_speech_frame = None;
                 return VadStatus::SpeechEnd(self.current_speech_samples);

@@ -8,7 +8,7 @@ import { useSnapshot } from "valtio";
 import { azureLanguages, deepGramLangs, webspeechapiLangs , whisperLangs } from "../../services/stt/stt_data";
 import ServiceButton from "../service-button";
 import Inspector from "./components";
-import { InputCheckbox, InputMapObject, InputMappedGroupSelect, InputSelect, InputText, InputWebAudioInput, InputFilePath } from "./components/input";
+import { InputCheckbox, InputMapObject, InputMappedGroupSelect, InputSelect, InputText, InputWebAudioInput, InputFilePath, InputRange } from "./components/input";
 import NiceModal from "@ebay/nice-modal-react";
 import Modal from "../Modal";
 import { useTranslation } from 'react-i18next';
@@ -187,6 +187,8 @@ const Whisper: FC = () => {
       onChange={updateLanguage}
       library={whisperLangs} />
     <InputCheckbox label="stt.whisper_translate_to_english" onChange={e => handleUpdate("translateToEnglish", e)} value={data.translateToEnglish}/>
+    <InputRange label="stt.whisper_vad_silence" step="30" min="120" max="2000" value={data.silenceInterval} onChange={e => handleUpdate("silenceInterval", e.target.value)} />
+    <Inspector.Description>{t('stt.whisper_silence_note')}</Inspector.Description>
     <InputFilePath
       label="stt.whisper_model_path"
       value={data.modelPath}

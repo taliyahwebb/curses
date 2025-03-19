@@ -41,6 +41,7 @@ export class STT_WhisperService implements ISTTService {
             modelPath: this.state.modelPath,
             lang: this.state.lang,
             translateToEnglish: this.state.translateToEnglish,
+            silenceInterval: parseInt(this.state.silenceInterval),
         },
     }).catch(err => {
         this.#initialized = false;

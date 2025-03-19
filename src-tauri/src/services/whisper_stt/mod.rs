@@ -1,24 +1,8 @@
-use std::{
-    sync::{Arc, Condvar, Mutex},
-    thread,
-};
-
-use futures::{
-    channel::{
-        mpsc::{self},
-        oneshot::{self, Receiver},
-    },
-    StreamExt,
-};
-use ringbuf::{
-    traits::{Consumer, Split},
-    HeapRb,
-};
-use rodio::{
-    cpal::{traits::StreamTrait, Stream},
-    DeviceTrait,
-};
+use futures::{channel::{mpsc::{self}, oneshot::{self, Receiver}}, StreamExt};
+use ringbuf::{traits::{Consumer, Split}, HeapRb};
+use rodio::{cpal::{traits::StreamTrait, Stream}, DeviceTrait};
 use serde::{Deserialize, Serialize};
+use std::{sync::{Arc, Condvar, Mutex}, thread, time::Duration};
 use tauri::{plugin, AppHandle, Emitter, Manager, Runtime, State};
 use tokio::select;
 use vad::{audio_loop, get_microphone_by_name, get_resampler, AudioError, Vad, VadActivity};
@@ -52,6 +36,7 @@ pub struct WhisperArgs {
     input_device: String,
     lang: String,
     translate_to_english: bool,
+    silence_interval: u64,
 }
 
 pub fn init<R: Runtime>() -> plugin::TauriPlugin<R> {
@@ -92,7 +77,7 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
     let cancellation_pair = cancel_pair.clone();
 
     let (device, config) = get_microphone_by_name(&args.input_device).map_err(WhisperError::AudioSetupError)?;
-    let mut vad = Vad::new(&config);
+    let mut vad = Vad::with_silence_interval(&config, Some(Duration::from_millis(args.silence_interval)));
     let (audio_tx, audio_rx) = std::sync::mpsc::sync_channel(10);
     // audio processing thread
     thread::spawn(move || {

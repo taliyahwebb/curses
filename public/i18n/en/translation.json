@@ -81,6 +81,8 @@
     "whisper_model_path": "Whisper Model",
     "whisper_translate_to_english": "Translate to english",
     "whisper_lang_desc_note": "Note: Quality differs between the languages and the model selected",
+    "whisper_vad_silence": "VAD Silence",
+    "whisper_silence_note": "Duration in ms to wait for to detect end of speech segment. Default: 240",
 
     "deepgram_title": "Deepgram",
     "deepgram_key": "Key",
