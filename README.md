@@ -7,9 +7,8 @@
 <p align="center">Speech to Text Captions for OBS, VRChat, Twitch chat and Discord</p>
 
 <p align="center">
-<!-- static -->
-  <!-- <img width="600" src="https://user-images.githubusercontent.com/3977499/218319590-296c96f0-7daa-4130-ab40-6b32f20cc26e.png"> -->
-  <img width="600" src="https://user-images.githubusercontent.com/3977499/218335391-a53dab5b-1e22-47b8-89c5-e1124798fbdc.gif">
+  <!-- TODO change image location to dev/master -->
+  <img width="600" src="https://github.com/taliyahwebb/curses/blob/update-readme/.github/assets/readme-sugar.gif">
 </p>
 
 <p align="center"><b>Repo Stats</b></p>
@@ -26,10 +25,24 @@
 - [Community](#community)
 - [Usage](#usage)
   - [Runtime Dependencies](#runtime-dependencies)
-  - [Getting Started with OBS](#getting-started-with-obs)
-    - [1. Get the App](#1-get-the-app)
-    - [2. Open app and copy link for OBS](#2-open-app-and-copy-link-for-obs)
-    - [3. Create browser source in OBS](#3-create-browser-source-in-obs)
+    - [Web renderer](#web-renderer)
+    - [Whisper STT](#whisper-stt)
+  - [STT services](#stt-services)
+    - [Web Speech API (STT)](#web-speech-api-stt)
+    - [Whisper](#whisper)
+    - [Browser](#browser)
+    - [Azure (STT)](#azure-stt)
+    - [Deepgram](#deepgram)
+    - [Speechly](#speechly)
+  - [TTS services](#tts-services)
+    - [Web Speech API (TTS)](#web-speech-api-tts)
+      - [Changing output device](#changing-output-device)
+    - [Piper](#piper)
+    - [Windows (TTS)](#windows-tts)
+    - [Azure (TTS)](#azure-tts)
+    - [TikTok](#tiktok)
+    - [Uberduck](#uberduck)
+    - [Custom TTS](#custom-tts)
 - [Building](#building)
   - [Prerequisites](#prerequisites)
     - [NixOS](#nixos)
@@ -40,11 +53,11 @@
 
 # Features
 [Instructions and details](#usage)
+- **[Speech to Text](#stt-services)**
+- **[Text to Speech](#tts-services)**
 - **OBS Captions customization**: Colors, fonts, shadows, background textures, text typing animation, sound effects, particle effects and CSS
 - **Native OBS stream captions**
 - **Google Fonts**: more than 1000 free fonts for OBS captions
-- **Speech to Text**: [Microsoft Azure](https://azure.microsoft.com/en-au/products/cognitive-services/speech-to-text/), [Speechly](https://www.speechly.com/), [Deepgram](https://deepgram.com/), WebSpeechApi(Chrome and Edge), [Whisper](https://github.com/ggerganov/whisper.cpp)
-- **Text to Speech**: [Microsoft Azure](https://azure.microsoft.com/en-us/products/cognitive-services/text-to-speech/), [Uberduck](https://uberduck.ai/), [Piper](https://github.com/rhasspy/piper), TikTok, Windows Api (SAPI), WebSpeechApi
 - **VRChat**: [KillFrenzy Avatar text](https://github.com/killfrenzy96/KillFrenzyAvatarText), vrchat's chatbox
 - **Twitch**: 
   - Use 7TV/FFZ/BTTV emotes in OBS captions
@@ -57,10 +70,7 @@
   - Automatically switch design when OBS changes scene
 
 ## Roadmap
-> [!NOTE]
-> Outdated
-- [ ] STT - Vosk
-- [ ] TTS - VoiceVox
+- see [Github Milestones](https://github.com/taliyahwebb/curses/milestones)
 
 # Community
 For help, feature requests, bug reports, release notifications, design templates [Join Discord](https://discord.gg/Sw6pw8fGYS)
@@ -76,11 +86,11 @@ If you're not running an old Windows version and didn't accidentally remove it t
 Otherwise, you can download it from [here](https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download).
 
 ### Whisper STT
-If you want to use the Whisper STT module you will need a Vulkan ready graphics driver installed.
+If you want to use the STT module [Whisper](#whisper) you will need a Vulkan ready graphics driver installed.
 
 - NixOS: if you are using a recent NixOS version and have a graphical user environment enabled, it will likely ✨just work✨ if your hardware supports Vulkan.
 - Other Linux: check your distributions documentation or see [Arch Linux Wiki](https://wiki.archlinux.org/title/Vulkan) for more information
-- Windows: having up to date Graphics drivers should surfice if the hardware supports it
+- Windows: having up to date Graphics drivers should suffice if the hardware supports it
 
 Here is a list of [Vulkan ready devices](https://vulkan.gpuinfo.org/). Most modern Graphics drivers should support Vulkan.
 
@@ -88,23 +98,20 @@ Here is a list of [Vulkan ready devices](https://vulkan.gpuinfo.org/). Most mode
 **Every service has its pros and cons. I'd advice to read about them all before making your choice.**
 
 ### Web Speech API (STT)
-Web Speech API is a general specification for web browsers to support both speech synthesis and recognition. Its implementation and voices available change depending on your operating system.
+Web Speech API is a general specification for web browsers to support both speech synthesis and recognition. It's implementation and voices available change depending on your operating system.
 
 <details>
 <summary>Windows</summary>
 We get the Web Speech API through Edge WebView2.
 
 Edge WebView2 (probably) uses cloud services to provide Speech-To-Text to the Web Speech API (can't be sure because it's closed-source).
-
-> [!NOTE]
-> It should not incorporate a profanity filter, but if it does we can't do anything about it, so check if your installation is up to date and report it to [Edge WebView2](https://github.com/MicrosoftEdge/WebView2Feedback?tab=readme-ov-file#-how-to-report-a-bug).
 </details>
 
 <details>
 <summary>Linux</summary>
 We get the Web Speech API through WebKitGTK.
 
-**WebKitGTK does not support the speech recognition of Web Speech API yet**, but everything should work as soon as the feature gets released.
+> **WebKitGTK does not support the speech recognition of Web Speech API yet**, but everything should work as soon as the feature gets released.
 
 There have been experimentations by the WebKitGTK team to use Whisper.cpp, but ["that is much farther down the roadmap"](https://matrix.to/#/#webkitgtk:matrix.org/$PQpUpl13RWnMzowuj9Ylk_zJ_0-5uajLDa20n0vCs1o) (2025/03/08).
 </details>
@@ -119,12 +126,14 @@ You're going to need to [download a model (`.bin`)](https://github.com/ggerganov
 
 Smaller models have a smaller performance impact, but larger models are more accurate. There are also english-only models (files with `.en`), all others being multilingual. `-q5_0` models take less memory and disk space and *can* be more efficient. `-tdrz` models can detect speaker changes but are more resource-intensive.
 
+> [!TIP]
+> The `base.en-q5_1` ([ggml-base.en-q5_1.bin](https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en-q5_1.bin?download=true)) gives pretty decent results when speaking clear english and is near instant on GPU and even works with acceptable performance on integrated graphics.
+
 ### Browser
 Browser allows you to open a browser (Chrome or Edge for now), and use the page it opens on as an input. It also uses the [Web Speech API](#web-speech-api-stt), but the provider is the web browser.
 
-Chrome uses Google's cloud computing services, and Edge probably does something similar.
 > [!NOTE]
-> These implementations are experimental and update with your browser, so it might stop using cloud computing at some point.
+> Chrome uses Google's cloud computing services, and Edge probably does something similar.
 
 ### Azure (STT)
 Azure is Microsoft's cloud computing service. It uses [per second billing](https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services/).
@@ -137,7 +146,9 @@ Deepgram is a cloud service. It uses [per minute billing](https://deepgram.com/p
 You will need to find how to create an API key and paste it in the *Key* field.
 
 ### Speechly
-TODO
+> [!WARNING]
+> Speechly was aquired by Roblox and it seems it's Speech To Text API was shut down
+> This service may be removed in the future
 
 ## TTS services
 **Every service has its pros and cons. I'd advice to read about them all before making your choice.**
@@ -159,15 +170,11 @@ You can't change the output device of this service inside Curses, but you change
 <summary>Linux</summary>
 We get the Web Speech API through WebKitGTK.
 
-**WebKitGTK does not officially support the speech synthesis part of Web Speech API yet**, but everything should work as soon as the feature gets released.
-> [!NOTE]
-> In the mean time, you can try [building WebKitGtk yourself](https://trac.webkit.org/wiki/BuildingGtk) with the additional CMake arguments `-DUSE_SPIEL=ON -DUSE_FLITE=OFF`. You might also need to edit `Source/cmake/OptionsGTK.cmake` to make `DUSE_SPIEL` a `PUBLIC` option.
-
-It should use any locally installed speech provider like eSpeak, Piper or Mimic.
+>**WebKitGTK does not officially support the speech synthesis part of Web Speech API yet**, but everything should work as soon as the feature gets released.
 </details>
 
 ### Piper
-Piper is a Free and Open Source TTS synthesizer. It generates the sound locally, and the voices are usually Public Domain (do check the license when downloading voices though).
+Piper is a Free and Open Source Text to Speech synthesizer. It generates the sound locally, and the voices are usually Public Domain (do check the license when downloading voices though).
 
 You will need to follow these few steps to get it up and running, but don't be scared!
 
@@ -179,13 +186,8 @@ You will need to follow these few steps to get it up and running, but don't be s
 - Find a voice you like on https://rhasspy.github.io/piper-samples/, and download both the `.onnx` and `.onnx.json` files into the directory you created. Make sure both files have the same name (e.g. `en_US-kristin-medium.onnx` and `en_US-kristin-medium.onnx.json`).
 - Select said voice in Curses and you're good to go :)
 
-### Windows
-The classic Windows voices.
-Not much more to say ahah.
-
-There might be some differences in the voice list with Web Speech API, no idea why lol
-
-And of course, this service is only available on Windows for obvious reason.
+### Windows (TTS)
+Windows provides the Microsoft Speech API (SAPI) which can be used for Text to Speech using the voices installed in your Windows instance.
 
 ### Azure (TTS)
 Azure is Microsoft's cloud computing service.
@@ -196,7 +198,8 @@ You will need to find [how to create an API key](https://ttsvoicewizard.com/docs
 ### TikTok
 Fast and high quality voices obtained through an unofficial TikTok TTS API.
 
-Not recommended for anything important (anything non-joke tbh), since **TikTok might shutdown the API at any point** ([learn more](https://github.com/agusibrahim/tiktok-tts-api?tab=readme-ov-file#important-notice-use-of-private-tiktok-api)).
+> [!WARNING]
+> Not recommended for anything important (anything non-joke tbh), since **TikTok might shutdown the API at any point** ([learn more](https://github.com/agusibrahim/tiktok-tts-api?tab=readme-ov-file#important-notice-use-of-private-tiktok-api)).
 
 ### Uberduck
 AI voices paid with a [subscription](https://www.uberduck.ai/pricing). **API access is needed to use Uberduck through Curses**.
@@ -225,25 +228,6 @@ There are more advanced options for Windows users depending on the extension of 
 (where `%script%` is the absolute path to the script)
 
 </details>
-
-## Getting Started with OBS
-> [!NOTE]
-> Outdated
-
-### 1. Get the App
-Get the latest [release here](https://github.com/mmpneo/curses/releases/latest). You can also [Join Discord](https://discord.gg/Sw6pw8fGYS) to get release notifications and download the new version from there as soon as it is published
-
-Or you can [build](#building) the application yourself.
-
-### 2. Open app and copy link for OBS
-Or click "Set Up OBS" to have everything set up automatically with **obs-websocket** plugin
-
-<img width="600" src="https://user-images.githubusercontent.com/3977499/218330675-472e02a9-1e18-4d60-8662-c4ca33325c24.gif">
-
-### 3. Create browser source in OBS
-Paste the link and change window size to match app's canvas size (default is 500x300)
-
-<img width="600" src="https://user-images.githubusercontent.com/3977499/218331723-721b69c5-a457-4dad-9658-f5232afc68f1.gif">
 
 # Building
 ## Prerequisites
