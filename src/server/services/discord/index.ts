@@ -1,4 +1,5 @@
 import { IServiceInterface, ServiceNetworkState, TextEventType } from "@/types";
+import { toast } from "react-toastify";
 import { serviceSubscibeToInput, serviceSubscibeToSource } from "@/utils";
 
 class Service_Discord implements IServiceInterface {
@@ -45,7 +46,7 @@ class Service_Discord implements IServiceInterface {
           avatar_url: this.#state.data.channelAvatarUrl || "",
           attachments: [],
         }),
-      });
+      }).catch((err) => toast.error(`could not dispatch discord channel hook: '${err}'`));
   }
 }
 
