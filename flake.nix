@@ -73,6 +73,7 @@
                   pkgs.cargo-tauri
                   pkgs.nodejs
                   pnpm
+                  pkgs.wrapGAppsHook # automatically wraps out binary to work with glib-networking
 
                   # whisper extra deps
                   pkgs.cmake
@@ -89,6 +90,7 @@
                   pkgs.harfbuzz
                   pkgs.librsvg
                   pkgs.libsoup_3
+                  pkgs.glib-networking # glib-networking is a runtime deb of libsoup
                   pkgs.pango
                   pkgs.webkitgtk_4_1
                   pkgs.openssl
@@ -132,6 +134,11 @@
             pkgs.typescript-language-server
           ];
           RUST_LOG = "curses";
+          shellHook = ''
+            # does what nativeBuildInputs[pkgs.wrapGAppsHook] do for glib-networking so it also
+            # works in the dev shell
+            export GIO_EXTRA_MODULES="$GIO_EXTRA_MODULES:${pkgs.glib-networking}/lib/gio/modules"
+          '';
         };
       }
     );
