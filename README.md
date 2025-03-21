@@ -7,8 +7,8 @@
 <p align="center">Speech to Text Captions for OBS, VRChat, Twitch chat and Discord</p>
 
 <p align="center">
-  <!-- TODO change image location to dev/master -->
-  <img width="600" src="https://github.com/taliyahwebb/curses/blob/update-readme/.github/assets/readme-sugar.gif">
+  <!-- TODO change image location to master -->
+  <img width="600" src="https://github.com/taliyahwebb/curses/blob/dev/.github/assets/readme-sugar.gif">
 </p>
 
 <p align="center"><b>Repo Stats</b></p>
@@ -59,9 +59,9 @@
 - **Native OBS stream captions**
 - **Google Fonts**: more than 1000 free fonts for OBS captions
 - **VRChat**: [KillFrenzy Avatar text](https://github.com/killfrenzy96/KillFrenzyAvatarText), vrchat's chatbox
-- **Twitch**: 
+- **Twitch**:
   - Use 7TV/FFZ/BTTV emotes in OBS captions
-  - Post your STT to chat 
+  - Post your STT to chat
   - Use your chat messages as a source for captions and TTS
   - native captions
 - **Discord**: Send your STT to specified channel
@@ -73,7 +73,7 @@
 - see [Github Milestones](https://github.com/taliyahwebb/curses/milestones)
 
 # Community
-For help, feature requests, bug reports, release notifications, design templates [Join Discord](https://discord.gg/Sw6pw8fGYS)
+For help, feature requests, bug reports, release notifications, design templates, [Join Discord](https://discord.gg/Sw6pw8fGYS).
 
 <a href="https://discord.gg/Sw6pw8fGYS"><img src="https://discordapp.com/api/guilds/856500849815060500/widget.png?style=banner2"/></a>
 
@@ -88,7 +88,7 @@ Otherwise, you can download it from [here](https://developer.microsoft.com/en-us
 ### Whisper STT
 If you want to use the STT module [Whisper](#whisper) you will need a Vulkan ready graphics driver installed.
 
-- NixOS: if you are using a recent NixOS version and have a graphical user environment enabled, it will likely ✨just work✨ if your hardware supports Vulkan.
+- NixOS: if you are using a recent NixOS version and have a graphical user environment enabled, it will likely ✨just work✨ if your hardware supports Vulkan
 - Other Linux: check your distributions documentation or see [Arch Linux Wiki](https://wiki.archlinux.org/title/Vulkan) for more information
 - Windows: having up to date Graphics drivers should suffice if the hardware supports it
 
@@ -98,7 +98,7 @@ Here is a list of [Vulkan ready devices](https://vulkan.gpuinfo.org/). Most mode
 **Every service has its pros and cons. I'd advice to read about them all before making your choice.**
 
 ### Web Speech API (STT)
-Web Speech API is a general specification for web browsers to support both speech synthesis and recognition. It's implementation and voices available change depending on your operating system.
+Web Speech API is a general specification for web browsers to support both speech synthesis and recognition. Its implementation and voices available change depending on your operating system.
 
 <details>
 <summary>Windows</summary>
@@ -112,8 +112,7 @@ Edge WebView2 (probably) uses cloud services to provide Speech-To-Text to the We
 We get the Web Speech API through WebKitGTK.
 
 > **WebKitGTK does not support the speech recognition of Web Speech API yet**, but everything should work as soon as the feature gets released.
-
-There have been experimentations by the WebKitGTK team to use Whisper.cpp, but ["that is much farther down the roadmap"](https://matrix.to/#/#webkitgtk:matrix.org/$PQpUpl13RWnMzowuj9Ylk_zJ_0-5uajLDa20n0vCs1o) (2025/03/08).
+> There have been experimentations by the WebKitGTK team to use Whisper.cpp, but ["that is much farther down the roadmap"](https://matrix.to/#/#webkitgtk:matrix.org/$PQpUpl13RWnMzowuj9Ylk_zJ_0-5uajLDa20n0vCs1o) (2025/03/08).
 </details>
 
 ### Whisper
@@ -147,8 +146,8 @@ You will need to find how to create an API key and paste it in the *Key* field.
 
 ### Speechly
 > [!WARNING]
-> Speechly was aquired by Roblox and it seems it's Speech To Text API was shut down
-> This service may be removed in the future
+> Speechly was aquired by Roblox and it seems its Speech To Text API was shut down.
+> This service may be removed in the future.
 
 ## TTS services
 **Every service has its pros and cons. I'd advice to read about them all before making your choice.**
@@ -225,8 +224,8 @@ There are more advanced options for Windows users depending on the extension of 
 | .py           | `python %script%`                                   |
 | .ps1          | `powershell -ExecutionPolicy Bypass -File %script%` |
 | .*            | `cmd /c %script%`                                   |
-(where `%script%` is the absolute path to the script)
 
+(where `%script%` is the absolute path to the script)
 </details>
 
 # Building
@@ -276,9 +275,9 @@ Note: [Runtime Dependencies](#runtime-dependencies)
 Note: [Runtime Dependencies](#runtime-dependencies)
 
 ## Build
-1. setup pnpm local dependencies
+1. Setup pnpm local dependencies
   - `pnpm i --frozen-lockfile`
-2. choose from the following the action you want to perform
+2. Choose from the following the action you want to perform
   - `pnpm tauri dev` build and run a local development version that restarts on code changes
   - `pnpm tauri dev --release` build and run the dev version with release settings
   - `pnpm tauri build --no-bundle --debug` to create a development build
