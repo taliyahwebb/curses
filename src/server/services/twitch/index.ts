@@ -1,4 +1,6 @@
 import { IServiceInterface, ServiceNetworkState, TextEventType } from "@/types";
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { Event, UnlistenFn } from "@tauri-apps/api/event";
 import { ApiClient, HelixUser } from "@twurple/api";
 import { StaticAuthProvider } from "@twurple/auth";
 import { proxy } from "valtio";
@@ -9,6 +11,7 @@ import {
 } from "../../../utils";
 import TwitchChatApi from "./chat";
 import TwitchEmotesApi from "./emotes";
+import { toast } from "react-toastify";
 const scope = ["chat:read", "chat:edit", "channel:read:subscriptions"];
 
 class Service_Twitch implements IServiceInterface {
@@ -21,6 +24,8 @@ class Service_Twitch implements IServiceInterface {
   liveCheckInterval?: any = null;
 
   apiClient?: ApiClient;
+
+  unlistener: UnlistenFn = () => {};
 
   state = proxy<{
     user: HelixUser | null;
@@ -76,46 +81,41 @@ class Service_Twitch implements IServiceInterface {
     });
   }
 
-  login() {
-    try {
-      const redirect =
-        import.meta.env.MODE === "development"
-          ? "http://localhost:1420/oauth_twitch.html"
-          : import.meta.env.CURSES_TWITCH_CLIENT_REDIRECT_LOCAL;
+  async login() {
+    // Using [Implicit grant flow](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/#implicit-grant-flow).
+    const link = new URL("https://id.twitch.tv/oauth2/authorize");
+    link.searchParams.set(
+      "client_id",
+      import.meta.env.CURSES_TWITCH_CLIENT_ID
+    );
+    link.searchParams.set(
+      "redirect_uri",
+      `http://localhost:${window.Config.serverNetwork.port}/oauth_twitch.html`
+    );
+    link.searchParams.set("response_type", "token");
+    link.searchParams.set("scope", scope.join("+"));
+    link.search = decodeURIComponent(link.search);
 
-      const link = new URL("https://id.twitch.tv/oauth2/authorize");
-      link.searchParams.set(
-        "client_id",
-        import.meta.env.CURSES_TWITCH_CLIENT_ID
-      );
-      link.searchParams.set("redirect_uri", redirect);
-      link.searchParams.set("response_type", "token");
-      link.searchParams.set("scope", scope.join("+"));
-      link.search = decodeURIComponent(link.search);
+    const auth_window = new WebviewWindow("oauth_twitch", {
+      url: link.toString(),
+      width: 600,
+      height: 600,
+      title: "Twitch", // TODO: add translation
+      devtools: import.meta.env.DEV, // true if vite is in dev mode
+    });
+    auth_window.once("tauri://created", () => {});
+    auth_window.once("tauri://error", (err) => toast.error(`Error creating window: ${err.payload}`));
 
-      const auth_window = window.open(link, "", "width=600,height=600");
-      const thisRef = this;
+    const thisRef = this;
+    const handleEvent = (event: Event<string>) => {
+      thisRef.unlistener();
 
-      const handleMessage = (msg: MessageEvent<unknown>) => {
-        if (
-          typeof msg.data === "string" &&
-          msg.data.startsWith("smplstt_tw_auth:")
-        ) {
-          const access_token = msg.data.split(":")[1];
-          if (typeof access_token === "string") {
-            thisRef.#state.data.token = access_token;
-            thisRef.connect();
-            window.removeEventListener("message", handleMessage, true);
-          }
-        }
-      };
-      if (auth_window) {
-        window.addEventListener("message", handleMessage, true);
-        auth_window.onbeforeunload = () => {
-          window?.removeEventListener("message", (m) => handleMessage(m), true);
-        };
-      }
-    } catch (error) {}
+      thisRef.#state.data.token = event.payload;
+      thisRef.connect();
+    };
+
+    this.unlistener(); // in case there was somehow an uncalled unlistener
+    this.unlistener = await auth_window.listen<string>("twitch_token", handleEvent);
   }
 
   logout() {

@@ -1,0 +1,14 @@
+{
+  "identifier": "oauth-twitch",
+  "description": "Permissions for the twitch authentication window",
+  "webviews": [
+    "oauth_twitch"
+  ],
+  "permissions": [
+    "core:window:allow-close",
+    "core:event:allow-emit"
+  ],
+  "remote": {
+    "urls": ["http://localhost:*/*"]
+  }
+}

@@ -63,7 +63,7 @@ const Inspector_Twitch: FC = () => {
   const {t} = useTranslation();
   const {user, liveStatus} = useSnapshot(window.ApiServer.twitch.state);
   const chatState = useSnapshot(window.ApiServer.twitch.chat.state);
-  const handleLogin = () => window.ApiServer.twitch.login();
+  const handleLogin = () => window.ApiServer.twitch.login().then();
   const handleLogout = () => window.ApiServer.twitch.logout();
   const handleShowEmotes = () => NiceModal.show('twitch-emotes');
   const handleShowEmotesMapper = () => NiceModal.show('twitch-emotes-map');
