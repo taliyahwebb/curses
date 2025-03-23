@@ -228,6 +228,14 @@ There are more advanced options for Windows users depending on the extension of 
 (where `%script%` is the absolute path to the script)
 </details>
 
+## Twitch
+### Using custom ports
+If you are using a custom port (i.e. running `curses --port {your port}`), Twitch authentication might not work. This is because Twitch only allows a few static URLs as redirects, ports included.
+
+If you are unable to use the default port (3030) for this one-time operation, you can try with any of 45561-45569.
+
+If this is not an option for you, you can [create your own app](https://dev.twitch.tv/docs/authentication/register-app/). Set the OAuth Redirect URL to `http://localhost:{your port}/oauth_twitch.html`, and the client type to `Public`. Then, pass the `CURSES_TWITCH_CLIENT_ID` env variable with the newly-generated client ID when running Curses.
+
 # Building
 ## Prerequisites
 **Application framework dependencies**:
