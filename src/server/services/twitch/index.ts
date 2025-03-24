@@ -12,6 +12,7 @@ import {
 import TwitchChatApi from "./chat";
 import TwitchEmotesApi from "./emotes";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 const scope = ["chat:read", "chat:edit", "channel:read:subscriptions"];
 
 class Service_Twitch implements IServiceInterface {
@@ -82,6 +83,7 @@ class Service_Twitch implements IServiceInterface {
   }
 
   async login() {
+    const {t} = useTranslation();
     // Using [Implicit grant flow](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/#implicit-grant-flow).
     const link = new URL("https://id.twitch.tv/oauth2/authorize");
     link.searchParams.set(
@@ -100,7 +102,7 @@ class Service_Twitch implements IServiceInterface {
       url: link.toString(),
       width: 600,
       height: 600,
-      title: "Twitch", // TODO: add translation
+      title: t('twitch.title'),
       devtools: import.meta.env.DEV, // true if vite is in dev mode
     });
     auth_window.once("tauri://created", () => {});
