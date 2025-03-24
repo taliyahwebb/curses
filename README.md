@@ -43,6 +43,8 @@
     - [TikTok](#tiktok)
     - [Uberduck](#uberduck)
     - [Custom TTS](#custom-tts)
+  - [Twitch](#twitch)
+    - [Using custom ports](#using-custom-ports)
 - [Building](#building)
   - [Prerequisites](#prerequisites)
     - [NixOS](#nixos)
