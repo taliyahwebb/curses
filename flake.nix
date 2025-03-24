@@ -33,6 +33,8 @@
             path = ./.;
           };
           paths = [
+            "Cargo.toml"
+            "Cargo.lock"
             "src-tauri"
             "src"
             "public"
@@ -56,13 +58,6 @@
               craneLib'.overrideArgs {
                 pname = projectName;
                 src = buildSrc;
-                cargoLock = ./src-tauri/Cargo.lock;
-                cargoToml = ./src-tauri/Cargo.toml;
-                postConfigure = ''
-                  # cargo lock is filtered out and a stripped version is placed at src root
-                  mv Cargo.lock src-tauri/
-                  cd src-tauri
-                '';
 
                 # libclang_path is needed when not using flakebox
                 # LIBCLANG_PATH = "${pkgs.libclang.lib}/lib/"; # (whisper-rs), bindgen needs this
@@ -108,13 +103,10 @@
             );
           in
           rec {
-            deps = craneLib.buildDepsOnly { src = buildSrc; };
+            deps = craneLib.buildDepsOnly { };
             ${projectName} = craneLib.buildPackage {
               cargoArtifacts = deps;
               nativeBuildInputs = [ pnpm.configHook ];
-              preBuild = ''
-                mv ../target target
-              '';
               pnpmDeps = pnpm.fetchDeps {
                 pname = projectName;
                 src = buildSrc;

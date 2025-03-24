@@ -1,19 +1,19 @@
 [package]
 name = "curses"
-version = "0.0.20"
-description = "A very cool app"
-authors = ["mmpneo@gmail.com"]
-license = ""
-repository = ""
-edition = "2021"
-rust-version = "1.73"
+edition = { workspace = true }
+version = { workspace = true }
+repository = { workspace = true }
+readme = { workspace = true }
+description = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
 window-shadows = "^0.2"
 uwuify = "^0.2"
 itertools = "0.14"
@@ -38,6 +38,7 @@ tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 wav_io = "0.1.15"
 samplerate = "0.2.4"
+tauri-plugin-global-shortcut = "2"
 
 [dependencies.tauri]
 version = "2"
@@ -58,19 +59,9 @@ features = [
   "Win32_UI_WindowsAndMessaging",
 ]
 
-[profile.release]
-lto = true
-codegen-units = 1
-strip = true
-
 [features]
 default = ["custom-protocol", "vulkan"]
 background_input = []
 custom-protocol = ["tauri/custom-protocol"]
 vulkan = ["whisper-rs/vulkan"]
 
-[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-global-shortcut = "2"
-
-[profile.dev.package."*"]
-opt-level = 3

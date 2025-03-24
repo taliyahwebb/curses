@@ -74,8 +74,8 @@ jobs:
       - uses: SebRollen/toml-action@v1.0.1
         id: version
         with:
-          file: 'src-tauri/Cargo.toml'
-          field: 'package.version'
+          file: 'Cargo.toml'
+          field: 'workspace.package.version'
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable # Set this to dtolnay/rust-toolchain@nightly
@@ -85,8 +85,6 @@ jobs:
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
 
       - name: install frontend dependencies
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
