@@ -112,16 +112,16 @@ jobs:
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: true
           prerelease: ${{ startsWith(github.ref, 'refs/heads/releases/') && endsWith(github.ref, '-pre')}}
-          args: ${{ matrix.args }}
+          args: "${{ matrix.args }} ${{ (matrix.platform == 'windows-latest' && steps.version.outputs.value) && '--no-bundle' || null }}"
       - uses: actions/upload-artifact@v4
         with:
           name: AppImage
-          path: src-tauri/target/release/bundle/appimage/curses_${{steps.version.outputs.value}}_amd64.AppImage
+          path: target/release/bundle/appimage/curses_${{steps.version.outputs.value}}_amd64.AppImage
       - uses: actions/upload-artifact@v4
         with:
           name: WindowsEXE
-          path: src-tauri/target/release/curses.exe
+          path: target/release/curses.exe
       - uses: actions/upload-artifact@v4
         with:
           name: WindowsInstaller
-          path: src-tauri/target/release/bundle/msi/curses_${{steps.version.outputs.value}}_x64_en-US.msi
+          path: target/release/bundle/msi/curses_${{steps.version.outputs.value}}_x64_en-US.msi
