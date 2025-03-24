@@ -35,6 +35,7 @@
           paths = [
             "Cargo.toml"
             "Cargo.lock"
+            "dev-tools"
             "src-tauri"
             "src"
             "public"
@@ -104,6 +105,11 @@
           in
           rec {
             deps = craneLib.buildDepsOnly { };
+            dev-tools = craneLib.buildPackage {
+              pname = "dev-tools";
+              cargoArtifacts = deps;
+              cargoExtraArgs = "--locked -p dev-tools";
+            };
             ${projectName} = craneLib.buildPackage {
               cargoArtifacts = deps;
               nativeBuildInputs = [ pnpm.configHook ];

@@ -25,6 +25,18 @@ jobs:
       uses: DeterminateSystems/magic-nix-cache-action@v2
     - name: Build on ${{ matrix.host }}
       run: nix build -L .#
+  build-dev-tools:
+    needs: build-flake # run after main build to reuse cache deps
+    name: build dev-tools
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@v4
+    - name: Magic Nix Cache
+      uses: DeterminateSystems/magic-nix-cache-action@v2
+    - name: Build on ${{ matrix.host }}
+      run: nix build -L .#dev-tools
   flake-check:
     name: Flake self-check
     runs-on: ubuntu-latest
