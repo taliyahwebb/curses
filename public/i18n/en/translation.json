@@ -199,6 +199,7 @@
     "title": "Twitch",
     "btn_logout": "Logout",
     "btn_login": "Login",
+    "auth_window_title": "Twitch authentication",
     "status_stream": "Stream status",
     "status_chat": "Chat connection",
     "field_enable_chat": "Enable chat",
