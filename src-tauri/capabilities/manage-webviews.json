@@ -1,0 +1,10 @@
+{
+  "identifier": "manage-webviews",
+  "description": "The set of webview-related permissions needed for the main window to manage webviews",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:webview:allow-create-webview-window"
+  ]
+}
