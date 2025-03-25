@@ -1,0 +1,30 @@
+productName = "curses"
+mainBinaryName = "curses"
+identifier = "com.cursescaptions.app"
+
+[bundle]
+active = true
+category = "Entertainment"
+icon = [
+  "icons/32x32.png",
+  "icons/128x128.png",
+  "icons/128x128@2x.png",
+  "icons/icon.icns",
+  "icons/icon.ico"
+]
+targets = "all"
+
+[build]
+beforeBuildCommand = "pnpm build"
+beforeDevCommand = "pnpm dev --host"
+devUrl = "http://localhost:1420"
+frontendDist = "../dist"
+
+[app]
+withGlobalTauri = true
+
+[[app.windows]]
+title = "Curses"
+fullscreen = false
+decorations = false
+useHttpsScheme = true

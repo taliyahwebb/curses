@@ -9,7 +9,7 @@ authors = { workspace = true }
 license = { workspace = true }
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = { version = "2", features = [ "config-toml" ] }
 
 [dependencies]
 serde = { workspace = true }
@@ -42,7 +42,7 @@ tauri-plugin-global-shortcut = "2"
 
 [dependencies.tauri]
 version = "2"
-features = []
+features = [ "config-toml" ]
 
 [dependencies.windows]
 version = "0.59"
