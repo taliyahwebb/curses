@@ -1,9 +1,0 @@
-{
-  "identifier": "create-webview",
-  "windows": [
-    "main"
-  ],
-  "permissions": [
-    "core:webview:allow-create-webview-window"
-  ]
-}
