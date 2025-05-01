@@ -211,6 +211,8 @@ You will need to find [how to create an API key](https://ttsvoicewizard.com/docs
 Custom TTS isn't a service, but it allows you to plug in pretty much any TTS service.
 
 You will probably need to create a wrapper script to make it work though.
+> [!WARNING]
+> The messages passed to this script might come from untrusted sources (eg. Twitch Chat), so make sure to properly sanitize the input as to not give random chatters access to your computer.
 
 It executes the given file as a command and passes 2 arguments:
 - the path to a file containing the text to synthesize in UTF-8 format.
