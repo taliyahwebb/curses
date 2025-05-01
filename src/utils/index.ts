@@ -49,7 +49,8 @@ export function isObjectVaid(value: Record<string, any>) {
 export function isEmptyValue(value: any) {
   return value === undefined
     || value === null
-    || (typeof value === 'object' && Object.keys(value).length === 0) || (typeof value === 'string' && value.trim().length === 0)
+    || (typeof value === 'object' && Object.keys(value).length === 0)
+    || (typeof value === 'string' && value.trim().length === 0);
 }
 
 export type WordReplacementsCache = {
@@ -60,7 +61,6 @@ export type WordReplacementsCache = {
 
 export function buildWordReplacementsCache(map: Record<string, string>, caseInsensitive: boolean): WordReplacementsCache {
   let trimKeys = Object.fromEntries(Object.entries(map).map(([k, v]) => [k.trim(), v]));
-  console.log(trimKeys);
   let _map = {}
   if (caseInsensitive) {
     _map = Object.fromEntries(Object.entries(map).map(([k, v]) => [k.toLowerCase(), v]));
