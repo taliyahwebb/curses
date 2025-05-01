@@ -42,7 +42,34 @@ const Azure: FC = memo(() => {
     />
     <InputCheckbox label="common.field_interim_results" onChange={e => up("interim", e)} value={pr.interim} />
   </>
-})
+});
+
+const LibreTranslate: FC = memo(() => {
+  const {t} = useTranslation();
+  const pr = useSnapshot(window.ApiServer.state.services.translation.data.libreTranslate);
+
+  const {azure: azureLanguages} = useSnapshot(window.ApiServer.translation.lib);
+  const update = <K extends keyof Translation_State["libreTranslate"]>(key: K, v: Translation_State["libreTranslate"][K]) =>
+    window.ApiServer.state.services.translation.data.libreTranslate[key] = v;
+
+  return <>
+    <Inspector.SubHeader>LibreTranslate</Inspector.SubHeader>
+    <InputText label="transl.libreTranslate_key" type="password" value={pr.key} onChange={v => update("key", v.target.value)} />
+    <InputSelect 
+      label="transl.azure_from_language"
+      options={azureLanguages as InputSelectOption[]}
+      value={pr.languageFrom}
+      onValueChange={e => update("languageFrom", e)}
+    />
+    <InputSelect 
+      label="transl.azure_to_language"
+      options={azureLanguages as InputSelectOption[]}
+      value={pr.languageTo}
+      onValueChange={e => update("languageTo", e)}
+    />
+  </>
+});
+
 
 const Inspector_Translation: FC = () => {
   const {t} = useTranslation();
@@ -60,9 +87,11 @@ const Inspector_Translation: FC = () => {
       <Inspector.Deactivatable active={state.status === ServiceNetworkState.disconnected}>
         <InputSelect options={[
           { label: "Azure", value: Translation_Backends.azure },
+          { label: "LibreTranslate", value: Translation_Backends.libreTranslate },
         ]} label="common.field_service" value={data.data.backend} onValueChange={e => up("backend", e as Translation_Backends)} />
 
         {data.data.backend === Translation_Backends.azure && <Azure />}
+        {data.data.backend === Translation_Backends.libreTranslate && <LibreTranslate/>}
       </Inspector.Deactivatable>
 
       <ServiceButton status={state.status} onStart={() => window.ApiServer.translation.start()} onStop={() => window.ApiServer.translation.stop()} />

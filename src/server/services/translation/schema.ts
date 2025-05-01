@@ -3,6 +3,7 @@ import { z } from "zod";
 
 export enum Translation_Backends {
   azure = "azure",
+  libreTranslate = "libreTranslate",
 }
 const zodTranslation_Backends = z.nativeEnum(Translation_Backends);
 
@@ -17,7 +18,13 @@ export const Service_Translation_Schema = z.object({
     language: zSafe(z.coerce.string(), "en"),
     profanity: zSafe(z.enum(["Deleted", "Marked", "NoAction"]), "Marked"),
     interim: zSafe(z.coerce.boolean(), true)
-  }).default({})
+  }).default({}),
+  libreTranslate: z.object({
+    key: zSafe(z.coerce.string(), ""),
+    languageFrom: zSafe(z.coerce.string(), "auto"),
+    languageTo: zSafe(z.coerce.string(), "en"),
+    interim: zSafe(z.coerce.boolean(), true),
+  }).default({}),
 }).default({});
 
 export type Translation_State = z.infer<typeof Service_Translation_Schema>;

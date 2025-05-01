@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import { proxy } from "valtio";
 import { Translation_Backends } from "./schema";
 import { Translation_AzureService } from "./services/azure";
+import { Translation_LibreTranslateService } from "./services/libreTranslate";
 import {
   ITranslationReceiver,
   ITranslationService,
@@ -24,6 +25,7 @@ const backends: {
   [k in Translation_Backends]: ITranslationServiceConstructor;
 } = {
   [Translation_Backends.azure]: Translation_AzureService,
+  [Translation_Backends.libreTranslate]: Translation_LibreTranslateService,
 };
 
 class Service_Translation implements IServiceInterface, ITranslationReceiver {
