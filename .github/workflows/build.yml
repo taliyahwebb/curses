@@ -75,6 +75,8 @@ jobs:
  
       - name: Install Vulkan SDK and Runtime
         uses: jakoch/install-vulkan-sdk-action@v1.2.1
+        with:
+          vulkan_version: 1.4.309.0
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
