@@ -8,21 +8,15 @@
   <p id="text">Redirected</p>
 
 <script>
-  function main() {
-    if (!document.location.hash)
-      document.getElementById("text").innerHTML = "This is only meant to be opened as a twitch redirect!";
+  if (!document.location.hash)
+    document.getElementById("text").innerHTML = "This is only meant to be opened as a twitch redirect!";
 
-    const parsedHash = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = parsedHash.get("access_token") ?? "";
+  const parsedHash = new URLSearchParams(window.location.hash.substring(1));
+  const accessToken = parsedHash.get("access_token") ?? "";
 
-    const tauriWindow = window.__TAURI__.window.getCurrentWindow();
-    tauriWindow.emit("twitch_token", accessToken)
-      .then(() => tauriWindow.close());
-  }
-
-  // temporary fix for https://github.com/tauri-apps/tauri/issues/12990
-  // this can be removed and the code directly executed once the issue is resolved
-  setTimeout(main, 1000);
+  const tauriWindow = window.__TAURI__.window.getCurrentWindow();
+  tauriWindow.emit("twitch_token", accessToken)
+    .then(() => tauriWindow.close());
 </script>
 </body>
 </html>
