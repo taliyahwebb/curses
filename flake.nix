@@ -5,6 +5,7 @@
     flake-utils.url = "github:numtide/flake-utils";
     flakebox.url = "github:rustshop/flakebox";
     flakebox.inputs.nixpkgs.follows = "nixpkgs";
+    nixgl.url = "github:nix-community/nixGL";
   };
 
   outputs =
@@ -12,13 +13,17 @@
       nixpkgs,
       flake-utils,
       flakebox,
+      nixgl,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
         projectName = "curses";
-        pkgs = nixpkgs.legacyPackages.${system};
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ nixgl.overlay ];
+        };
         pnpm = pkgs.pnpm_9;
         flakeboxLib = flakebox.lib.${system} {
           config = {
@@ -50,6 +55,17 @@
             "tsconfig.node.json"
             "vite.config.ts"
           ];
+        };
+
+        more-alsa-plugins = pkgs.symlinkJoin {
+          name = "more-alsa-plugins";
+          paths = map (path: "${path}/lib/alsa-lib") (
+            with pkgs;
+            [
+              pipewire
+              alsa-plugins
+            ]
+          );
         };
 
         multiBuild = (flakeboxLib.craneMultiBuild { }) (
@@ -96,9 +112,6 @@
                   pkgs.vulkan-loader
 
                   pkgs.alsa-lib
-
-                  # piper binary pre-shipped
-                  pkgs.piper-tts
                 ];
               }
             );
@@ -119,23 +132,37 @@
                 hash = "sha256-pdHVo9iqTSPOjaeMxndFXS6vNhg7+EHLTGnImCgoKpQ=";
               };
               cargoBuildCommand = "cargo tauri build --no-bundle --";
+              postInstall = ''
+                wrapProgram $out/bin/curses \
+                  ${pkgs.lib.optionalString pkgs.stdenv.isLinux "--set ALSA_PLUGIN_DIR ${more-alsa-plugins}"} \
+                  --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.piper-tts ]}
+              '';
             };
           }
         );
+        nixGLCurses = pkgs.writeShellScriptBin "curses" ''
+          ${pkgs.lib.getExe pkgs.nixgl.nixGLIntel} \
+          ${pkgs.lib.getExe pkgs.nixgl.nixVulkanIntel} \
+          ${multiBuild.${projectName}}/bin/curses "$@"
+        '';
       in
       {
-        packages.default = multiBuild.${projectName};
+        packages.default = nixGLCurses;
+        packages.curses = multiBuild.${projectName};
         legacyPackages = multiBuild;
         devShells = flakeboxLib.mkShells {
           inputsFrom = [ multiBuild.${projectName} ];
           packages = [
             pkgs.typescript-language-server
+            pkgs.nixgl.nixGLIntel
+            pkgs.nixgl.nixVulkanIntel
           ];
           RUST_LOG = "curses";
           shellHook = ''
             # does what nativeBuildInputs[pkgs.wrapGAppsHook] do for glib-networking so it also
             # works in the dev shell
             export GIO_EXTRA_MODULES="$GIO_EXTRA_MODULES:${pkgs.glib-networking}/lib/gio/modules"
+            ${pkgs.lib.optionalString pkgs.stdenv.isLinux ''export ALSA_PLUGIN_DIR="${more-alsa-plugins}"''}
           '';
         };
       }

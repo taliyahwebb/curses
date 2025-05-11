@@ -253,9 +253,6 @@ This repository provides a [Nix flake](https://nixos.wiki/wiki/flakes) which pro
 - Nix Package as the default flake package output
   - can be built with `nix build` (binary will be available as `./result/bin/curses`)
 
-> [!WARNING]
-> The flake is not made for non-NixOS environments.
-
 The Development Environment provides all needed libraries to build the project.
 
 Note: [Runtime Dependencies](#runtime-dependencies)
