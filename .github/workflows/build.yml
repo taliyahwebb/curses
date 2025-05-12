@@ -14,7 +14,19 @@ on:
       - 'releases/**'
 
 jobs:
+  pre-commit-check:
+    name: workspace pre-commit check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@v4
+    - name: Magic Nix Cache
+      uses: DeterminateSystems/magic-nix-cache-action@v2
+    - name: run pre-commit check
+      run: nix develop .#lint -c ./misc/git-hooks/pre-commit
   build-flake:
+    needs: pre-commit-check
     name: build nixos
     runs-on: ubuntu-latest
     steps:
@@ -23,7 +35,7 @@ jobs:
       uses: DeterminateSystems/nix-installer-action@v4
     - name: Magic Nix Cache
       uses: DeterminateSystems/magic-nix-cache-action@v2
-    - name: Build on ${{ matrix.host }}
+    - name: Nix build
       run: nix build -L .#
   build-dev-tools:
     needs: build-flake # run after main build to reuse cache deps
@@ -35,7 +47,7 @@ jobs:
       uses: DeterminateSystems/nix-installer-action@v4
     - name: Magic Nix Cache
       uses: DeterminateSystems/magic-nix-cache-action@v2
-    - name: Build on ${{ matrix.host }}
+    - name: nix build
       run: nix build -L .#dev-tools
   flake-check:
     name: Flake self-check

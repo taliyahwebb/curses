@@ -24,11 +24,36 @@
           inherit system;
           overlays = [ nixgl.overlay ];
         };
+        lib = pkgs.lib;
         pnpm = pkgs.pnpm_9;
         flakeboxLib = flakebox.lib.${system} {
           config = {
             github.ci.enable = false;
             semgrep.enable = false;
+            flakebox.lint.enable = false;
+            just = {
+              enable = true;
+              rules.watch.content = lib.mkForce ''
+                # run and restart on changes
+                watch:
+                  #!/usr/bin/env bash
+                  set -euo pipefail
+                  if [ ! -f Cargo.toml ]; then
+                    cd {{invocation_directory()}}
+                  fi
+                  env RUST_LOG=''${RUST_LOG:-debug} cargo tauri dev
+              '';
+              rules.build.content = lib.mkForce ''
+                # run `cargo build` on everything
+                build *ARGS="--no-bundle":
+                  #!/usr/bin/env bash
+                  set -euo pipefail
+                  if [ ! -f Cargo.toml ]; then
+                    cd {{invocation_directory()}}
+                  fi
+                  cargo tauri build {{ARGS}}
+              '';
+            };
           };
         };
 
@@ -123,7 +148,7 @@
               cargoArtifacts = deps;
               cargoExtraArgs = "--locked -p dev-tools";
             };
-            ${projectName} = craneLib.buildPackage {
+            curses = craneLib.buildPackage {
               cargoArtifacts = deps;
               nativeBuildInputs = [ pnpm.configHook ];
               pnpmDeps = pnpm.fetchDeps {
@@ -138,20 +163,23 @@
                   --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.piper-tts ]}
               '';
             };
+            nixGLCurses = pkgs.writeShellScriptBin "curses" ''
+              ${pkgs.lib.getExe pkgs.nixgl.nixGLIntel} \
+              ${pkgs.lib.getExe pkgs.nixgl.nixVulkanIntel} \
+              ${curses}/bin/curses "$@"
+            '';
           }
         );
-        nixGLCurses = pkgs.writeShellScriptBin "curses" ''
-          ${pkgs.lib.getExe pkgs.nixgl.nixGLIntel} \
-          ${pkgs.lib.getExe pkgs.nixgl.nixVulkanIntel} \
-          ${multiBuild.${projectName}}/bin/curses "$@"
-        '';
       in
       {
-        packages.default = nixGLCurses;
-        packages.curses = multiBuild.${projectName};
-        legacyPackages = multiBuild;
-        devShells = flakeboxLib.mkShells {
-          inputsFrom = [ multiBuild.${projectName} ];
+        packages.default = multiBuild.nixGLCurses;
+        packages.curses = multiBuild.curses;
+        packages.dev-tools = multiBuild.dev-tools;
+        devShells.lint = flakeboxLib.mkLintShell {
+          packages = [ ];
+        };
+        devShells.default = flakeboxLib.mkDevShell {
+          inputsFrom = [ multiBuild.curses ];
           packages = [
             pkgs.typescript-language-server
             pkgs.nixgl.nixGLIntel
