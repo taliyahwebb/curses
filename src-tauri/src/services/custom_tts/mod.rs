@@ -50,7 +50,7 @@ async fn get_audio_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
     } else {
         let error = match status.code() {
             Some(code) => format!("{:?} exited with status code: {}", command.as_std(), code),
-            None => format!("Script terminated by signal"),
+            None => "Script terminated by signal".to_string(),
         };
         Err(io::Error::other(error))
     }

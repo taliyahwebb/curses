@@ -33,12 +33,12 @@ async fn config(config: State<'_, AppConfiguration>) -> Result<WebConfig, String
     let Ok(ip) = local_ip() else {
         return Err("Error retrieving local IP".to_string());
     };
-    return Ok(WebConfig {
+    Ok(WebConfig {
         local_ip: ip.to_string(),
         port: config.port.to_string(),
         peer_path: "peer".to_string(),
         pubsub_path: "pubsub".to_string(),
-    });
+    })
 }
 
 #[cfg(windows)]
@@ -103,7 +103,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             let a = Arc::new(app.asset_resolver());
             tauri::async_runtime::spawn(async move {
                 let routes = warp::path!("ping")
-                    .map(|| format!("pong"))
+                    .map(|| "pong".to_string())
                     .or(peer::path())
                     .or(pubsub::path(pubsub_input_rx, pubsub_output_tx))
                     .or(assets::path(a));

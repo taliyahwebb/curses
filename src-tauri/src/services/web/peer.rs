@@ -17,13 +17,13 @@ pub type Peers = Arc<RwLock<HashMap<String, mpsc::UnboundedSender<Result<Message
 pub fn path() -> BoxedFilter<(impl Reply,)> {
     let peers = Peers::default();
     let peers = warp::any().map(move || peers.clone());
-    let t = warp::path("peer")
+
+    warp::path("peer")
         .and(warp::ws())
         .and(peers)
         .and(warp::query::<PeerQueryData>())
         .map(|ws: Ws, peers, q| ws.on_upgrade(move |socket| peer_handler(socket, peers, q)))
-        .boxed();
-    t
+        .boxed()
 }
 
 pub async fn peer_handler(ws: WebSocket, peers: Peers, query: PeerQueryData) {
@@ -38,7 +38,7 @@ pub async fn peer_handler(ws: WebSocket, peers: Peers, query: PeerQueryData) {
         return;
     }
 
-    tx.send(Ok(PeerMessageType::OPEN.into())).unwrap();
+    tx.send(Ok(PeerMessageType::Open.into())).unwrap();
 
     peers.write().await.insert(query.id.clone(), tx);
 
@@ -51,27 +51,25 @@ pub async fn peer_handler(ws: WebSocket, peers: Peers, query: PeerQueryData) {
     peers.write().await.remove(&query.id);
 }
 
-#[derive(Serialize, Deserialize, PartialEq)]
+#[derive(Default, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "UPPERCASE")]
 enum PeerMessageType {
-    OPEN, // socket ready
-    LEAVE,
-    CANDIDATE,
-    OFFER,
-    ANSWER,
-    EXPIRE, // host not found
-    HEARTBEAT,
+    Open, // socket ready
+    Leave,
+    Candidate,
+    Offer,
+    Answer,
+    Expire, // host not found
+    Heartbeat,
     #[serde(rename(serialize = "ID_TAKEN", deserialize = "IDTAKEN"))]
-    IDTAKEN,
-    ERROR,
+    IDTaken,
+    #[default]
+    Error,
 }
-impl Default for PeerMessageType {
-    fn default() -> Self {
-        PeerMessageType::ERROR
-    }
-}
-impl Into<Message> for PeerMessageType {
-    fn into(self) -> Message {
-        Message::text(serde_json::to_string(&PeerMessageShort { t: self }).unwrap())
+
+impl From<PeerMessageType> for Message {
+    fn from(val: PeerMessageType) -> Self {
+        Message::text(serde_json::to_string(&PeerMessageShort { t: val }).unwrap())
     }
 }
 
@@ -103,10 +101,10 @@ async fn handle_message(peer_id: &String, msg: Message, users: &Peers) {
 
     let users = users.read().await;
 
-    if msg.t == PeerMessageType::OFFER && !users.contains_key(msg.dst.as_str()) {
+    if msg.t == PeerMessageType::Offer && !users.contains_key(msg.dst.as_str()) {
         let Some(peer_tx) = users.get(peer_id) else { return };
         let Ok(msg_str) = serde_json::to_string(&PeerMessage {
-            t: PeerMessageType::EXPIRE,
+            t: PeerMessageType::Expire,
             src: msg.dst,
             dst: peer_id.clone(),
             payload: msg.payload,
@@ -114,7 +112,7 @@ async fn handle_message(peer_id: &String, msg: Message, users: &Peers) {
             return;
         };
         peer_tx.send(Ok(Message::text(msg_str))).unwrap();
-    } else if msg.dst != "" && users.contains_key(&msg.dst) {
+    } else if !msg.dst.is_empty() && users.contains_key(&msg.dst) {
         msg.src = peer_id.clone();
         let Some(peer_tx) = users.get(&msg.dst) else { return };
         let Ok(msg_str) = serde_json::to_string(&msg) else { return };

@@ -39,8 +39,8 @@ fn app_close(app_handle: tauri::AppHandle) {
     };
     app_handle.save_window_state(StateFlags::all()).ok(); // don't really care if it saves it
 
-    if let Err(_) = window.close() {
-        return app_handle.exit(0);
+    if window.close().is_err() {
+        app_handle.exit(0)
     }
 }
 fn app_setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {

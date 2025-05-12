@@ -31,14 +31,14 @@ pub fn path(mut input: mpsc::Receiver<String>, output: mpsc::Sender<String>) -> 
 
     let peers = warp::any().map(move || peers.clone());
     let output = warp::any().map(move || output.clone());
-    let t = warp::path("pubsub")
+
+    warp::path("pubsub")
         .and(warp::ws())
         .and(peers)
         .and(output)
         .and(warp::query::<PeerQueryData>())
         .map(|ws: Ws, peers, output, q| ws.on_upgrade(move |socket| peer_handler(socket, peers, output, q)))
-        .boxed();
-    t
+        .boxed()
 }
 
 pub async fn peer_handler(ws: WebSocket, peers: Peers, output: mpsc::Sender<String>, query: PeerQueryData) {

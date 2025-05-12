@@ -124,7 +124,7 @@ async fn get_wav_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
         .spawn()
         .with_context(|| format!("Failed to start '{}'", piper_path.display()))?;
 
-    write_to_stdin(&mut process, &args.value.as_bytes()).await?;
+    write_to_stdin(&mut process, args.value.as_bytes()).await?;
 
     let status = process.wait().await?;
 
