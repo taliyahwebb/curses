@@ -34,7 +34,7 @@ jobs:
     - name: Nix build
       run: nix build -L .#
   build-dev-tools:
-    needs: build-flake # run after main build to reuse cache deps
+    needs: pre-commit-check
     name: build dev-tools
     runs-on: ubuntu-latest
     steps:
@@ -54,6 +54,7 @@ jobs:
         fail-mode: true
     
   build-tauri:
+    needs: pre-commit-check
     permissions:
       contents: write
     strategy:
