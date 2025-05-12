@@ -1,8 +1,7 @@
+use crate::utils::*;
 use serde::{Deserialize, Serialize};
 use std::{io, path::PathBuf};
-use tauri::{plugin, Runtime};
-
-use crate::utils::*;
+use tauri::{Runtime, plugin};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Voice {
@@ -156,7 +155,7 @@ fn get_voices(path: PathBuf) -> Result<Vec<Voice>, String> {
 
 #[tauri::command]
 async fn speak(args: SpeakArgs) -> Result<(), String> {
-    use crate::services::audio::{play_async, RpcAudioPlayAsync};
+    use crate::services::audio::{RpcAudioPlayAsync, play_async};
 
     // fast path for empty string
     if args.value.is_empty() {

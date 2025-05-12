@@ -1,12 +1,7 @@
+use crate::services::audio::{RpcAudioPlayAsync, play_async};
 use futures::TryFutureExt;
 use serde::{Deserialize, Serialize};
-use tauri::{
-    command,
-    plugin::{Builder, TauriPlugin},
-    Runtime,
-};
-
-use crate::services::audio::{play_async, RpcAudioPlayAsync};
+use tauri::{Runtime, command, plugin::{Builder, TauriPlugin}};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct UberDuckAuth {

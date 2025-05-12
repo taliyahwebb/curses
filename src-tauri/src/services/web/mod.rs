@@ -2,7 +2,7 @@ use super::AppConfiguration;
 use local_ip_address::local_ip;
 use serde::{Deserialize, Serialize};
 use std::{process::{Command, Stdio}, sync::Arc};
-use tauri::{async_runtime::Mutex, command, plugin::{Builder, TauriPlugin}, Emitter, Manager, Runtime, State};
+use tauri::{Emitter, Manager, Runtime, State, async_runtime::Mutex, command, plugin::{Builder, TauriPlugin}};
 use tokio::sync::mpsc;
 use warp::Filter;
 
@@ -43,27 +43,23 @@ async fn config(config: State<'_, AppConfiguration>) -> Result<WebConfig, String
 
 #[cfg(windows)]
 fn try_open_browser(browser: &String, url: &String) -> Result<bool, String> {
-    Ok(
-        Command::new("cmd")
-            .stderr(Stdio::null()) // errors are expected, don't print to terminal
-            .args(["/C", format!("start {} {}", browser, url).as_str()])
-            .status()
-            .expect("failed to execute process `cmd`")
-            .success()
-    )
+    Ok(Command::new("cmd")
+        .stderr(Stdio::null()) // errors are expected, don't print to terminal
+        .args(["/C", format!("start {} {}", browser, url).as_str()])
+        .status()
+        .expect("failed to execute process `cmd`")
+        .success())
 }
 
 #[cfg(target_os = "linux")]
-fn try_open_browser(browser: &String, url: &String) -> Result <bool, String> {
-    Ok(
-        Command::new(browser)
-            .stderr(Stdio::null())
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .arg(url)
-            .spawn()
-            .is_ok()
-    )
+fn try_open_browser(browser: &String, url: &String) -> Result<bool, String> {
+    Ok(Command::new(browser)
+        .stderr(Stdio::null())
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .arg(url)
+        .spawn()
+        .is_ok())
 }
 
 #[cfg(not(any(windows, target_os = "linux")))]
@@ -81,8 +77,12 @@ struct OpenBrowserCommand {
 fn open_browser(data: OpenBrowserCommand) -> Result<(), String> {
     for browser in &data.browser_names {
         match try_open_browser(browser, &data.url) {
-            Ok(success) => if success { return Ok(()) },
-            Err(err) => return Err(err)
+            Ok(success) => {
+                if success {
+                    return Ok(());
+                }
+            }
+            Err(err) => return Err(err),
         };
     }
     Err("Could not find browser executable".to_string())

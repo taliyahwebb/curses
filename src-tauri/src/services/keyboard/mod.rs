@@ -1,7 +1,6 @@
-use tauri::plugin::{Builder, TauriPlugin};
-use tauri::Runtime;
 #[cfg(feature = "background_input")]
 use tauri::Emitter;
+use tauri::{Runtime, plugin::{Builder, TauriPlugin}};
 
 #[cfg(feature = "background_input")]
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
@@ -16,23 +15,11 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 #[cfg(feature = "background_input")]
 mod background_input {
     use super::*;
-
     use serde::{Deserialize, Serialize};
     use std::{os::raw::c_int, sync::RwLock};
-    use tauri::command;
-    use tauri::State;
+    use tauri::{State, command};
     use tokio::sync::mpsc;
-    use windows::Win32::{
-        Foundation::{LPARAM, LRESULT, WPARAM},
-        System::Threading::{AttachThreadInput, GetCurrentThreadId},
-        UI::{
-            Input::KeyboardAndMouse::{GetKeyboardLayout, GetKeyboardState, MapVirtualKeyExW, ToUnicodeEx, MAPVK_VK_TO_VSC_EX, VK_LCONTROL},
-            WindowsAndMessaging::{
-                CallNextHookEx, GetForegroundWindow, GetWindowThreadProcessId, SetWindowsHookExA, UnhookWindowsHookEx, HC_ACTION, HHOOK,
-                KBDLLHOOKSTRUCT, WH_KEYBOARD_LL, WM_KEYDOWN,
-            },
-        },
-    };
+    use windows::Win32::{Foundation::{LPARAM, LRESULT, WPARAM}, System::Threading::{AttachThreadInput, GetCurrentThreadId}, UI::{Input::KeyboardAndMouse::{GetKeyboardLayout, GetKeyboardState, MAPVK_VK_TO_VSC_EX, MapVirtualKeyExW, ToUnicodeEx, VK_LCONTROL}, WindowsAndMessaging::{CallNextHookEx, GetForegroundWindow, GetWindowThreadProcessId, HC_ACTION, HHOOK, KBDLLHOOKSTRUCT, SetWindowsHookExA, UnhookWindowsHookEx, WH_KEYBOARD_LL, WM_KEYDOWN}}};
 
     struct BgInput {
         tx: mpsc::UnboundedSender<String>,

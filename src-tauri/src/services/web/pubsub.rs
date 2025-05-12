@@ -1,15 +1,10 @@
-use std::{collections::HashMap, sync::Arc};
-
 use futures::StreamExt;
 use serde::Deserialize;
+use std::{collections::HashMap, sync::Arc};
 use tauri::async_runtime::RwLock;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use warp::{
-    filters::BoxedFilter,
-    ws::{Message, WebSocket, Ws},
-    Filter, Reply,
-};
+use warp::{Filter, Reply, filters::BoxedFilter, ws::{Message, WebSocket, Ws}};
 
 #[derive(Deserialize)]
 pub struct PeerQueryData {

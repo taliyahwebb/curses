@@ -1,13 +1,8 @@
-use std::io;
-use std::path::Path;
-use std::path::PathBuf;
-
-use serde::{Deserialize, Serialize};
-use tauri::{plugin, Runtime};
-
-use tokio::process::Command;
-
 use crate::utils::*;
+use serde::{Deserialize, Serialize};
+use std::{io, path::{Path, PathBuf}};
+use tauri::{Runtime, plugin};
+use tokio::process::Command;
 
 /// arguments to the `speak` function. most of these get passed straight to the executable
 #[derive(Serialize, Deserialize, Debug)]
@@ -116,7 +111,7 @@ fn build_command(script: &Path, txtfile: &Path, outfile: &Path) -> Command {
 
 #[tauri::command]
 async fn speak(args: SpeakArgs) -> Result<(), String> {
-    use crate::services::audio::{play_async, RpcAudioPlayAsync};
+    use crate::services::audio::{RpcAudioPlayAsync, play_async};
 
     // fast path for empty string
     if args.value.is_empty() {

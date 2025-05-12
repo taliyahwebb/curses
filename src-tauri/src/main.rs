@@ -1,11 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use crate::services::AppConfiguration;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
-use tauri::{command, Manager, State};
+use tauri::{Manager, State, command};
 use tauri_plugin_window_state::{AppHandleExt, StateFlags};
-
-use crate::services::AppConfiguration;
 
 mod services;
 mod utils;
@@ -60,8 +59,7 @@ fn main() {
         Err(_err) => {
             #[cfg(windows)]
             {
-                use windows::core::*;
-                use windows::Win32::UI::WindowsAndMessaging::{MessageBoxA, MB_ICONWARNING, MB_OK};
+                use windows::{Win32::UI::WindowsAndMessaging::{MB_ICONWARNING, MB_OK, MessageBoxA}, core::*};
                 let message = format!("Port {} is not available!", args.port);
                 unsafe {
                     MessageBoxA(None, windows::core::PCSTR(message.as_ptr()), s!("Curses error"), MB_OK | MB_ICONWARNING);

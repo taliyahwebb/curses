@@ -1,8 +1,6 @@
 use core::panic;
-use std::{
-    fs::{self, File},
-    io::{self, Write, stdout},
-};
+use std::fs::{self, File};
+use std::io::{self, Write, stdout};
 
 use serde_json::{Map, Value};
 

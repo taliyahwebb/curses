@@ -1,11 +1,7 @@
-use rosc::{encoder, OscMessage, OscPacket, OscType};
+use rosc::{OscMessage, OscPacket, OscType, encoder};
 use serde::{Deserialize, Serialize};
 use std::net::{SocketAddr, UdpSocket};
-use tauri::{
-    command,
-    plugin::{Builder, TauriPlugin},
-    Manager, Runtime, State,
-};
+use tauri::{Manager, Runtime, State, command, plugin::{Builder, TauriPlugin}};
 
 pub struct OscPlugin {
     socket: Option<UdpSocket>,

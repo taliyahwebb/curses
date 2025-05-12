@@ -1,6 +1,5 @@
-use std::path::Path;
-
 use serde::Serialize;
+use std::path::Path;
 use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters, WhisperState};
 
 /// Whisper expects this sample rate

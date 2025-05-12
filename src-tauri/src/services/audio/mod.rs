@@ -1,15 +1,7 @@
-use std::io::Cursor;
-
-use rodio::{
-    cpal::{self, traits::HostTrait},
-    Decoder, DeviceTrait, OutputStream, OutputStreamHandle, Sink,
-};
+use rodio::{Decoder, DeviceTrait, OutputStream, OutputStreamHandle, Sink, cpal::{self, traits::HostTrait}};
 use serde::{Deserialize, Serialize};
-use tauri::{
-    command,
-    plugin::{Builder, TauriPlugin},
-    Runtime,
-};
+use std::io::Cursor;
+use tauri::{Runtime, command, plugin::{Builder, TauriPlugin}};
 
 fn get_output_stream(device_name: &str) -> Option<(OutputStream, OutputStreamHandle)> {
     let host = cpal::default_host();

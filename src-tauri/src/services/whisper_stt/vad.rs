@@ -1,8 +1,8 @@
 use super::whisper::SAMPLE_RATE;
-use cpal::{traits::{DeviceTrait, HostTrait}, BufferSize, Device, SampleRate, StreamConfig};
+use cpal::{BufferSize, Device, SampleRate, StreamConfig, traits::{DeviceTrait, HostTrait}};
 use earshot::{VoiceActivityDetector, VoiceActivityModel, VoiceActivityProfile};
 use futures::channel::mpsc::UnboundedSender;
-use ringbuf::{storage::Heap, traits::{Consumer, Observer, Producer}, LocalRb};
+use ringbuf::{LocalRb, storage::Heap, traits::{Consumer, Observer, Producer}};
 use rodio::cpal;
 use samplerate::Samplerate;
 use serde::Serialize;
@@ -109,8 +109,8 @@ impl Vad {
                 self.current_speech_samples = n;
                 self.current_frame = 0;
                 return VadStatus::SpeechStart; // it's ok to return here since
-                                               // the upper level will poll
-                                               // again until `Speech`
+                // the upper level will poll
+                // again until `Speech`
             };
             // we are inside a speech window
             self.current_frame += 1;

@@ -1,10 +1,6 @@
 use std::sync::Arc;
-
 use tauri::{AssetResolver, Runtime};
-
-use warp::http::header::*;
-use warp::http::{HeaderValue, Response, StatusCode};
-use warp::{filters::BoxedFilter, path::FullPath, Filter, Rejection, Reply};
+use warp::{Filter, Rejection, Reply, filters::BoxedFilter, http::{HeaderValue, Response, StatusCode, header::*}, path::FullPath};
 
 pub fn path<R: Runtime>(resolver: Arc<AssetResolver<R>>) -> BoxedFilter<(impl Reply,)> {
     warp::path::full()

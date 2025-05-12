@@ -1,12 +1,12 @@
-use futures::{channel::{mpsc::{self}, oneshot::{self, Receiver}}, StreamExt};
-use ringbuf::{traits::{Consumer, Split}, HeapRb};
-use rodio::{cpal::{traits::StreamTrait, Stream}, DeviceTrait};
+use futures::{StreamExt, channel::{mpsc::{self}, oneshot::{self, Receiver}}};
+use ringbuf::{HeapRb, traits::{Consumer, Split}};
+use rodio::{DeviceTrait, cpal::{Stream, traits::StreamTrait}};
 use serde::{Deserialize, Serialize};
 use std::{sync::{Arc, Condvar, Mutex}, thread, time::Duration};
-use tauri::{plugin, AppHandle, Emitter, Manager, Runtime, State};
+use tauri::{AppHandle, Emitter, Manager, Runtime, State, plugin};
 use tokio::select;
-use vad::{audio_loop, get_microphone_by_name, get_resampler, AudioError, Vad, VadActivity};
-use whisper::{Whisper, WhisperOptions, WhisperSetupError, MAX_WHISPER_FRAME};
+use vad::{AudioError, Vad, VadActivity, audio_loop, get_microphone_by_name, get_resampler};
+use whisper::{MAX_WHISPER_FRAME, Whisper, WhisperOptions, WhisperSetupError};
 
 mod vad;
 mod whisper;
