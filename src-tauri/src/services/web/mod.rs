@@ -1,10 +1,15 @@
-use super::AppConfiguration;
+use std::process::{Command, Stdio};
+use std::sync::Arc;
+
 use local_ip_address::local_ip;
 use serde::{Deserialize, Serialize};
-use std::{process::{Command, Stdio}, sync::Arc};
-use tauri::{Emitter, Manager, Runtime, State, async_runtime::Mutex, command, plugin::{Builder, TauriPlugin}};
+use tauri::async_runtime::Mutex;
+use tauri::plugin::{Builder, TauriPlugin};
+use tauri::{Emitter, Manager, Runtime, State, command};
 use tokio::sync::mpsc;
 use warp::Filter;
+
+use super::AppConfiguration;
 
 mod assets;
 mod peer;
@@ -92,7 +97,11 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
     let (pubsub_input_tx, pubsub_input_rx) = mpsc::channel::<String>(1); // to pubsub
     let (pubsub_output_tx, mut pubsub_output_rx) = mpsc::channel::<String>(1); // to js
     Builder::new("web")
-        .invoke_handler(tauri::generate_handler![open_browser, pubsub_broadcast, config])
+        .invoke_handler(tauri::generate_handler![
+            open_browser,
+            pubsub_broadcast,
+            config
+        ])
         .setup(|app, _api| {
             app.manage(PubSubInput {
                 tx: Mutex::new(pubsub_input_tx),

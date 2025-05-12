@@ -1,10 +1,14 @@
-use crate::utils::*;
+use std::io;
+use std::path::{Path, PathBuf};
+
 use serde::{Deserialize, Serialize};
-use std::{io, path::{Path, PathBuf}};
 use tauri::{Runtime, plugin};
 use tokio::process::Command;
 
-/// arguments to the `speak` function. most of these get passed straight to the executable
+use crate::utils::*;
+
+/// arguments to the `speak` function. most of these get passed straight to the
+/// executable
 #[derive(Serialize, Deserialize, Debug)]
 struct SpeakArgs {
     /// audio output device
@@ -96,8 +100,8 @@ fn build_command(script: &Path, txtfile: &Path, outfile: &Path) -> Command {
     command.arg(txtfile);
     command.arg(outfile);
 
-    // console applications on windows have the annoying habit of spawning a terminal window.
-    // we need to explicitly tell CreateProcess not to do that.
+    // console applications on windows have the annoying habit of spawning a
+    // terminal window. we need to explicitly tell CreateProcess not to do that.
     command.creation_flags(0x08000000); // CREATE_NO_WINDOW
 
     command

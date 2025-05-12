@@ -1,10 +1,14 @@
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use futures::StreamExt;
 use serde::Deserialize;
-use std::{collections::HashMap, sync::Arc};
 use tauri::async_runtime::RwLock;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use warp::{Filter, Reply, filters::BoxedFilter, ws::{Message, WebSocket, Ws}};
+use warp::filters::BoxedFilter;
+use warp::ws::{Message, WebSocket, Ws};
+use warp::{Filter, Reply};
 
 #[derive(Deserialize)]
 pub struct PeerQueryData {
@@ -13,7 +17,10 @@ pub struct PeerQueryData {
 
 pub type Peers = Arc<RwLock<HashMap<String, mpsc::UnboundedSender<Result<Message, warp::Error>>>>>;
 
-pub fn path(mut input: mpsc::Receiver<String>, output: mpsc::Sender<String>) -> BoxedFilter<(impl Reply,)> {
+pub fn path(
+    mut input: mpsc::Receiver<String>,
+    output: mpsc::Sender<String>,
+) -> BoxedFilter<(impl Reply,)> {
     let peers = Peers::default();
 
     let input_peers = peers.clone();
@@ -37,11 +44,18 @@ pub fn path(mut input: mpsc::Receiver<String>, output: mpsc::Sender<String>) -> 
         .and(peers)
         .and(output)
         .and(warp::query::<PeerQueryData>())
-        .map(|ws: Ws, peers, output, q| ws.on_upgrade(move |socket| peer_handler(socket, peers, output, q)))
+        .map(|ws: Ws, peers, output, q| {
+            ws.on_upgrade(move |socket| peer_handler(socket, peers, output, q))
+        })
         .boxed()
 }
 
-pub async fn peer_handler(ws: WebSocket, peers: Peers, output: mpsc::Sender<String>, query: PeerQueryData) {
+pub async fn peer_handler(
+    ws: WebSocket,
+    peers: Peers,
+    output: mpsc::Sender<String>,
+    query: PeerQueryData,
+) {
     let (peer_tx, mut peer_rx) = ws.split();
 
     let (tx, rx) = mpsc::unbounded_channel();

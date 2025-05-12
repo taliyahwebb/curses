@@ -1,6 +1,11 @@
 use std::sync::Arc;
+
 use tauri::{AssetResolver, Runtime};
-use warp::{Filter, Rejection, Reply, filters::BoxedFilter, http::{HeaderValue, Response, StatusCode, header::*}, path::FullPath};
+use warp::filters::BoxedFilter;
+use warp::http::header::*;
+use warp::http::{HeaderValue, Response, StatusCode};
+use warp::path::FullPath;
+use warp::{Filter, Rejection, Reply};
 
 pub fn path<R: Runtime>(resolver: Arc<AssetResolver<R>>) -> BoxedFilter<(impl Reply,)> {
     warp::path::full()
@@ -8,14 +13,20 @@ pub fn path<R: Runtime>(resolver: Arc<AssetResolver<R>>) -> BoxedFilter<(impl Re
         .boxed()
 }
 
-async fn file_response<R: Runtime>(path: FullPath, resolver: Arc<AssetResolver<R>>) -> Result<impl Reply, Rejection> {
+async fn file_response<R: Runtime>(
+    path: FullPath,
+    resolver: Arc<AssetResolver<R>>,
+) -> Result<impl Reply, Rejection> {
     if let Some(asset) = resolver.get(path.as_str().into()) {
         Ok(Response::builder()
             .status(StatusCode::OK)
             .header(ACCEPT_RANGES, HeaderValue::from_static("bytes"))
             .header(ACCESS_CONTROL_ALLOW_ORIGIN, HeaderValue::from_static("*"))
             .header(CONTENT_TYPE, asset.mime_type)
-            .header(CONTENT_SECURITY_POLICY, HeaderValue::from_static("frame-ancestors *"))
+            .header(
+                CONTENT_SECURITY_POLICY,
+                HeaderValue::from_static("frame-ancestors *"),
+            )
             .header(X_FRAME_OPTIONS, HeaderValue::from_static("ALLOW-FROM *"))
             .body(asset.bytes))
     } else if let Some(index) = resolver.get("/index.html".into()) {
@@ -23,7 +34,10 @@ async fn file_response<R: Runtime>(path: FullPath, resolver: Arc<AssetResolver<R
             .status(StatusCode::OK)
             .header(ACCEPT_RANGES, HeaderValue::from_static("bytes"))
             .header(ACCESS_CONTROL_ALLOW_ORIGIN, HeaderValue::from_static("*"))
-            .header(CONTENT_SECURITY_POLICY, HeaderValue::from_static("frame-ancestors *"))
+            .header(
+                CONTENT_SECURITY_POLICY,
+                HeaderValue::from_static("frame-ancestors *"),
+            )
             .header(X_FRAME_OPTIONS, HeaderValue::from_static("ALLOW-FROM *"))
             .body(index.bytes))
     } else {

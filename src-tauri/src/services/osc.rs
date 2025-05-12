@@ -1,7 +1,9 @@
+use std::net::{SocketAddr, UdpSocket};
+
 use rosc::{OscMessage, OscPacket, OscType, encoder};
 use serde::{Deserialize, Serialize};
-use std::net::{SocketAddr, UdpSocket};
-use tauri::{Manager, Runtime, State, command, plugin::{Builder, TauriPlugin}};
+use tauri::plugin::{Builder, TauriPlugin};
+use tauri::{Manager, Runtime, State, command};
 
 pub struct OscPlugin {
     socket: Option<UdpSocket>,
@@ -12,7 +14,9 @@ impl Default for OscPlugin {
         let Ok(socket) = UdpSocket::bind("127.0.0.1:3400") else {
             return Self { socket: None };
         };
-        OscPlugin { socket: Some(socket) }
+        OscPlugin {
+            socket: Some(socket),
+        }
     }
 }
 
@@ -34,7 +38,11 @@ impl OscPlugin {
             })
             .collect();
 
-        let msg_buf = encoder::encode(&OscPacket::Message(OscMessage { addr: rpc.path, args })).unwrap();
+        let msg_buf = encoder::encode(&OscPacket::Message(OscMessage {
+            addr: rpc.path,
+            args,
+        }))
+        .unwrap();
         socket.send_to(&msg_buf, addr).unwrap();
     }
 }

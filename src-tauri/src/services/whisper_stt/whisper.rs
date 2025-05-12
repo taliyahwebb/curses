@@ -1,6 +1,13 @@
-use serde::Serialize;
 use std::path::Path;
-use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters, WhisperState};
+
+use serde::Serialize;
+use whisper_rs::{
+    FullParams,
+    SamplingStrategy,
+    WhisperContext,
+    WhisperContextParameters,
+    WhisperState,
+};
 
 /// Whisper expects this sample rate
 pub const SAMPLE_RATE: usize = 16000;
@@ -33,7 +40,10 @@ pub enum WhisperSetupError {
 }
 
 impl Whisper {
-    pub fn with_options(model: impl AsRef<Path>, opt: WhisperOptions) -> Result<Whisper, WhisperSetupError> {
+    pub fn with_options(
+        model: impl AsRef<Path>,
+        opt: WhisperOptions,
+    ) -> Result<Whisper, WhisperSetupError> {
         let params = WhisperContextParameters::default();
         let ctx = WhisperContext::new_with_params(
             model
@@ -85,7 +95,8 @@ impl Whisper {
         }
         let samples = &self.buf[0..WHISPER_PREPEND_SILENCE + self.samples_in_buf];
         let mut float_samples = Box::new([0f32; WHISPER_PREPEND_SILENCE + MAX_WHISPER_FRAME]);
-        whisper_rs::convert_integer_to_float_audio(samples, &mut float_samples[..samples.len()]).expect("should be able to de-quantize data");
+        whisper_rs::convert_integer_to_float_audio(samples, &mut float_samples[..samples.len()])
+            .expect("should be able to de-quantize data");
 
         let mut params = self.params.clone();
         params.set_language(Some(&self.language));
@@ -109,6 +120,12 @@ impl Whisper {
             .full_get_segment_text(0)
             .ok()
             // filter hallucination
-            .and_then(|text| if text.eq_ignore_ascii_case(" you") { None } else { Some(text) })
+            .and_then(|text| {
+                if text.eq_ignore_ascii_case(" you") {
+                    None
+                } else {
+                    Some(text)
+                }
+            })
     }
 }

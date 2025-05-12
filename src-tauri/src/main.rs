@@ -1,10 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use crate::services::AppConfiguration;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use tauri::{Manager, State, command};
 use tauri_plugin_window_state::{AppHandleExt, StateFlags};
+
+use crate::services::AppConfiguration;
 
 mod services;
 mod utils;
@@ -59,10 +60,16 @@ fn main() {
         Err(_err) => {
             #[cfg(windows)]
             {
-                use windows::{Win32::UI::WindowsAndMessaging::{MB_ICONWARNING, MB_OK, MessageBoxA}, core::*};
+                use windows::Win32::UI::WindowsAndMessaging::{MB_ICONWARNING, MB_OK, MessageBoxA};
+                use windows::core::*;
                 let message = format!("Port {} is not available!", args.port);
                 unsafe {
-                    MessageBoxA(None, windows::core::PCSTR(message.as_ptr()), s!("Curses error"), MB_OK | MB_ICONWARNING);
+                    MessageBoxA(
+                        None,
+                        windows::core::PCSTR(message.as_ptr()),
+                        s!("Curses error"),
+                        MB_OK | MB_ICONWARNING,
+                    );
                 }
             }
             return;
@@ -76,7 +83,11 @@ fn main() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_shell::init())
         .setup(app_setup)
-        .invoke_handler(tauri::generate_handler![get_port, get_native_features, app_close])
+        .invoke_handler(tauri::generate_handler![
+            get_port,
+            get_native_features,
+            app_close
+        ])
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .manage(AppConfiguration { port: args.port })
         .plugin(services::osc::init())

@@ -1,6 +1,16 @@
 use serde::{Deserialize, Serialize};
-use tauri::{Manager, Runtime, State, plugin::{Builder, TauriPlugin}};
-use windows::{Win32::Media::Speech::{ISpeechObjectToken, ISpeechObjectTokens, ISpeechVoice, SVSFDefault, SVSFlagsAsync, SpVoice, SpeechVoiceSpeakFlags}, core::{BSTR, Interface}};
+use tauri::plugin::{Builder, TauriPlugin};
+use tauri::{Manager, Runtime, State};
+use windows::Win32::Media::Speech::{
+    ISpeechObjectToken,
+    ISpeechObjectTokens,
+    ISpeechVoice,
+    SVSFDefault,
+    SVSFlagsAsync,
+    SpVoice,
+    SpeechVoiceSpeakFlags,
+};
+use windows::core::{BSTR, Interface};
 
 #[derive(Debug)]
 pub struct Intf<I: Interface>(pub I);
@@ -58,7 +68,8 @@ impl ISpeechToken {
 impl WindowsTTSPlugin {
     fn new() -> Self {
         use windows::Win32::System::Com::{CLSCTX_ALL, CoCreateInstance, CoInitialize};
-        let voice = unsafe { CoInitialize(None).and_then(|| CoCreateInstance(&SpVoice, None, CLSCTX_ALL)) };
+        let voice =
+            unsafe { CoInitialize(None).and_then(|| CoCreateInstance(&SpVoice, None, CLSCTX_ALL)) };
         Self(voice.map(Intf).ok())
     }
 

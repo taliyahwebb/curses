@@ -1,4 +1,5 @@
-use tauri::{Runtime, command, plugin::{Builder, TauriPlugin}};
+use tauri::plugin::{Builder, TauriPlugin};
+use tauri::{Runtime, command};
 use uwuifier::uwuify_str_sse;
 
 #[command]

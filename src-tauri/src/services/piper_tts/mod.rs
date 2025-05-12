@@ -1,7 +1,10 @@
-use crate::utils::*;
+use std::io;
+use std::path::PathBuf;
+
 use serde::{Deserialize, Serialize};
-use std::{io, path::PathBuf};
 use tauri::{Runtime, plugin};
+
+use crate::utils::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Voice {
@@ -12,7 +15,8 @@ struct Voice {
     path: PathBuf,
 }
 
-/// arguments to the `speak` function. most of these get passed straight to piper.exe
+/// arguments to the `speak` function. most of these get passed straight to
+/// piper.exe
 #[derive(Serialize, Deserialize, Debug)]
 struct SpeakArgs {
     /// audio output device
@@ -44,12 +48,17 @@ struct SpeakArgs {
 }
 
 /// Scans the given directory for Piper voice files.
-/// A valid piper voice file must end in `.onnx` and have an accompanying `.onnx.json`
+/// A valid piper voice file must end in `.onnx` and have an accompanying
+/// `.onnx.json`
 fn scan_voice_directory(path: PathBuf) -> io::Result<Vec<Voice>> {
     fn try_into_voice(entry: std::fs::DirEntry) -> Option<Voice> {
         let path = entry.path();
-        if path.is_file() && path.extension() == Some("onnx".as_ref()) && path.with_extension("onnx.json").exists() {
-            // we only need the name for display purposes, so the lossy conversion here is fine.
+        if path.is_file()
+            && path.extension() == Some("onnx".as_ref())
+            && path.with_extension("onnx.json").exists()
+        {
+            // we only need the name for display purposes, so the lossy conversion here is
+            // fine.
             let name = path.file_stem()?.to_string_lossy().into();
             Some(Voice { name, path })
         } else {
@@ -72,14 +81,19 @@ async fn write_to_stdin(process: &mut tokio::process::Child, bytes: &[u8]) -> io
 }
 
 /// Handles adding optional command line parameters to a Command object
-fn add_arg_if_some(command: &mut tokio::process::Command, name: &str, value: Option<impl ToString>) {
+fn add_arg_if_some(
+    command: &mut tokio::process::Command,
+    name: &str,
+    value: Option<impl ToString>,
+) {
     if let Some(value) = value {
         command.arg(name);
         command.arg(value.to_string());
     }
 }
 
-/// Tries to create a new temporary WAV file; Gives an error with some context if that fails.
+/// Tries to create a new temporary WAV file; Gives an error with some context
+/// if that fails.
 fn create_temp_file() -> io::Result<tempfile::NamedTempFile> {
     let dir = tempfile::env::temp_dir();
     tempfile::Builder::new()
@@ -115,8 +129,9 @@ async fn get_wav_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
 
     #[cfg(windows)]
     {
-        // console applications on windows have the annoying habit of spawning a terminal window.
-        // we need to explicitly tell CreateProcess not to do that.
+        // console applications on windows have the annoying habit of spawning a
+        // terminal window. we need to explicitly tell CreateProcess not to do
+        // that.
         command.creation_flags(0x08000000); // CREATE_NO_WINDOW
     }
 
@@ -129,9 +144,12 @@ async fn get_wav_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
     let status = process.wait().await?;
 
     if status.success() {
-        tokio::fs::read(wav_file_path)
-            .await
-            .with_context(|| format!("Failed to read temporary file at '{}'", wav_file_path.display()))
+        tokio::fs::read(wav_file_path).await.with_context(|| {
+            format!(
+                "Failed to read temporary file at '{}'",
+                wav_file_path.display()
+            )
+        })
     } else {
         let error = match status.code() {
             Some(code) => format!("Piper exited with status code: {code}"),

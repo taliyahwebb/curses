@@ -1,7 +1,11 @@
-use rodio::{Decoder, DeviceTrait, OutputStream, OutputStreamHandle, Sink, cpal::{self, traits::HostTrait}};
-use serde::{Deserialize, Serialize};
 use std::io::Cursor;
-use tauri::{Runtime, command, plugin::{Builder, TauriPlugin}};
+
+use rodio::cpal::traits::HostTrait;
+use rodio::cpal::{self};
+use rodio::{Decoder, DeviceTrait, OutputStream, OutputStreamHandle, Sink};
+use serde::{Deserialize, Serialize};
+use tauri::plugin::{Builder, TauriPlugin};
+use tauri::{Runtime, command};
 
 fn get_output_stream(device_name: &str) -> Option<(OutputStream, OutputStreamHandle)> {
     let host = cpal::default_host();
@@ -57,6 +61,10 @@ fn get_input_devices() -> Vec<String> {
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("audio")
-        .invoke_handler(tauri::generate_handler![play_async, get_output_devices, get_input_devices])
+        .invoke_handler(tauri::generate_handler![
+            play_async,
+            get_output_devices,
+            get_input_devices
+        ])
         .build()
 }

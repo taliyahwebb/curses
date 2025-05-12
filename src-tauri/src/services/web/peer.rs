@@ -1,11 +1,15 @@
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as SerdeValue;
-use std::{collections::HashMap, sync::Arc};
 use tauri::async_runtime::RwLock;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use warp::{Filter, Reply, filters::BoxedFilter, ws::{Message, WebSocket, Ws}};
+use warp::filters::BoxedFilter;
+use warp::ws::{Message, WebSocket, Ws};
+use warp::{Filter, Reply};
 
 #[derive(Deserialize)]
 pub struct PeerQueryData {
@@ -102,7 +106,9 @@ async fn handle_message(peer_id: &String, msg: Message, users: &Peers) {
     let users = users.read().await;
 
     if msg.t == PeerMessageType::Offer && !users.contains_key(msg.dst.as_str()) {
-        let Some(peer_tx) = users.get(peer_id) else { return };
+        let Some(peer_tx) = users.get(peer_id) else {
+            return;
+        };
         let Ok(msg_str) = serde_json::to_string(&PeerMessage {
             t: PeerMessageType::Expire,
             src: msg.dst,
@@ -114,8 +120,12 @@ async fn handle_message(peer_id: &String, msg: Message, users: &Peers) {
         peer_tx.send(Ok(Message::text(msg_str))).unwrap();
     } else if !msg.dst.is_empty() && users.contains_key(&msg.dst) {
         msg.src = peer_id.clone();
-        let Some(peer_tx) = users.get(&msg.dst) else { return };
-        let Ok(msg_str) = serde_json::to_string(&msg) else { return };
+        let Some(peer_tx) = users.get(&msg.dst) else {
+            return;
+        };
+        let Ok(msg_str) = serde_json::to_string(&msg) else {
+            return;
+        };
         peer_tx.send(Ok(Message::text(msg_str))).unwrap();
     }
 }

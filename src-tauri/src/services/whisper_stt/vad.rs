@@ -1,13 +1,19 @@
-use super::whisper::SAMPLE_RATE;
-use cpal::{BufferSize, Device, SampleRate, StreamConfig, traits::{DeviceTrait, HostTrait}};
+use std::mem::{self, MaybeUninit};
+use std::time::Duration;
+
+use cpal::traits::{DeviceTrait, HostTrait};
+use cpal::{BufferSize, Device, SampleRate, StreamConfig};
 use earshot::{VoiceActivityDetector, VoiceActivityModel, VoiceActivityProfile};
 use futures::channel::mpsc::UnboundedSender;
-use ringbuf::{LocalRb, storage::Heap, traits::{Consumer, Observer, Producer}};
+use ringbuf::LocalRb;
+use ringbuf::storage::Heap;
+use ringbuf::traits::{Consumer, Observer, Producer};
 use rodio::cpal;
 use samplerate::Samplerate;
 use serde::Serialize;
-use std::{mem::{self, MaybeUninit}, time::Duration};
 use wav_io::utils::stereo_to_mono;
+
+use super::whisper::SAMPLE_RATE;
 
 /// ~30ms of audio
 pub const VAD_FRAME: usize = 480; // sample count
@@ -64,12 +70,17 @@ impl Vad {
         };
         let ring = LocalRb::new((buffer_size * 2).max(VAD_FRAME as u32 * 2) as usize);
         Vad {
-            vad: VoiceActivityDetector::new_with_model(VoiceActivityModel::ES_ALPHA, VoiceActivityProfile::VERY_AGGRESSIVE),
+            vad: VoiceActivityDetector::new_with_model(
+                VoiceActivityModel::ES_ALPHA,
+                VoiceActivityProfile::VERY_AGGRESSIVE,
+            ),
             ring,
             current_frame: 0,
             last_speech_frame: None,
             current_speech_samples: 0,
-            silence_frames: to_frames(silence_interval.unwrap_or(DEFAULT_SEGMENT_SEPARATOR_SILENCE)),
+            silence_frames: to_frames(
+                silence_interval.unwrap_or(DEFAULT_SEGMENT_SEPARATOR_SILENCE),
+            ),
         }
     }
 
@@ -81,13 +92,15 @@ impl Vad {
 
     pub fn output_to(&mut self, final_ring: &mut impl Producer<Item = i16>) -> VadStatus {
         while self.ring.occupied_len() >= VAD_FRAME {
-            let mut frame: [MaybeUninit<i16>; VAD_FRAME] = [const { MaybeUninit::uninit() }; VAD_FRAME];
+            let mut frame: [MaybeUninit<i16>; VAD_FRAME] =
+                [const { MaybeUninit::uninit() }; VAD_FRAME];
             if VAD_FRAME != self.ring.pop_slice_uninit(&mut frame) {
                 panic!("vad ring should have enough data for at least one frame");
             }
             // SAFETY: this is safe because the panic above makes sure that all i16 were
             // initialized
-            let frame = unsafe { mem::transmute::<[MaybeUninit<i16>; VAD_FRAME], [i16; VAD_FRAME]>(frame) };
+            let frame =
+                unsafe { mem::transmute::<[MaybeUninit<i16>; VAD_FRAME], [i16; VAD_FRAME]>(frame) };
 
             let is_speech = self
                 .vad
@@ -192,7 +205,11 @@ pub fn get_microphone_by_name(name: &str) -> Result<(Device, StreamConfig), Audi
             .supported_input_configs()
             .map_err(|err| AudioError::InputDeviceUnavailable(format!("{name}: '{err}'")))?
             .next()
-            .ok_or_else(|| AudioError::InputDeviceUnavailable(format!("{name}: 'does not have any valid input configurations'")))?;
+            .ok_or_else(|| {
+                AudioError::InputDeviceUnavailable(format!(
+                    "{name}: 'does not have any valid input configurations'"
+                ))
+            })?;
         let config = config
             .try_with_sample_rate(SampleRate(SAMPLE_RATE as u32))
             .unwrap_or_else(|| {
@@ -235,9 +252,17 @@ pub fn get_microphone_by_name(name: &str) -> Result<(Device, StreamConfig), Audi
 
 pub fn get_resampler(src_rate: u32) -> Result<Option<Samplerate>, AudioError> {
     if src_rate != SAMPLE_RATE as u32 {
-        eprintln!("running with resampling src{:?}->dest{SAMPLE_RATE}", src_rate);
-        let resampler = Samplerate::new(samplerate::ConverterType::SincFastest, src_rate, SAMPLE_RATE as u32, 1)
-            .map_err(|err| AudioError::ResamplingUnavailable(err.to_string()))?;
+        eprintln!(
+            "running with resampling src{:?}->dest{SAMPLE_RATE}",
+            src_rate
+        );
+        let resampler = Samplerate::new(
+            samplerate::ConverterType::SincFastest,
+            src_rate,
+            SAMPLE_RATE as u32,
+            1,
+        )
+        .map_err(|err| AudioError::ResamplingUnavailable(err.to_string()))?;
         Ok(Some(resampler))
     } else {
         eprintln!("running at native {SAMPLE_RATE}Hz sample rate");

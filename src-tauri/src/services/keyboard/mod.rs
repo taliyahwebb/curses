@@ -1,6 +1,7 @@
 #[cfg(feature = "background_input")]
 use tauri::Emitter;
-use tauri::{Runtime, plugin::{Builder, TauriPlugin}};
+use tauri::Runtime;
+use tauri::plugin::{Builder, TauriPlugin};
 
 #[cfg(feature = "background_input")]
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
@@ -14,12 +15,36 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 
 #[cfg(feature = "background_input")]
 mod background_input {
-    use super::*;
+    use std::os::raw::c_int;
+    use std::sync::RwLock;
+
     use serde::{Deserialize, Serialize};
-    use std::{os::raw::c_int, sync::RwLock};
     use tauri::{State, command};
     use tokio::sync::mpsc;
-    use windows::Win32::{Foundation::{LPARAM, LRESULT, WPARAM}, System::Threading::{AttachThreadInput, GetCurrentThreadId}, UI::{Input::KeyboardAndMouse::{GetKeyboardLayout, GetKeyboardState, MAPVK_VK_TO_VSC_EX, MapVirtualKeyExW, ToUnicodeEx, VK_LCONTROL}, WindowsAndMessaging::{CallNextHookEx, GetForegroundWindow, GetWindowThreadProcessId, HC_ACTION, HHOOK, KBDLLHOOKSTRUCT, SetWindowsHookExA, UnhookWindowsHookEx, WH_KEYBOARD_LL, WM_KEYDOWN}}};
+    use windows::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
+    use windows::Win32::System::Threading::{AttachThreadInput, GetCurrentThreadId};
+    use windows::Win32::UI::Input::KeyboardAndMouse::{
+        GetKeyboardLayout,
+        GetKeyboardState,
+        MAPVK_VK_TO_VSC_EX,
+        MapVirtualKeyExW,
+        ToUnicodeEx,
+        VK_LCONTROL,
+    };
+    use windows::Win32::UI::WindowsAndMessaging::{
+        CallNextHookEx,
+        GetForegroundWindow,
+        GetWindowThreadProcessId,
+        HC_ACTION,
+        HHOOK,
+        KBDLLHOOKSTRUCT,
+        SetWindowsHookExA,
+        UnhookWindowsHookEx,
+        WH_KEYBOARD_LL,
+        WM_KEYDOWN,
+    };
+
+    use super::*;
 
     struct BgInput {
         tx: mpsc::UnboundedSender<String>,
@@ -68,7 +93,8 @@ mod background_input {
                         let code = MapVirtualKeyExW(vkCode, MAPVK_VK_TO_VSC_EX, kb_layout) << 16;
 
                         let mut name = [0_u16; 32];
-                        let res_size = ToUnicodeEx(vkCode, code, &kb_state, &mut name, 0, kb_layout);
+                        let res_size =
+                            ToUnicodeEx(vkCode, code, &kb_state, &mut name, 0, kb_layout);
                         if res_size > 0 {
                             if let Some(s) = String::from_utf16(&name[..res_size as usize]).ok() {
                                 Some(KeyCommand::Key(s))
@@ -114,7 +140,8 @@ mod background_input {
                 tx.send(rpc).unwrap();
             }));
         }
-        let Ok(hook) = (unsafe { SetWindowsHookExA(WH_KEYBOARD_LL, Some(raw_callback), None, 0) }) else {
+        let Ok(hook) = (unsafe { SetWindowsHookExA(WH_KEYBOARD_LL, Some(raw_callback), None, 0) })
+        else {
             return Err("Could not start listener".into());
         };
         let mut wr = state.listen_hook_id.write().unwrap();

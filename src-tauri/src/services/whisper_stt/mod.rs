@@ -1,8 +1,16 @@
-use futures::{StreamExt, channel::{mpsc::{self}, oneshot::{self, Receiver}}};
-use ringbuf::{HeapRb, traits::{Consumer, Split}};
-use rodio::{DeviceTrait, cpal::{Stream, traits::StreamTrait}};
+use std::sync::{Arc, Condvar, Mutex};
+use std::thread;
+use std::time::Duration;
+
+use futures::StreamExt;
+use futures::channel::mpsc::{self};
+use futures::channel::oneshot::{self, Receiver};
+use ringbuf::HeapRb;
+use ringbuf::traits::{Consumer, Split};
+use rodio::DeviceTrait;
+use rodio::cpal::Stream;
+use rodio::cpal::traits::StreamTrait;
 use serde::{Deserialize, Serialize};
-use std::{sync::{Arc, Condvar, Mutex}, thread, time::Duration};
 use tauri::{AppHandle, Emitter, Manager, Runtime, State, plugin};
 use tokio::select;
 use vad::{AudioError, Vad, VadActivity, audio_loop, get_microphone_by_name, get_resampler};
@@ -76,8 +84,10 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
     let cancel_pair = Arc::new((Mutex::new(false), Condvar::new()));
     let cancellation_pair = cancel_pair.clone();
 
-    let (device, config) = get_microphone_by_name(&args.input_device).map_err(WhisperError::AudioSetupError)?;
-    let mut vad = Vad::with_silence_interval(&config, Some(Duration::from_millis(args.silence_interval)));
+    let (device, config) =
+        get_microphone_by_name(&args.input_device).map_err(WhisperError::AudioSetupError)?;
+    let mut vad =
+        Vad::with_silence_interval(&config, Some(Duration::from_millis(args.silence_interval)));
     let (audio_tx, audio_rx) = std::sync::mpsc::sync_channel(10);
     // audio processing thread
     thread::spawn(move || {
@@ -91,7 +101,8 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
                 panic!("configs with {invalid} channels are not supported");
             }
         };
-        // we need to build the resampler in here because it cannot be send across threads
+        // we need to build the resampler in here because it cannot be send across
+        // threads
         let resample_with = match get_resampler(config.sample_rate.0) {
             Ok(resampler) => resampler,
             Err(err) => {
@@ -115,7 +126,8 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
                         },
                         move |err| {
                             // only try send because we might have had an earlier error
-                            let _ = err_tx.try_send(WhisperError::AudioStreamError(err.to_string()));
+                            let _ =
+                                err_tx.try_send(WhisperError::AudioStreamError(err.to_string()));
                         },
                         None,
                     )
@@ -148,7 +160,14 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
         });
 
         while let Ok(data) = audio_rx.recv() {
-            audio_loop(&data, channels, &resample_with, &mut producer, &mut vad, &mut activity_tx);
+            audio_loop(
+                &data,
+                channels,
+                &resample_with,
+                &mut producer,
+                &mut vad,
+                &mut activity_tx,
+            );
         }
     });
 
