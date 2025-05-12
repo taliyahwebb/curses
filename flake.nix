@@ -184,6 +184,7 @@
             pkgs.typescript-language-server
             pkgs.nixgl.nixGLIntel
             pkgs.nixgl.nixVulkanIntel
+            (lib.lowPrio pkgs.piper-tts)
           ];
           RUST_LOG = "curses";
           shellHook = ''
