@@ -163,7 +163,7 @@ async fn get_wav_bytes(args: &SpeakArgs, state: State<'_, PiperInstance>) -> io:
         lock.insert((process, buffered_error))
     };
 
-    write_to_stdin(&mut child.0, &format!("{}\n", args.value).as_bytes()).await?;
+    write_to_stdin(&mut child.0, format!("{}\n", args.value).as_bytes()).await?;
     let mut str_buf = Vec::new();
     let mut wav_file = Vec::new();
     let mut buf = [0u8; 1024]; // common os buffer size
