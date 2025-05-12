@@ -4,7 +4,7 @@ import {
   TextEvent,
   TextEventSource
 } from "@/types";
-import { serviceSubscibeToInput } from "@/utils";
+import { serviceSubscribeToInput } from "@/utils";
 import { toast } from "react-toastify";
 import { proxy } from "valtio";
 import { Translation_Backends } from "./schema";
@@ -75,7 +75,7 @@ class Service_Translation implements IServiceInterface, ITranslationReceiver {
       (e) => e && this.translate(e)
     );
 
-    serviceSubscibeToInput(
+    serviceSubscribeToInput(
       window.ApiServer.state.services.translation.data,
       "inputField",
       (e) => e && this.translate(e)

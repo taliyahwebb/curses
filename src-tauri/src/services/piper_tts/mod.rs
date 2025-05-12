@@ -116,7 +116,7 @@ async fn get_wav_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
 
     #[cfg(windows)]
     {
-        // console applications on windows have the annoying habbit of spawning a terminal window.
+        // console applications on windows have the annoying habit of spawning a terminal window.
         // we need to explicitly tell CreateProcess not to do that.
         command.creation_flags(0x08000000); // CREATE_NO_WINDOW
     }

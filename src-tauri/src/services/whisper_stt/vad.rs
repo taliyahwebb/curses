@@ -213,7 +213,7 @@ pub fn get_microphone_by_name(name: &str) -> Result<(Device, StreamConfig), Audi
                 .next_multiple_of(ALSA_BUFFER_QAUANTUM)
                 .max(ALSA_BUFFER_MIN),
         });
-        println!("using bufffer size {buffer_size:?}");
+        println!("using buffer size {buffer_size:?}");
         let sample_rate = config.sample_rate();
         let channels = config.channels();
         if channels > 2 {

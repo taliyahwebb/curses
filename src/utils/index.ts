@@ -21,7 +21,7 @@ export function useUpdateElement<SchemaType extends object>(id: string) {
 }
 
 // allows to dynamically switch text source
-export function serviceSubscibeToSource<Obj extends object>(baseProxy: Obj, key: keyof Obj, fn: (e?: TextEvent) => void) {
+export function serviceSubscribeToSource<Obj extends object>(baseProxy: Obj, key: keyof Obj, fn: (e?: TextEvent) => void) {
   let lastSub = "";
   subscribeKey(baseProxy, key, (e: any) => {
     window.ApiShared.pubsub.unsubscribe(lastSub);
@@ -31,7 +31,7 @@ export function serviceSubscibeToSource<Obj extends object>(baseProxy: Obj, key:
   lastSub = window.ApiShared.pubsub.subscribeText(baseProxy[key] as any, fn)
 }
 
-export function serviceSubscibeToInput<Obj extends object>(baseProxy: Obj, enableKey: keyof Obj, fn: (e?: TextEvent) => void) {
+export function serviceSubscribeToInput<Obj extends object>(baseProxy: Obj, enableKey: keyof Obj, fn: (e?: TextEvent) => void) {
   let lastSub = "";
   subscribeKey(baseProxy, enableKey, (e: any) => {
     window.ApiShared.pubsub.unsubscribe(lastSub);
@@ -42,7 +42,7 @@ export function serviceSubscibeToInput<Obj extends object>(baseProxy: Obj, enabl
     lastSub = window.ApiShared.pubsub.subscribeText(TextEventSource.textfield, fn)
 }
 
-export function isObjectVaid(value: Record<string, any>) {
+export function isObjectValid(value: Record<string, any>) {
   return !Object.values(value).some(isEmptyValue)
 }
 

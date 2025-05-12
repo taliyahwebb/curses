@@ -1,5 +1,5 @@
 import { TextEvent, TextEventType } from "@/types";
-import { isObjectVaid } from "@/utils";
+import { isObjectValid } from "@/utils";
 import { Translation_State } from "../schema";
 import {
   ITranslationReceiver,
@@ -12,7 +12,7 @@ export class Translation_AzureService implements ITranslationService {
   dispose(): void {}
 
   start(state: Translation_State): void {
-    if (!isObjectVaid(this.state))
+    if (!isObjectValid(this.state))
       return this.receiver.onStop("[Azure translator] Options missing");
     this.receiver.onStart();
   }

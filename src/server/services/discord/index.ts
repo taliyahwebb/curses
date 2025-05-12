@@ -1,6 +1,6 @@
 import { IServiceInterface, ServiceNetworkState, TextEventType } from "@/types";
 import { toast } from "react-toastify";
-import { serviceSubscibeToInput, serviceSubscibeToSource } from "@/utils";
+import { serviceSubscribeToInput, serviceSubscribeToSource } from "@/utils";
 
 class Service_Discord implements IServiceInterface {
   get #state() {
@@ -15,14 +15,14 @@ class Service_Discord implements IServiceInterface {
   }
 
   async init() {
-    serviceSubscibeToSource(this.#state.data, "postSource", (data) => {
+    serviceSubscribeToSource(this.#state.data, "postSource", (data) => {
       if (this.checkTwitch) return;
       this.#state.data.postEnable &&
         data?.value &&
         data?.type === TextEventType.final &&
         this.say(data.value);
     });
-    serviceSubscibeToInput(this.#state.data, "postInput", (data) => {
+    serviceSubscribeToInput(this.#state.data, "postInput", (data) => {
       if (this.checkTwitch) return;
 
       this.#state.data.postEnable &&

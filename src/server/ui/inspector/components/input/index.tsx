@@ -249,7 +249,7 @@ interface CheckboxTextProps extends InputBaseProps {
   value?: boolean
 }
 
-export const InputDoubleCountainer: FC<PropsWithChildren<{ label: string }>> = ({ label, children }) => {
+export const InputDoubleContainer: FC<PropsWithChildren<{ label: string }>> = ({ label, children }) => {
   return <InputContainer label={label}>
     <div className="field-width flex space-x-2">
       {children}

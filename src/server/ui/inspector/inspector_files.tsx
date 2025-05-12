@@ -27,9 +27,9 @@ const Inspector_Files: FC = memo(() => {
 
   useEffect(() => {
     setData(filesMeta.filter(meta => !meta.type.startsWith("font/")));
-    const grouppedFonts = groupBy(filesMeta.filter(meta => meta.type.startsWith("font/")), "name");
-    const fontGroups: FontGroupProps[] = Object.keys(grouppedFonts)
-      .map(name => grouppedFonts[name].reduce((sum, font) => ({
+    const groupedFonts = groupBy(filesMeta.filter(meta => meta.type.startsWith("font/")), "name");
+    const fontGroups: FontGroupProps[] = Object.keys(groupedFonts)
+      .map(name => groupedFonts[name].reduce((sum, font) => ({
         name, count: sum.count + 1, size: sum.size + font.size
       }), { name, count: 0, size: 0 }))
     setFonts(fontGroups);

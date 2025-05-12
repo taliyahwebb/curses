@@ -1,6 +1,6 @@
 import { FC }                          from "react";
 import { useGetState, useUpdateState } from "@/client";
-import { InputBaseText, InputDoubleCountainer }                           from "./input";
+import { InputBaseText, InputDoubleContainer }                           from "./input";
 import {TransformRect}                 from "@/client/elements/schema";
 import { useSnapshot } from "valtio";
 
@@ -14,14 +14,14 @@ const TransformInput: FC<{id: string}> = ({id}) => {
   });
 
   return <>
-    <InputDoubleCountainer label="common.field_position">
+    <InputDoubleContainer label="common.field_position">
         <InputBaseText value={rect?.x} onChange={e => handleUpdate("x", e.target.value)} type="number"/>
         <InputBaseText value={rect?.y} onChange={e => handleUpdate("y", e.target.value)} type="number"/>
-    </InputDoubleCountainer>
-    <InputDoubleCountainer label="common.field_size">
+    </InputDoubleContainer>
+    <InputDoubleContainer label="common.field_size">
         <InputBaseText value={rect?.w} onChange={e => handleUpdate("w", e.target.value)} type="number"/>
         <InputBaseText value={rect?.h} onChange={e => handleUpdate("h", e.target.value)} type="number"/>
-    </InputDoubleCountainer>
+    </InputDoubleContainer>
   </>
 }
 

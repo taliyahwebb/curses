@@ -12,7 +12,7 @@ import { VscSettings } from "react-icons/vsc";
 import { useCopyToClipboard } from "react-use";
 import { useSnapshot } from "valtio";
 import Inspector from "./components";
-import { InputBaseText, InputCheckbox, InputChips, InputCode, InputColor, InputContainer, InputDoubleCountainer, InputFile, InputFont, InputRange, InputSelect, InputText, InputTextSource } from "./components/input";
+import { InputBaseText, InputCheckbox, InputChips, InputCode, InputColor, InputContainer, InputDoubleContainer, InputFile, InputFont, InputRange, InputSelect, InputText, InputTextSource } from "./components/input";
 import NameInput from "./components/name-input";
 import TransformInput from "./components/transform-input";
 import { ElementSceneState } from "@/client/elements/schema";
@@ -69,10 +69,10 @@ const TextInspector: FC<{ id: string }> = ({ id }) => {
     <InputText label="text.font_line_height" step="0.1" type="number" value={data.textLineHeight} onChange={e => up("textLineHeight", e.target.value)} />
 
     <Inspector.SubHeader>{t('text.section_text_shadow')}</Inspector.SubHeader>
-    <InputDoubleCountainer label="text.text_shadow_position">
+    <InputDoubleContainer label="text.text_shadow_position">
       <InputBaseText value={data.textShadowX} onChange={e => up("textShadowX", e.target.value)} type="number" />
       <InputBaseText value={data.textShadowY} onChange={e => up("textShadowY", e.target.value)} type="number" />
-    </InputDoubleCountainer>
+    </InputDoubleContainer>
     <InputText label="text.text_shadow_blur" type="number" value={data.textShadowZ} onChange={e => up("textShadowZ", e.target.value)} />
     <InputColor label="text.text_shadow_color" value={data.textShadowColor} onChange={e => up("textShadowColor", e)} />
 
@@ -107,21 +107,21 @@ const BoxInspector: FC<{ id: string }> = ({ id }) => {
 
     <InputText label="text.box_text_padding" min="0" step="1" type="number" value={data.boxPadding} onChange={e => up("boxPadding", e.target.value)} />
 
-    <InputDoubleCountainer label="text.box_vertical_offset">
+    <InputDoubleContainer label="text.box_vertical_offset">
       <InputBaseText value={data.boxScrollPaddingTop} onChange={e => up("boxScrollPaddingTop", e.target.value)} type="number" />
       <InputBaseText value={data.boxScrollPaddingBottom} onChange={e => up("boxScrollPaddingBottom", e.target.value)} type="number" />
-    </InputDoubleCountainer>
+    </InputDoubleContainer>
 
-    <InputDoubleCountainer label="text.box_horizontal_offset">
+    <InputDoubleContainer label="text.box_horizontal_offset">
       <InputBaseText value={data.boxScrollPaddingLeft} onChange={e => up("boxScrollPaddingLeft", e.target.value)} type="number" />
       <InputBaseText value={data.boxScrollPaddingRight} onChange={e => up("boxScrollPaddingRight", e.target.value)} type="number" />
-    </InputDoubleCountainer>
+    </InputDoubleContainer>
 
     <Inspector.SubHeader>{t('text.section_box_shadow')}</Inspector.SubHeader>
-    <InputDoubleCountainer label="text.box_shadow_position">
+    <InputDoubleContainer label="text.box_shadow_position">
       <InputBaseText value={data.boxShadowX} onChange={e => up("boxShadowX", e.target.value)} type="number" />
       <InputBaseText value={data.boxShadowY} onChange={e => up("boxShadowY", e.target.value)} type="number" />
-    </InputDoubleCountainer>
+    </InputDoubleContainer>
     <InputText label="text.box_shadow_blur" type="number" value={data.boxShadowZ} onChange={e => up("boxShadowZ", e.target.value)} />
     <InputText label="text.box_shadow_spread" type="number" value={data.boxShadowSpread} onChange={e => up("boxShadowZ", e.target.value)} />
     <InputColor label="text.box_shadow_color" value={data.boxShadowColor} onChange={e => up("boxShadowColor", e)} />
@@ -206,18 +206,18 @@ const EffectsInspector: FC<{ id: string }> = ({ id }) => {
     <InputFile label="text.audio_show_sound" type="audio" value={data.soundFileOnShow} onChange={e => up("soundFileOnShow", e)} />
     <InputFile label="text.audio_hide_sound" type="audio" value={data.soundFileOnHide} onChange={e => up("soundFileOnHide", e)} />
     <InputRange label="common.field_volume" step="0.01" min="0" max="1" value={data.soundVolume} onChange={e => up("soundVolume", parseFloat(e.target.value) || 0)} />
-    <InputDoubleCountainer label="text.audio_params">
+    <InputDoubleContainer label="text.audio_params">
       <div className="flex-grow font-semibold text-xs text-center opacity-50">min</div>
       <div className="flex-grow font-semibold text-xs text-center opacity-50">max</div>
-    </InputDoubleCountainer>
-    <InputDoubleCountainer label="text.audio_detune">
+    </InputDoubleContainer>
+    <InputDoubleContainer label="text.audio_detune">
       <InputBaseText type="number" value={data.soundDetuneMin} onChange={e => up("soundDetuneMin", parseFloat(e.target.value) || 0)} />
       <InputBaseText type="number" value={data.soundDetuneMax} onChange={e => up("soundDetuneMax", parseFloat(e.target.value) || 0)} />
-    </InputDoubleCountainer>
-    <InputDoubleCountainer label="text.audio_playback">
+    </InputDoubleContainer>
+    <InputDoubleContainer label="text.audio_playback">
       <InputBaseText type="number" value={data.soundPlaybackMin} onChange={e => up("soundPlaybackMin", parseFloat(e.target.value) || 0)} />
       <InputBaseText type="number" value={data.soundPlaybackMax} onChange={e => up("soundPlaybackMax", parseFloat(e.target.value) || 0)} />
-    </InputDoubleCountainer>
+    </InputDoubleContainer>
 
 
     <Inspector.SubHeader>{t('text.section_particles')}</Inspector.SubHeader>
@@ -225,37 +225,37 @@ const EffectsInspector: FC<{ id: string }> = ({ id }) => {
     <InputFile label="text.particles_first" type="image" value={data.particlesSpriteFileIdFirst} onChange={e => up("particlesSpriteFileIdFirst", e)} />
     <InputFile label="text.particles_second" type="image" value={data.particlesSpriteFileIdSecond} onChange={e => up("particlesSpriteFileIdSecond", e)} />
     <InputFile label="text.particles_third" type="image" value={data.particlesSpriteFileIdThird} onChange={e => up("particlesSpriteFileIdThird", e)} />
-    <InputDoubleCountainer label="text.particles_params">
+    <InputDoubleContainer label="text.particles_params">
       <div className="flex-grow font-semibold text-xs text-center opacity-50">min</div>
       <div className="flex-grow font-semibold text-xs text-center opacity-50">max</div>
-    </InputDoubleCountainer>
-    <InputDoubleCountainer label="text.particles_number">
+    </InputDoubleContainer>
+    <InputDoubleContainer label="text.particles_number">
       <InputBaseText type="number" min="0" value={data.particlesCountMin} onChange={e => up("particlesCountMin", e.target.value)} />
       <InputBaseText type="number" min="0" value={data.particlesCountMax} onChange={e => up("particlesCountMax", e.target.value)} />
-    </InputDoubleCountainer>
-    <InputDoubleCountainer label="text.particles_duration">
+    </InputDoubleContainer>
+    <InputDoubleContainer label="text.particles_duration">
       <InputBaseText type="number" min="0" value={data.particlesDurationMin} onChange={e => up("particlesDurationMin", e.target.value)} />
       <InputBaseText type="number" min="0" value={data.particlesDurationMax} onChange={e => up("particlesDurationMax", e.target.value)} />
-    </InputDoubleCountainer>
+    </InputDoubleContainer>
 
-    <InputDoubleCountainer label="text.particles_direction_x">
+    <InputDoubleContainer label="text.particles_direction_x">
       <InputBaseText type="number" min="0" value={data.particlesDirectionXMin} onChange={e => up("particlesDirectionXMin", e.target.value)} />
       <InputBaseText type="number" min="0" value={data.particlesDirectionXMax} onChange={e => up("particlesDirectionXMax", e.target.value)} />
-    </InputDoubleCountainer>
-    <InputDoubleCountainer label="text.particles_direction_y">
+    </InputDoubleContainer>
+    <InputDoubleContainer label="text.particles_direction_y">
       <InputBaseText type="number" min="0" value={data.particlesDirectionYMin} onChange={e => up("particlesDirectionYMin", e.target.value)} />
       <InputBaseText type="number" min="0" value={data.particlesDirectionYMax} onChange={e => up("particlesDirectionYMax", e.target.value)} />
-    </InputDoubleCountainer>
+    </InputDoubleContainer>
 
-    <InputDoubleCountainer label="text.particles_scale">
+    <InputDoubleContainer label="text.particles_scale">
       <InputBaseText type="number" min="0" value={data.particlesScaleMin} onChange={e => up("particlesScaleMin", e.target.value)} />
       <InputBaseText type="number" min="0" value={data.particlesScaleMax} onChange={e => up("particlesScaleMax", e.target.value)} />
-    </InputDoubleCountainer>
+    </InputDoubleContainer>
 
-    <InputDoubleCountainer label="text.particles_rotation">
+    <InputDoubleContainer label="text.particles_rotation">
       <InputBaseText type="number" min="0" value={data.particlesRotationMin} onChange={e => up("particlesRotationMin", e.target.value)} />
       <InputBaseText type="number" min="0" value={data.particlesRotationMax} onChange={e => up("particlesRotationMax", e.target.value)} />
-    </InputDoubleCountainer>
+    </InputDoubleContainer>
 
   </>
 }

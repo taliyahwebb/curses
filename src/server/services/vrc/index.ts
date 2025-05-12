@@ -1,6 +1,6 @@
 import { invoke }                                          from "@tauri-apps/api/core";
 import { IServiceInterface, TextEventType }                from "@/types";
-import { serviceSubscibeToInput, serviceSubscibeToSource } from "../../../utils";
+import { serviceSubscribeToInput, serviceSubscribeToSource } from "../../../utils";
 import { VRC_Backends }                                    from "./schema";
 import VRC_KillFrenzyTarget                                from "./targets/killfrenzy";
 import VRC_TextboxTarget                                   from "./targets/textbox";
@@ -27,7 +27,7 @@ class Service_VRC implements IServiceInterface {
   async init() {
     this.targets.textbox = new VRC_TextboxTarget();
     this.targets.killfrenzy = new VRC_KillFrenzyTarget();
-    serviceSubscibeToSource(this.#state, "source", (data) => {
+    serviceSubscribeToSource(this.#state, "source", (data) => {
       if (!this.#state.enable || !data) return;
       if (data.type === TextEventType.final) {
         this.#activeTarget?.pushFinal(data.value);
@@ -35,7 +35,7 @@ class Service_VRC implements IServiceInterface {
         this.#activeTarget?.pushInterim(data.value);
       }
     });
-    serviceSubscibeToInput(this.#state, "inputField", (data) => {
+    serviceSubscribeToInput(this.#state, "inputField", (data) => {
       if (!this.#state.enable || !data) return;
       if (data.type === TextEventType.final) {
         this.#activeTarget?.pushFinal(data.value);

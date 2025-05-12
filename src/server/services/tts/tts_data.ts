@@ -316,7 +316,7 @@ export const azureVoices: MappedGroupDictionary<{
   ],
   "Vietnamese (Vietnam)": [
     ["vi-VN-HoaiMyNeural", "HoaiMyNeural"],
-    ["vi-VN-NamMinhNeural", "NamMinhNeural"]
+    ["vi-VN-NameMinhNeural", "NameMinhNeural"]
   ],
   "Welsh (United Kingdom)": [
     ["cy-GB-NiaNeural", "NiaNeural"],

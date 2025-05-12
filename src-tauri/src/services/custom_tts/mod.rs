@@ -101,7 +101,7 @@ fn build_command(script: &Path, txtfile: &Path, outfile: &Path) -> Command {
     command.arg(txtfile);
     command.arg(outfile);
 
-    // console applications on windows have the annoying habbit of spawning a terminal window.
+    // console applications on windows have the annoying habit of spawning a terminal window.
     // we need to explicitly tell CreateProcess not to do that.
     command.creation_flags(0x08000000); // CREATE_NO_WINDOW
 

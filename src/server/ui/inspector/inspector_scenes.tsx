@@ -6,7 +6,7 @@ import { useSnapshot } from "valtio";
 import Dropdown from "../dropdown/Dropdown";
 import Tooltip from "../dropdown/Tooltip";
 import Inspector from "./components";
-import { InputBaseText, InputDoubleCountainer } from "./components/input";
+import { InputBaseText, InputDoubleContainer } from "./components/input";
 import { useTranslation } from "react-i18next";
 
 const SceneMenu: FC<{ id: string }> = ({ id }) => {
@@ -47,10 +47,10 @@ const Inspector_Scenes: FC = () => {
     <Inspector.Header><RiStackFill /> {t('scenes.title')}</Inspector.Header>
     <Inspector.Content>
       <Inspector.SubHeader>{t('scenes.section_canvas')}</Inspector.SubHeader>
-      <InputDoubleCountainer label="scenes.field_canvas_size">
+      <InputDoubleContainer label="scenes.field_canvas_size">
         <InputBaseText value={canvas?.w} onChange={e => updateState(state => { state.canvas.w = parseFloat(e.target.value) })} type="number"/>
         <InputBaseText value={canvas?.h} onChange={e => updateState(state => { state.canvas.h = parseFloat(e.target.value) })} type="number"/>
-      </InputDoubleCountainer>
+      </InputDoubleContainer>
 
       <Inspector.SubHeader>{t('scenes.section_scenes')}</Inspector.SubHeader>
       {scenes && Object.keys(scenes).map((sceneId) => <Scene key={sceneId} data={scenes[sceneId]} />)}

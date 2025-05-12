@@ -1,0 +1,8 @@
+[default.extend-identifiers]
+# dont correct localization shortcuts
+fo = "fo"
+ba = "ba"
+BA = "BA"
+
+[default.extend-words]
+noo = "noo" # extra expressive no

@@ -1,5 +1,5 @@
 import { IServiceInterface, ServiceNetworkState, TextEventType } from "@/types";
-import { WordReplacementsCache, buildWordReplacementsCache, serviceSubscibeToInput, serviceSubscibeToSource } from "@/utils";
+import { WordReplacementsCache, buildWordReplacementsCache, serviceSubscribeToInput, serviceSubscribeToSource } from "@/utils";
 import { toast } from "react-toastify";
 import { proxy } from "valtio";
 import { subscribeKey } from "valtio/utils";
@@ -61,12 +61,12 @@ class Service_TTS implements IServiceInterface, ITTSReceiver {
     subscribeKey(this.data, "replaceWords", () => this.updateReplacementsCache());
     subscribeKey(this.data, "replaceWordsIgnoreCase", () => this.updateReplacementsCache());
 
-    serviceSubscibeToSource(this.data, "source", data => {
+    serviceSubscribeToSource(this.data, "source", data => {
       if (data?.type === TextEventType.final)
         this.play(data.value);
     });
 
-    serviceSubscibeToInput(this.data, "inputField", data => {
+    serviceSubscribeToInput(this.data, "inputField", data => {
       if (data?.type === TextEventType.final)
         this.play(data.value);
     });

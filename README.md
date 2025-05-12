@@ -148,7 +148,7 @@ You will need to find how to create an API key and paste it in the *Key* field.
 
 ### Speechly
 > [!WARNING]
-> Speechly was aquired by Roblox and it seems its Speech To Text API was shut down.
+> Speechly was acquired by Roblox and it seems its Speech To Text API was shut down.
 > This service may be removed in the future.
 
 ## TTS services

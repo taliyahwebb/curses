@@ -9,7 +9,7 @@ export const azureLanguages: MappedGroupDictionary = {
 
   "Arabic": [
     ["ar-DZ", "Algeria"],
-    ["ar-BH", "Bahrain), modern standar"],
+    ["ar-BH", "Bahrain), modern standard"],
     ["ar-EG", "Egypt"],
     ["ar-IQ", "Iraq"],
     ["ar-IL", "Israel"],

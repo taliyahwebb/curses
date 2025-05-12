@@ -34,7 +34,7 @@ export class STT_WhisperService implements ISTTService {
     const stop_interim_callback = await listen<string>("whisper_stt_interim", (event) => {
       this.bindings.onInterim(event.payload);
     });
-    /// the rust backend function will only return when an error occured or stop() was issued
+    /// the rust backend function will only return when an error occurred or stop() was issued
     await invoke<void>("plugin:whisper-stt|start", {
         args: {
             inputDevice: this.state.device,

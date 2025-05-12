@@ -103,7 +103,7 @@ class Service_Keyboard implements IServiceInterface {
     this.triggerBackgroundTimer();
   }
   stopBackgroundInput() {
-    // for immidiate cancel
+    // for immediate cancel
     if (this.backgroundTimer !== null) {
       clearTimeout(this.backgroundTimer);
       clearInterval(this.backgroundInterval as number);

@@ -8,8 +8,8 @@ import OBSWebSocket, { EventSubscription, OBSWebSocketError } from "obs-websocke
 import { toast } from "react-toastify";
 import { proxy } from "valtio";
 import {
-  serviceSubscibeToInput,
-  serviceSubscibeToSource,
+  serviceSubscribeToInput,
+  serviceSubscribeToSource,
 } from "../../../utils";
 
 class Service_OBS implements IServiceInterface {
@@ -29,8 +29,8 @@ class Service_OBS implements IServiceInterface {
     this.wsInstance.on("Identified", () => this.wshandleConnected());
     this.wsInstance.on("CurrentProgramSceneChanged", e => this.trySwitchScene(e.sceneName));
 
-    serviceSubscibeToSource(this.#state, "source", e => this.processTextEvent(e));
-    serviceSubscibeToInput(this.#state, "inputField", e => this.processTextEvent(e));
+    serviceSubscribeToSource(this.#state, "source", e => this.processTextEvent(e));
+    serviceSubscribeToInput(this.#state, "inputField", e => this.processTextEvent(e));
 
     if (this.#state.wsAutoStart)
       this.wsConnect();

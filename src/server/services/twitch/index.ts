@@ -6,8 +6,8 @@ import { StaticAuthProvider } from "@twurple/auth";
 import { proxy } from "valtio";
 import { subscribeKey } from "valtio/utils";
 import {
-  serviceSubscibeToInput,
-  serviceSubscibeToSource,
+  serviceSubscribeToInput,
+  serviceSubscribeToSource,
 } from "../../../utils";
 import TwitchChatApi from "./chat";
 import TwitchEmotesApi from "./emotes";
@@ -56,7 +56,7 @@ class Service_Twitch implements IServiceInterface {
       } else this.chat.disconnect();
     });
 
-    serviceSubscibeToSource(this.#state.data, "chatPostSource", (data) => {
+    serviceSubscribeToSource(this.#state.data, "chatPostSource", (data) => {
       if (
         this.#state.data.chatPostLive &&
         this.state.liveStatus !== ServiceNetworkState.connected
@@ -68,7 +68,7 @@ class Service_Twitch implements IServiceInterface {
         this.chat.post(data.value);
     });
 
-    serviceSubscibeToInput(this.#state.data, "chatPostInput", (data) => {
+    serviceSubscribeToInput(this.#state.data, "chatPostInput", (data) => {
       if (
         this.#state.data.chatPostLive &&
         this.state.liveStatus !== ServiceNetworkState.connected

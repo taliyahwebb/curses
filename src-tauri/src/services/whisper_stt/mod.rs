@@ -101,7 +101,7 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
         };
 
         // audio fetching thread
-        // start this thread after setup was successfull to reduce cleanup work
+        // start this thread after setup was successful to reduce cleanup work
         thread::spawn(move || {
             let mut start_err = err_tx.clone();
             let result = || -> Result<Stream, WhisperError> {
@@ -186,7 +186,7 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
     };
     let result = handle_stream.await;
     {
-        // put in a child scope so lock gets dropped immediatly
+        // put in a child scope so lock gets dropped immediately
         let (lock, cvar) = &*cancel_pair;
         let mut cancel = lock.lock().expect("should be able to lock");
         *cancel = true;
