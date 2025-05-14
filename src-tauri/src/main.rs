@@ -4,6 +4,15 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use tauri::{Manager, State, command};
 use tauri_plugin_window_state::{AppHandleExt, StateFlags};
+#[cfg(windows)]
+use webview2_com::Microsoft::Web::WebView2::Win32::{
+    COREWEBVIEW2_PERMISSION_KIND_MICROPHONE,
+    COREWEBVIEW2_PERMISSION_STATE_ALLOW,
+    ICoreWebView2_13,
+    ICoreWebView2Profile4,
+};
+#[cfg(windows)]
+use windows::core::{Interface, PCWSTR};
 
 use crate::services::AppConfiguration;
 
@@ -34,6 +43,38 @@ fn get_port(state: State<'_, InitArguments>) -> u16 {
 }
 
 #[command]
+fn grant_mic_access(_origin: &str, _webview_window: tauri::WebviewWindow) {
+    #[cfg(windows)]
+    {
+        let mut origin = _origin.to_string();
+        origin.push('\0');
+        let origin = origin.encode_utf16().collect::<Vec<u16>>();
+
+        _webview_window
+            .with_webview(move |webview| unsafe {
+                let origin = PCWSTR::from_raw(origin.as_ptr());
+
+                let core = Interface::cast::<ICoreWebView2_13>(
+                    &webview.controller().CoreWebView2().unwrap(),
+                )
+                .unwrap();
+                let profile =
+                    Interface::cast::<ICoreWebView2Profile4>(&core.Profile().unwrap()).unwrap();
+
+                profile
+                    .SetPermissionState(
+                        COREWEBVIEW2_PERMISSION_KIND_MICROPHONE,
+                        origin,
+                        COREWEBVIEW2_PERMISSION_STATE_ALLOW,
+                        None,
+                    )
+                    .unwrap();
+            })
+            .unwrap();
+    }
+}
+
+#[command]
 fn app_close(app_handle: tauri::AppHandle) {
     let Some(window) = app_handle.get_webview_window("main") else {
         return app_handle.exit(0);
@@ -44,6 +85,7 @@ fn app_close(app_handle: tauri::AppHandle) {
         app_handle.exit(0)
     }
 }
+
 fn app_setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let window = app.get_webview_window("main").unwrap();
     window.set_shadow(true).ok(); // ignore failure
@@ -83,13 +125,14 @@ fn main() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_shell::init())
         .setup(app_setup)
+        .manage(AppConfiguration { port: args.port })
         .invoke_handler(tauri::generate_handler![
             get_port,
             get_native_features,
-            app_close
+            app_close,
+            grant_mic_access,
         ])
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .manage(AppConfiguration { port: args.port })
         .plugin(services::osc::init())
         .plugin(services::web::init())
         .plugin(services::audio::init())
