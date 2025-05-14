@@ -28,3 +28,4 @@ title = "Curses"
 fullscreen = false
 decorations = false
 useHttpsScheme = true
+devtools = true
