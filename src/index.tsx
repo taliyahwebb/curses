@@ -8,6 +8,7 @@ import React, {ReactNode, Suspense} from "react";
 import AppConfiguration   from "@/config";
 import ApiShared          from "@/shared";
 import ClientLoadingView from "./client/ui/view_loading";
+import applyAllMigrations from "./server/services/migration";
 
 declare global {
   interface Window {
@@ -47,6 +48,8 @@ function renderView(view: ReactNode) {
 const LazyServerView = React.lazy(() => import("./server/ui/editor-view"));
 
 (async function () {
+  await applyAllMigrations();
+
   window.Config = new AppConfiguration();
   window.ApiShared = new ApiShared();
   window.ApiClient = new ApiClient();
