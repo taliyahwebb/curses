@@ -43,7 +43,7 @@ tauri-plugin-fs = { git = "https://github.com/tauri-apps/plugins-workspace", bra
 
 [dependencies.tauri]
 version = "2"
-features = [ "config-toml" ]
+features = ["config-toml", "devtools"]
 
 [target.'cfg(windows)'.dependencies]
 webview2-com = "0.37.0"
