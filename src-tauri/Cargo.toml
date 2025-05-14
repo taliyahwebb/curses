@@ -45,8 +45,11 @@ tauri-plugin-fs = { git = "https://github.com/tauri-apps/plugins-workspace", bra
 version = "2"
 features = [ "config-toml" ]
 
-[dependencies.windows]
-version = "0.59"
+[target.'cfg(windows)'.dependencies]
+webview2-com = "0.37.0"
+
+[target.'cfg(windows)'.dependencies.windows]
+version = "0.61"
 features = [
   "Win32_Foundation",
   "Win32_Media_Audio",
