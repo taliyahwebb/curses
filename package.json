@@ -70,7 +70,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.50.0",
-    "@tauri-apps/cli": "^2.2.7",
+    "@tauri-apps/cli": "^2.4.1",
     "@types/animejs": "^3.1.13",
     "@types/lodash": "^4.17.14",
     "@types/node": "^18.19.74",
