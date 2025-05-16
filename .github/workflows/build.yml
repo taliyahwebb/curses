@@ -2,29 +2,10 @@ name: 'build'
 
 on:
   workflow_dispatch: {}
-  push:
-    branches:
-      - dev
-      - master
-      - 'releases/**'
-  pull_request:
-    branches:
-      - dev
-      - master
-      - 'releases/**'
+  workflow_call: {}
 
 jobs:
-  pre-commit-check:
-    name: workspace pre-commit check
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@v4
-    - name: run pre-commit check
-      run: nix develop .#lint -c ./misc/git-hooks/pre-commit
   build-flake:
-    needs: pre-commit-check
     name: build nixos
     runs-on: ubuntu-latest
     steps:
@@ -33,6 +14,7 @@ jobs:
       uses: DeterminateSystems/nix-installer-action@v4
     - name: Nix build
       run: nix build -L .#
+
   build-dev-tools:
     needs: pre-commit-check
     name: build dev-tools
@@ -43,16 +25,7 @@ jobs:
       uses: DeterminateSystems/nix-installer-action@v4
     - name: nix build
       run: nix build -L .#dev-tools
-  flake-check:
-    name: Flake self-check
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Check Nix flake inputs
-      uses: DeterminateSystems/flake-checker-action@v5
-      with:
-        fail-mode: true
-    
+
   build-tauri:
     needs: pre-commit-check
     permissions:
