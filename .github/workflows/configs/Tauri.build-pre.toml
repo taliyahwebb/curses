@@ -1,0 +1,2 @@
+productName = "curses prerelease"
+bundle.targets = ["appimage"]
