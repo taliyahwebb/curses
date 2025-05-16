@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-flake:
-    name: build nixos
+    name: nixos
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
       run: nix build -L .#dev-tools
 
   build-tauri:
-    needs: pre-commit-check
+    name: main targets
     permissions:
       contents: write
     strategy:
