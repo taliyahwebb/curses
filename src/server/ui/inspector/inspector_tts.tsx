@@ -340,7 +340,7 @@ const Piper: FC = () => {
         label="tts.piper_exe_location"
         value={data.exe_location}
         onChange={e => handleUpdate("exe_location", e.target.value)}
-        dialogOptions={{ filters: isWindows ? [{ name: "piper.exe", extensions: ["exe"] }] : [] }}
+        dialogOptions={{ filters: IS_WINDOWS ? [{ name: "piper.exe", extensions: ["exe"] }] : [] }}
       />
       <InputFilePath
         label="tts.piper_voice_location"
@@ -413,7 +413,7 @@ const Inspector_TTS: FC = () => {
         <InputSelect label="common.field_service" value={data.data.backend} options={[
           ...(window.speechSynthesis ?
               [{ label: t('tts.webspeechapi_title'),  value: TTS_Backends.webspeechapi }] : []),
-          ...(isWindows ?
+          ...(IS_WINDOWS ?
               [{ label: t('tts.windows_title'),       value: TTS_Backends.windows      }] : []),
           { label: t('tts.azure_title'),      value: TTS_Backends.azure     },
           { label: t('tts.tiktok_title'),     value: TTS_Backends.tiktok    },

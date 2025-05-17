@@ -1,2 +1,2 @@
 /// <reference types="vite/client" />
-declare const isWindows: bool;
+declare const IS_WINDOWS: boolean;

@@ -42,6 +42,6 @@ export default defineConfig({
   },
   define: {
     // forced to define here because process.platform is not supported inside of vite
-    isWindows: process.platform === "win32",
+    IS_WINDOWS: process.platform === "win32",
   },
 });
