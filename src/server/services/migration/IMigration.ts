@@ -14,6 +14,7 @@ export default interface IMigration {
   /**
    * Checks if the migration is still valid by looking at the data saved at the time of migration.
    * This can for example be used to re-run a migration after an update, or if some data changed.
+   * THIS FUNCTION SHOULD NOT INCLUDE ANY INTENSIVE ACTIONS AS IT WILL BE RUN EVERY TIME AT STARTUP!
    * @param version - the version the migration was performed in
    * @param data - the data return by `apply` the last time the migration took place
    * @returns - true if the migration doesn't have to be re-run, false if it does

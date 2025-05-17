@@ -14,7 +14,7 @@ function isValidMigrationsJSON(
   return (
     appliedMigrations &&
     Array.isArray(appliedMigrations) &&
-    appliedMigrations.forEach((appliedMigration) => (
+    appliedMigrations.every((appliedMigration) => (
       "migrationID" in appliedMigration &&
       typeof appliedMigration.migrationID === "string" &&
       Object.keys(migrations).includes(appliedMigration.migrationID) &&
@@ -38,7 +38,10 @@ async function getAppliedMigrations(): Promise<AppliedMigration[]> {
   const json = new TextDecoder().decode(await readFile(...MIGRATIONS_FILE));
 
   const migrationsJSON = JSON.parse(json);
-  if (!isValidMigrationsJSON(migrationsJSON)) return [];
+  if (!isValidMigrationsJSON(migrationsJSON)) {
+    console.error("Invalid migration file, resetting");
+    return [];
+  }
 
   return migrationsJSON;
 }
@@ -59,15 +62,20 @@ async function apply(migrationID: MigrationID): Promise<MigrationData> {
 }
 
 /**
- * Applies an already-applied migration if its information shows it's out of date
+ * Applies an already-applied migration if its information shows it's out of date and still applicable
  * @returns - a boolean indicating if the migration was rerun,
  * and the data associated to the last migration
  */
 async function reapply(appliedMigration: AppliedMigration): Promise<[boolean, MigrationData]> {
   const migration: IMigration = migrations[appliedMigration.migrationID];
 
-  if (migration.isStillValid(appliedMigration.version, appliedMigration.data))
-    return [true, await apply(appliedMigration.migrationID)];
+  if (
+    !migration.isStillValid(appliedMigration.version, appliedMigration.data) &&
+    migration.isApplicable()
+  ) {
+    console.log(`Migration \`${appliedMigration.migrationID}\`: reset and applied`);
+    return [true, await migration.apply()];
+  }
   return [false, appliedMigration.data];
 }
 
@@ -116,6 +124,6 @@ export default async function applyAllMigrations() {
     }
   }
 
-  const json = new TextEncoder().encode(JSON.stringify(migrationIDs, null, 4));
+  const json = new TextEncoder().encode(JSON.stringify(appliedMigrations, null, 4));
   writeFile("migrations.json", json, { baseDir: BaseDirectory.AppLocalData });
 }
