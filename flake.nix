@@ -184,7 +184,8 @@
             pkgs.typescript-language-server
             pkgs.nixgl.nixGLIntel
             pkgs.nixgl.nixVulkanIntel
-            (lib.lowPrio pkgs.piper-tts)
+            pkgs.coreutils
+            pkgs.piper-tts
           ];
           RUST_LOG = "curses";
           shellHook = ''
@@ -192,6 +193,12 @@
             # works in the dev shell
             export GIO_EXTRA_MODULES="$GIO_EXTRA_MODULES:${pkgs.glib-networking}/lib/gio/modules"
             ${pkgs.lib.optionalString pkgs.stdenv.isLinux ''export ALSA_PLUGIN_DIR="${more-alsa-plugins}"''}
+
+            # export the nixGL/vulkan paths automatically
+            env_tempfile=$(mktemp XXXXXX-env.sh)
+            nixGLIntel nixVulkanIntel ${lib.getExe pkgs.bash} -c "export -p" > "$env_tempfile"
+            source "$env_tempfile"
+            rm "$env_tempfile"
           '';
         };
       }
