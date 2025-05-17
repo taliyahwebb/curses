@@ -5,8 +5,8 @@ on:
   workflow_call: {}
 
 jobs:
-  build-flake:
-    name: nixos
+  nix-curses:
+    name: nix curses
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -15,9 +15,8 @@ jobs:
     - name: Nix build
       run: nix build -L .#
 
-  build-dev-tools:
-    needs: pre-commit-check
-    name: build dev-tools
+  nix-dev-tools:
+    name: nix dev-tools
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -26,8 +25,8 @@ jobs:
     - name: nix build
       run: nix build -L .#dev-tools
 
-  build-tauri:
-    name: main targets
+  curses:
+    name: curses
     permissions:
       contents: write
     strategy:
@@ -93,8 +92,7 @@ jobs:
           releaseDraft: true
           prerelease: ${{ startsWith(github.ref, 'refs/heads/releases/') && endsWith(github.ref, '-pre')}}
           # Use different tauri config if prerelease (msi bundles only support x.x.x versioning)
-          args: "${{ matrix.args }}
-          --config .github/workflows/configs/Tauri.build${{ endsWith(steps.version.outputs.value, '-pre') && '-pre' || null }}.toml"
+          args: "${{ matrix.args }} --config .github/workflows/configs/Tauri.build${{ endsWith(steps.version.outputs.value, '-pre') && '-pre' || null }}.toml"
       - uses: actions/upload-artifact@v4
         with:
           name: AppImage
