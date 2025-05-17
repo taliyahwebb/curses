@@ -1,14 +1,17 @@
 use core::str;
-use std::io;
+use std::io::{self, Cursor};
 use std::path::PathBuf;
 
 use futures::TryFutureExt;
+use rodio::Decoder;
 use serde::{Deserialize, Serialize};
 use tauri::{Manager, Runtime, State, plugin};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
 use tokio::process::ChildStderr;
 use tokio::sync::Mutex;
 
+use super::audio::IndependentSink;
+use crate::services::audio::get_independent_sink;
 use crate::utils::*;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -98,7 +101,7 @@ fn add_arg_if_some(
 }
 
 /// Invokes piper to generate a WAV file and returns it as a byte vector
-async fn get_wav_bytes(args: &SpeakArgs, state: State<'_, PiperInstance>) -> io::Result<Vec<u8>> {
+async fn get_wav_bytes(args: &SpeakArgs, state: &State<'_, PiperInstance>) -> io::Result<Vec<u8>> {
     // at first i tried to read the wav data from stdout, but that didn't work,
     // so now i just use a regular file here.
     let model_path = &args.voice_path;
@@ -191,6 +194,7 @@ async fn get_wav_bytes(args: &SpeakArgs, state: State<'_, PiperInstance>) -> io:
 #[derive(Default)]
 struct PiperInstance {
     process: Mutex<Option<(tokio::process::Child, BufReader<ChildStderr>)>>,
+    sink: Mutex<Option<IndependentSink>>,
 }
 
 #[tauri::command]
@@ -207,16 +211,23 @@ fn get_voices(path: PathBuf) -> Result<Vec<Voice>, String> {
 
 #[tauri::command]
 async fn speak(args: SpeakArgs, state: State<'_, PiperInstance>) -> Result<(), String> {
-    use crate::services::audio::{RpcAudioPlayAsync, play_async};
+    use crate::services::audio::RpcAudioPlayAsync;
 
     // fast path for empty string
     if args.value.is_empty() {
         return Ok(());
     }
 
-    let bytes = get_wav_bytes(&args, state)
+    let bytes = get_wav_bytes(&args, &state)
         .await
         .map_err(|e| e.to_string())?;
+
+    let mut lock = state.sink.lock().await;
+    let sink = if let Some(sink) = lock.as_mut() {
+        sink
+    } else {
+        lock.insert(get_independent_sink(&args.device).map_err(|e| e.to_string())?)
+    };
 
     let play_async_args = RpcAudioPlayAsync {
         device_name: args.device,
@@ -225,7 +236,14 @@ async fn speak(args: SpeakArgs, state: State<'_, PiperInstance>) -> Result<(), S
         rate: 1.0,
     };
 
-    play_async(play_async_args).await
+    match Decoder::new(Cursor::new(play_async_args.data)) {
+        Ok(source) => {
+            sink.inner.append(source);
+            sink.inner.sleep_until_end();
+            Ok(())
+        }
+        Err(err) => Err(format!("Unable to play file: '{err}'")),
+    }
 }
 
 #[tauri::command]

@@ -14,6 +14,7 @@ tauri-build = { version = "2", features = [ "config-toml" ] }
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
+anyhow = { workspace = true }
 window-shadows = "^0.2"
 uwuify = "^0.2"
 itertools = "0.14"

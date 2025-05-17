@@ -903,6 +903,7 @@ dependencies = [
 name = "curses"
 version = "0.1.0-pre"
 dependencies = [
+ "anyhow",
  "clap 4.5.37",
  "earshot",
  "futures",
