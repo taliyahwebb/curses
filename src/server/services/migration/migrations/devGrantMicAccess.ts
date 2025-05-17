@@ -5,7 +5,7 @@ type Data = { origin: string };
 
 export default {
   // worst case scenario we set the permission twice
-  isApplicable: () => !import.meta.env.DEV,
+  isApplicable: () => import.meta.env.DEV,
 
   isStillValid: (_version, data) => (<Data>data).origin === window.origin,
 
