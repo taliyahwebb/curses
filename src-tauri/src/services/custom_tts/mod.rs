@@ -1,11 +1,9 @@
-use std::io;
 use std::path::{Path, PathBuf};
 
+use anyhow::{Context, anyhow};
 use serde::{Deserialize, Serialize};
 use tauri::{Runtime, plugin};
 use tokio::process::Command;
-
-use crate::utils::*;
 
 /// arguments to the `speak` function. most of these get passed straight to the
 /// executable
@@ -21,7 +19,7 @@ struct SpeakArgs {
     value: String,
 }
 
-async fn get_audio_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
+async fn get_audio_bytes(args: &SpeakArgs) -> anyhow::Result<Vec<u8>> {
     // create temp dir and file paths
     let directory = tempfile::tempdir()?;
     let txtfile = directory.path().join("speak.txt");
@@ -56,7 +54,7 @@ async fn get_audio_bytes(args: &SpeakArgs) -> io::Result<Vec<u8>> {
             Some(code) => format!("{:?} exited with status code: {}", command.as_std(), code),
             None => "Script terminated by signal".to_string(),
         };
-        Err(io::Error::other(error))
+        Err(anyhow!(error))
     }
 }
 
