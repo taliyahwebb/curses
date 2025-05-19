@@ -4,6 +4,9 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use tauri::{Manager, State, command};
 use tauri_plugin_window_state::{AppHandleExt, StateFlags};
+use tracing::{Level, trace};
+use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::{EnvFilter, FmtSubscriber};
 #[cfg(windows)]
 use webview2_com::Microsoft::Web::WebView2::Win32::{
     COREWEBVIEW2_PERMISSION_KIND_MICROPHONE,
@@ -17,7 +20,6 @@ use windows::core::{Interface, PCWSTR};
 use crate::services::AppConfiguration;
 
 mod services;
-mod utils;
 
 #[derive(Parser, Debug)]
 struct InitArguments {
@@ -93,6 +95,19 @@ fn app_setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn main() {
+    // a builder for `FmtSubscriber`.
+    let subscriber = FmtSubscriber::builder()
+        .with_env_filter(EnvFilter::from_default_env())
+        // all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)
+        // will be written to stdout.
+        // .with_max_level(Level::TRACE)
+        // completes the builder.
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+
+    trace!("logger init");
+
     let args = InitArguments::parse();
 
     // crash if port is not available

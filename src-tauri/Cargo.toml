@@ -15,6 +15,8 @@ tauri-build = { version = "2", features = [ "config-toml" ] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 window-shadows = "^0.2"
 uwuify = "^0.2"
 itertools = "0.14"
