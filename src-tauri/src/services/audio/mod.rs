@@ -10,6 +10,7 @@ use rodio::{Decoder, DeviceTrait, OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
 use tauri::plugin::{Builder, TauriPlugin};
 use tauri::{Runtime, command};
+use tracing::trace;
 
 fn get_output_stream(device_name: &str) -> Option<(OutputStream, OutputStreamHandle)> {
     let host = cpal::default_host();
@@ -57,9 +58,9 @@ pub fn get_independent_sink(device_name: &str) -> anyhow::Result<IndependentSink
             if !tx.send(Err(anyhow!("will never be read"))).is_err() {
                 panic!("logic error");
             }
-            // use stream down here so that it is not ever dropped prior
+            // 'use' stream down here so that it is not ever dropped prior
             black_box(_stream);
-            eprintln!("independent audio sink closed");
+            trace!("independent audio sink closed");
         })?;
 
     let sink = match rx.recv() {
