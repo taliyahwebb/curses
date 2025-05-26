@@ -1,16 +1,16 @@
 use core::str;
-use std::io::{self, Cursor, Read};
+use std::fs;
+use std::io::{self, Cursor};
 use std::path::PathBuf;
-use std::time::Duration;
-use std::{future, thread};
 
 use anyhow::{Context, bail};
-use futures::{FutureExt, TryFutureExt};
+use futures::TryFutureExt;
 use rodio::Decoder;
 use serde::{Deserialize, Serialize};
 use tauri::{Manager, Runtime, State, plugin};
-use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
-use tokio::process::ChildStderr;
+use tempfile::TempDir;
+use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::process::ChildStdout;
 use tokio::sync::Mutex;
 use tracing::{debug, trace};
 
@@ -84,8 +84,11 @@ fn scan_voice_directory(path: PathBuf) -> io::Result<Vec<Voice>> {
 async fn write_to_stdin(process: &mut tokio::process::Child, bytes: &[u8]) -> anyhow::Result<()> {
     use tokio::io::AsyncWriteExt;
     let stdin = process.stdin.as_mut().expect("Failed to open stdin");
-    let result = stdin.write_all(bytes).await;
-    result.with_context(|| "Could not write to piper's standard input")
+    stdin
+        .write_all(bytes)
+        .await
+        .context("writing to piper stdin")?;
+    Ok(())
 }
 
 /// Handles adding optional command line parameters to a Command object
@@ -103,46 +106,30 @@ fn add_arg_if_some(
 /// sends the text to piper instance to generate a WAV file and returns it as a
 /// byte vector
 async fn get_wav_bytes(text: &str, state: &State<'_, PiperInstance>) -> anyhow::Result<Vec<u8>> {
+    // reading files from stdout directly works but causes trouble with properly
+    // separating individual "files" (tried to use stderr piper output but that
+    // works poorly since it's not properly synchronized with stdout)
     let mut lock = state.process.lock().await;
     let Some(child) = lock.as_mut() else {
         bail!("piper instance not running");
     };
 
     write_to_stdin(&mut child.0, format!("{}\n", text).as_bytes()).await?;
-    debug!("text was input to piper");
-    let mut str_buf = Vec::new();
-    let mut wav_file = Vec::new();
-    let mut buf = [0u8; 1024]; // common os buffer size
-    let make_dummy_future = || {
-        thread::sleep(Duration::from_micros(100));
-        future::pending()
-    };
-    loop {
-        tokio::select! {
-            biased;
-            Ok(read) = child.0.stdout.as_mut().expect("stdout").read(&mut buf) => {
-                wav_file.extend_from_slice(&buf[..read]);
-            }
-            _dummy = make_dummy_future() => {}, // introduce a small delay because there is a race condition between stdout and stderr here
-            _ = child.1.read_until(b"\n"[0], &mut str_buf) => {break;},
-        }
-    }
-    let str_buf = str::from_utf8(&str_buf).expect("stderr should only output utf8 valid");
-    if str_buf.contains("Real-time factor") {
-        debug!("piper created output");
-        // noop, we matched on success
-    } else {
-        let mut child = lock.take().expect("there should have been a child process");
-        child.0.kill().await?;
-        bail!("piper exec error: '{str_buf}'");
-    }
+    trace!("text was input to piper");
+    let mut path = String::new();
+    child.1.read_line(&mut path).await?;
+    let path = path.trim();
+    trace!("piper produced output at '{path}'");
+    let bytes = fs::read(&path)?;
+    fs::remove_file(&path)?;
+    trace!("deleted tmpfile '{path}'");
 
-    Ok(wav_file)
+    Ok(bytes)
 }
 
 #[derive(Default)]
 struct PiperInstance {
-    process: Mutex<Option<(tokio::process::Child, BufReader<ChildStderr>)>>,
+    process: Mutex<Option<(tokio::process::Child, BufReader<ChildStdout>, TempDir)>>,
     sink: Mutex<Option<IndependentSink>>,
 }
 
@@ -215,14 +202,17 @@ async fn start(state: State<'_, PiperInstance>, args: PiperArgs) -> Result<(), S
     if lock.is_some() {
         return Err("already running".to_string());
     }
+    let temp_dir = tempfile::tempdir()
+        .context("creating piper output temp dir")
+        .map_err(|e| e.to_string())?;
     let mut command = tokio::process::Command::new(&args.exe_path);
     command.stdin(std::process::Stdio::piped());
     command.stdout(std::process::Stdio::piped());
     command.stderr(std::process::Stdio::piped());
     command.arg("-m");
     command.arg(args.voice_path);
-    command.arg("-f");
-    command.arg("-");
+    command.arg("-d");
+    command.arg(temp_dir.path());
 
     add_arg_if_some(&mut command, "--speaker", args.speaker_id);
     add_arg_if_some(&mut command, "--noise_scale", args.noise_scale);
@@ -246,8 +236,14 @@ async fn start(state: State<'_, PiperInstance>, args: PiperArgs) -> Result<(), S
     let mut buffered_error = BufReader::new(
         process
             .stderr
-            .take()
+            .as_mut()
             .expect("stderr should have been captured"),
+    );
+    let buffered_out = BufReader::new(
+        process
+            .stdout
+            .take()
+            .expect("stdout should have been captured"),
     );
     // expected piper output
     // ```
@@ -263,10 +259,16 @@ async fn start(state: State<'_, PiperInstance>, args: PiperArgs) -> Result<(), S
             .context("reading piper output")
             .map_err(|err| err.to_string())?;
 
-        if buf.contains("Initialized piper") {
-            break;
-        } else if buf.contains("Loaded voice") {
+        if buf.contains("Loaded voice") {
             continue;
+        } else if buf.contains("Initialized piper") {
+            continue;
+        } else if buf.contains("Output directory") {
+            debug!(
+                "piper output dir: '{}'",
+                buf.split(':').last().expect("invalid piper output")
+            );
+            break;
         } else {
             process
                 .kill()
@@ -276,7 +278,7 @@ async fn start(state: State<'_, PiperInstance>, args: PiperArgs) -> Result<(), S
             return Err(format!("piper exec error: '{buf}'"));
         }
     }
-    *lock = Some((process, buffered_error));
+    *lock = Some((process, buffered_out, temp_dir));
     Ok(())
 }
 
