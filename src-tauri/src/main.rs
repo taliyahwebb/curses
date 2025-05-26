@@ -4,8 +4,7 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use tauri::{Manager, State, command};
 use tauri_plugin_window_state::{AppHandleExt, StateFlags};
-use tracing::{Level, trace};
-use tracing_subscriber::util::SubscriberInitExt;
+use tracing::trace;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 #[cfg(windows)]
 use webview2_com::Microsoft::Web::WebView2::Win32::{

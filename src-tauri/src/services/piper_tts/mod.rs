@@ -120,8 +120,8 @@ async fn get_wav_bytes(text: &str, state: &State<'_, PiperInstance>) -> anyhow::
     child.1.read_line(&mut path).await?;
     let path = path.trim();
     trace!("piper produced output at '{path}'");
-    let bytes = fs::read(&path)?;
-    fs::remove_file(&path)?;
+    let bytes = fs::read(path)?;
+    fs::remove_file(path)?;
     trace!("deleted tmpfile '{path}'");
 
     Ok(bytes)
@@ -249,6 +249,7 @@ async fn start(state: State<'_, PiperInstance>, args: PiperArgs) -> Result<(), S
     // ```
     // [yyyy-mm-dd hh:mm:ss.nnn] [piper] [info] Loaded voice in <time> second(s)
     // [yyyy-mm-dd hh:mm:ss.nnn] [piper] [info] Initialized piper
+    // [yyyy-mm-dd hh:mm:ss.nnn] [piper] [info] Output directory: <tempdir>
     // ```
     let mut buf = String::new();
     loop {
@@ -259,14 +260,12 @@ async fn start(state: State<'_, PiperInstance>, args: PiperArgs) -> Result<(), S
             .context("reading piper output")
             .map_err(|err| err.to_string())?;
 
-        if buf.contains("Loaded voice") {
-            continue;
-        } else if buf.contains("Initialized piper") {
+        if buf.contains("Loaded voice") || buf.contains("Initialized piper") {
             continue;
         } else if buf.contains("Output directory") {
             debug!(
                 "piper output dir: '{}'",
-                buf.split(':').last().expect("invalid piper output")
+                buf.split(':').next_back().expect("invalid piper output")
             );
             break;
         } else {

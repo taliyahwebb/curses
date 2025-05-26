@@ -55,7 +55,7 @@ pub fn get_independent_sink(device_name: &str) -> anyhow::Result<IndependentSink
 
             // try to send, since this is a rendezvous channel this will not complete and
             // error once the receiver is dropped
-            if !tx.send(Err(anyhow!("will never be read"))).is_err() {
+            if tx.send(Err(anyhow!("will never be read"))).is_ok() {
                 panic!("logic error");
             }
             // 'use' stream down here so that it is not ever dropped prior
