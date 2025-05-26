@@ -28,6 +28,7 @@ struct Voice {
 /// arguments to the `speak` function. most of these get passed straight to
 /// piper.exe
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct PiperArgs {
     /// audio output device
     device: String,

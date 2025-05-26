@@ -28,9 +28,9 @@ export class TTS_PiperService implements ITTSService {
         invoke<void>("plugin:piper-tts|start", {
                 args: {
                     device: this.state.device,
-                    exe_path: this.state.exe_location,
-                    voice_path: this.state.voice,
-                    speaker_id: this.state.speaker_id,
+                    exePath: this.state.exe_location,
+                    voicePath: this.state.voice,
+                    speakerId: this.state.speaker_id,
                 },
         }).then(() => this.bindings.onStart()).catch(err => {
             this.bindings.onStop(err)
@@ -42,9 +42,9 @@ export class TTS_PiperService implements ITTSService {
             await invoke<void>("plugin:piper-tts|speak", {
                 args: {
                     device: this.state.device,
-                    exe_path: this.state.exe_location,
-                    voice_path: this.state.voice,
-                    speaker_id: this.state.speaker_id,
+                    exePath: this.state.exe_location,
+                    voicePath: this.state.voice,
+                    speakerId: this.state.speaker_id,
                 },
                 text: value
             }).catch(err => {
