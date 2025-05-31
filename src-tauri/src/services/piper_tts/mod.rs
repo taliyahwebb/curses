@@ -121,6 +121,8 @@ async fn get_wav_bytes(text: &str, state: &State<'_, PiperInstance>) -> anyhow::
     let path = path.trim();
     trace!("piper produced output at '{path}'");
     let bytes = fs::read(path)?;
+    #[cfg(windows)]
+    std::thread::yield_now();
     fs::remove_file(path)?;
     trace!("deleted tmpfile '{path}'");
 
