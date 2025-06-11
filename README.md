@@ -7,8 +7,7 @@
 <p align="center">Speech to Text Captions for OBS, VRChat, Twitch chat and Discord</p>
 
 <p align="center">
-  <!-- TODO change image location to master -->
-  <img width="600" src="https://github.com/taliyahwebb/curses/blob/dev/.github/assets/readme-sugar.gif">
+  <img width="600" src="./.github/assets/readme-sugar.gif">
 </p>
 
 <p align="center"><b>Repo Stats</b></p>
