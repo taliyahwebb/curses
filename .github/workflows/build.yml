@@ -12,7 +12,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install Nix
       uses: DeterminateSystems/nix-installer-action@v4
-    - name: Nix build
+    - name: nix build
       run: nix build -L .#
 
   nix-dev-tools:
@@ -57,7 +57,7 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-      - name: setup node
+      - name: Set up node
         uses: actions/setup-node@v4
         with:
           cache: 'pnpm' # Set this to npm, yarn or pnpm.
@@ -68,7 +68,7 @@ jobs:
           file: 'Cargo.toml'
           field: 'workspace.package.version'
 
-      - name: install Rust stable
+      - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable # Set this to dtolnay/rust-toolchain@nightly
         with:
           # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
@@ -77,11 +77,12 @@ jobs:
       - name: Rust cache
         uses: swatinem/rust-cache@v2
 
-      - name: install frontend dependencies
+      - name: Install frontend dependencies
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
         run: pnpm i --frozen-lockfile # change this to npm or pnpm depending on which one you use.
 
-      - id: tauri-artifacts
+      - name: Build Tauri app
+        id: tauri-artifacts
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -93,15 +94,18 @@ jobs:
           prerelease: ${{ startsWith(github.ref, 'refs/heads/releases/') && endsWith(github.ref, '-pre')}}
           # Use different tauri config if prerelease (msi bundles only support x.x.x versioning)
           args: "${{ matrix.args }} --config .github/workflows/configs/Tauri.build${{ endsWith(steps.version.outputs.value, '-pre') && '-pre' || null }}.toml"
-      - uses: actions/upload-artifact@v4
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
         with:
           name: AppImage
           path: target/release/bundle/appimage/curses_${{steps.version.outputs.value}}_amd64.AppImage
-      - uses: actions/upload-artifact@v4
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
         with:
           name: WindowsEXE
           path: target/release/curses.exe
-      - uses: actions/upload-artifact@v4
+      - name: Upload MSI artifact
+        uses: actions/upload-artifact@v4
         with:
           name: WindowsInstaller
           path: target/release/bundle/msi/curses_${{steps.version.outputs.value}}_x64_en-US.msi
