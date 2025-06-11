@@ -15,6 +15,7 @@ function isValidMigrationsJSON(
     appliedMigrations &&
     Array.isArray(appliedMigrations) &&
     appliedMigrations.every((appliedMigration) => (
+      typeof appliedMigration === "object" &&
       "migrationID" in appliedMigration &&
       typeof appliedMigration.migrationID === "string" &&
       Object.keys(migrations).includes(appliedMigration.migrationID) &&
