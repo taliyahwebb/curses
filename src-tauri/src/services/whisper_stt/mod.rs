@@ -12,23 +12,41 @@ use rodio::cpal::Stream;
 use rodio::cpal::traits::StreamTrait;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, Runtime, State, plugin};
+use thiserror::Error;
 use tokio::select;
-use vad::{AudioError, Vad, VadActivity, audio_loop, get_microphone_by_name, get_resampler};
+use vad::{
+    InputDeviceError,
+    ResamplingVad,
+    ResamplingVadSetupError,
+    VadActivity,
+    audio_loop,
+    get_microphone_by_name,
+};
 use whisper::{MAX_WHISPER_FRAME, Whisper, WhisperOptions, WhisperSetupError};
 
 mod vad;
 mod whisper;
 
-#[derive(Debug, Serialize)]
+#[derive(Error, Debug)]
 pub enum WhisperError {
+    #[error("there is already a running whisper instance")]
     AlreadyRunning,
-    AudioSetupError(AudioError),
+    #[error("error setting up the audio device: '{0}'")]
+    AudioSetupError(#[from] InputDeviceError),
+    #[error("error in audio stream: '{0}'")]
     AudioStreamError(String),
-    WhisperSetupError(WhisperSetupError),
+    #[error("error setting up whisper instance: '{0}'")]
+    WhisperSetupError(#[from] WhisperSetupError),
+    #[error("error setting up resampling+vad pipeline: '{0}'")]
+    ResamplingVadSetupError(#[from] ResamplingVadSetupError),
 }
-impl From<WhisperSetupError> for WhisperError {
-    fn from(value: WhisperSetupError) -> Self {
-        WhisperError::WhisperSetupError(value)
+
+impl Serialize for WhisperError {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
     }
 }
 
@@ -68,7 +86,7 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
     let mut stop = {
         let mut stop = state.stop.lock().expect("should be able to lock mutex");
         if stop.is_some() {
-            return Err(WhisperError::AlreadyRunning);
+            Err(WhisperError::AlreadyRunning)?;
         }
         let (tx, rx) = oneshot::channel::<()>();
         *stop = Some(rx);
@@ -86,12 +104,13 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
 
     let (device, config) =
         get_microphone_by_name(&args.input_device).map_err(WhisperError::AudioSetupError)?;
-    let mut vad =
-        Vad::with_silence_interval(&config, Some(Duration::from_millis(args.silence_interval)));
+    let mut vad = ResamplingVad::with_silence_interval(
+        &config,
+        Some(Duration::from_millis(args.silence_interval)),
+    )?;
     let (audio_tx, audio_rx) = std::sync::mpsc::sync_channel(10);
     // audio processing thread
     thread::spawn(move || {
-        let mut start_err = err_tx.clone();
         let channels = match config.channels {
             n @ 1..=2 => {
                 eprintln!("running with {n} channels");
@@ -99,15 +118,6 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
             }
             invalid => {
                 panic!("configs with {invalid} channels are not supported");
-            }
-        };
-        // we need to build the resampler in here because it cannot be send across
-        // threads
-        let resample_with = match get_resampler(config.sample_rate.0) {
-            Ok(resampler) => resampler,
-            Err(err) => {
-                let _ = start_err.try_send(WhisperError::AudioSetupError(err));
-                return;
             }
         };
 
@@ -160,14 +170,7 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
         });
 
         while let Ok(data) = audio_rx.recv() {
-            audio_loop(
-                &data,
-                channels,
-                &resample_with,
-                &mut producer,
-                &mut vad,
-                &mut activity_tx,
-            );
+            audio_loop(&data, channels, &mut producer, &mut vad, &mut activity_tx);
         }
     });
 

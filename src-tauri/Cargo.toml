@@ -17,6 +17,7 @@ serde_json = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
+thiserror = "2.0.12"
 window-shadows = "^0.2"
 uwuify = "^0.2"
 itertools = "0.14"
@@ -35,7 +36,7 @@ ringbuf = "0.4.7"
 earshot = "0.1.0"
 whisper-rs = "0.13.2"
 wav_io = "0.1.15"
-samplerate = "0.2.4"
+rubato = "0.16.2"
 # use git sources for plugins because the way tauri team does not deliver crates.io updates on some changes that sometimes breaks sandbox builds
 tauri-plugin-global-shortcut = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }
 tauri-plugin-window-state = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }

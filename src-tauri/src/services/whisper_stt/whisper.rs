@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use serde::Serialize;
+use thiserror::Error;
 use whisper_rs::{
     FullParams,
     SamplingStrategy,
@@ -33,9 +33,11 @@ pub struct Whisper {
     samples_in_buf: usize,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Error, Debug)]
 pub enum WhisperSetupError {
+    #[error("whisper model file could not be found")]
     ModelFileNotFound,
+    #[error("whisper model could not be loaded: invalid format")]
     ModelInvalid,
 }
 
