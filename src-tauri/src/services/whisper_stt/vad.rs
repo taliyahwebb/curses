@@ -1,17 +1,17 @@
+use std::sync::Arc;
 use std::time::Duration;
 
 use cpal::traits::{DeviceTrait, HostTrait};
 use cpal::{BufferSize, Device, SampleRate, StreamConfig};
 use earshot::{VoiceActivityDetector, VoiceActivityModel, VoiceActivityProfile};
 use futures::channel::mpsc::UnboundedSender;
-use ringbuf::LocalRb;
 use ringbuf::storage::Heap;
-use ringbuf::traits::{Consumer, Observer, Producer};
+use ringbuf::traits::{Consumer, Observer, Producer, Split};
+use ringbuf::{CachingCons, CachingProd, SharedRb};
 use rodio::cpal;
 use rubato::{FftFixedOut, Resampler};
 use thiserror::Error;
-use tracing::{debug, error};
-use wav_io::utils::stereo_to_mono;
+use tracing::{debug, error, warn};
 
 use super::whisper::SAMPLE_RATE;
 
@@ -67,10 +67,14 @@ pub enum VadActivity {
     SpeechEnd(NSamples),
 }
 
+type Cons = CachingCons<Arc<SharedRb<Heap<f32>>>>;
+type Prod = CachingProd<Arc<SharedRb<Heap<f32>>>>;
+
 pub struct ResamplingVad {
     vad: VoiceActivityDetector,
-    ring: LocalRb<Heap<f32>>,
+    ring: Cons,
     resample_with: Option<(FftFixedOut<f32>, Vec<Vec<f32>>)>,
+    channels: u16,
     input_buff: Vec<f32>,
     // TODO: build control structure
     /// reading this while `last_speech_frame = None` is undefined behavior
@@ -86,7 +90,7 @@ impl ResamplingVad {
     pub fn with_silence_interval(
         config: &StreamConfig,
         silence_interval: Option<Duration>,
-    ) -> Result<ResamplingVad, ResamplingVadSetupError> {
+    ) -> Result<(Prod, ResamplingVad), ResamplingVadSetupError> {
         let resample_with = get_resampler(config.sample_rate.0)?;
         let BufferSize::Fixed(buffer_size) = config.buffer_size else {
             panic!("config doesnt allow safe vad setup");
@@ -95,67 +99,86 @@ impl ResamplingVad {
             Some(resampler) => resampler.0.input_frames_max(),
             None => VAD_FRAME,
         };
-        let ring = LocalRb::new((buffer_size * 2).max(max_vad_input as u32 * 2) as usize);
+        let ring = SharedRb::new(
+            (config.sample_rate.0 as usize * config.channels as usize) // 1s of audio
+                .max((buffer_size * 2).max(max_vad_input as u32 * 2) as usize), /* or 2x biggest needed buffer */
+        );
+        let (producer, ring) = ring.split();
         let input_buff = match &resample_with {
-            Some((resampler, _)) => resampler
-                .input_buffer_allocate(true)
-                .pop()
-                .expect("should have 1 channel"),
-            None => vec![0.; VAD_FRAME],
+            Some((resampler, _)) => {
+                let max_mono_input = resampler.input_frames_max();
+                vec![0.; max_mono_input * config.channels as usize]
+            }
+            None => vec![0.; VAD_FRAME * config.channels as usize],
         };
-        Ok(ResamplingVad {
-            vad: VoiceActivityDetector::new_with_model(
-                VoiceActivityModel::ES_ALPHA,
-                VoiceActivityProfile::VERY_AGGRESSIVE,
-            ),
-            resample_with,
-            input_buff,
-            ring,
-            current_frame: 0,
-            last_speech_frame: None,
-            current_speech_samples: 0,
-            silence_frames: to_frames(
-                silence_interval.unwrap_or(DEFAULT_SEGMENT_SEPARATOR_SILENCE),
-            ),
-        })
+        Ok((
+            producer,
+            ResamplingVad {
+                vad: VoiceActivityDetector::new_with_model(
+                    VoiceActivityModel::ES_ALPHA,
+                    VoiceActivityProfile::VERY_AGGRESSIVE,
+                ),
+                resample_with,
+                channels: config.channels,
+                input_buff,
+                ring,
+                current_frame: 0,
+                last_speech_frame: None,
+                current_speech_samples: 0,
+                silence_frames: to_frames(
+                    silence_interval.unwrap_or(DEFAULT_SEGMENT_SEPARATOR_SILENCE),
+                ),
+            },
+        ))
     }
 
-    pub fn input(&mut self, samples: &[f32]) {
-        if self.ring.push_slice(samples) != samples.len() {
-            eprintln!("warning: internal buffer full, some audio was dropped");
-        }
+    /// # Returns
+    /// the amount of raw audio frames missing for the next VAD action
+    pub fn missing_frames(&self) -> usize {
+        let raw_needed = self.input_frames_next();
+        raw_needed.saturating_sub(self.ring.occupied_len())
+    }
+
+    /// # Returns
+    /// the amount of frames total for the next VAD action
+    pub fn input_frames_next(&self) -> usize {
+        let mono_needed = match &self.resample_with {
+            Some((resampler, _)) => resampler.input_frames_next(),
+            None => VAD_FRAME,
+        };
+        mono_needed * self.channels as usize
     }
 
     pub fn output_to(&mut self, final_ring: &mut impl Producer<Item = i16>) -> VadStatus {
         loop {
-            if self.ring.occupied_len() < self.input_buff.len() {
+            if self.missing_frames() > 0 {
                 match self.last_speech_frame {
                     Some(_) => return VadStatus::Speech,
                     None => return VadStatus::Silence,
                 };
             }
+            let raw_needed = self.input_frames_next();
+            let raw_samples = &mut self.input_buff[..raw_needed];
+            if raw_needed != self.ring.pop_slice(raw_samples) {
+                panic!("vad ring should have enough data for at least one resample");
+            }
+            let mono_samples = condense_in_place(raw_samples, self.channels);
             let vad_input = match &mut self.resample_with {
                 Some((resampler, out)) => {
-                    let needed = resampler.input_frames_next();
-                    if needed != self.ring.pop_slice(&mut self.input_buff[..needed]) {
-                        panic!("vad ring should have enough data for at least one resample");
-                    }
                     let (consumed, produced) = resampler
-                        .process_into_buffer(&[&self.input_buff[..needed]], out, None)
+                        .process_into_buffer(&[&mono_samples], out, None)
                         .expect("resampler started with invalid buffers");
-                    assert!(consumed == needed, "resampler did not consume all frames");
+                    assert!(
+                        consumed == raw_needed,
+                        "resampler did not consume all frames"
+                    );
                     assert!(
                         produced == VAD_FRAME,
                         "resampler did not produce a vad frame"
                     );
                     convert_samples_f32_to_i16(&out[0][..VAD_FRAME])
                 }
-                None => {
-                    if VAD_FRAME != self.ring.pop_slice(&mut self.input_buff[..VAD_FRAME]) {
-                        panic!("vad ring should have enough data for at least one frame");
-                    }
-                    convert_samples_f32_to_i16(&self.input_buff[..VAD_FRAME])
-                }
+                None => convert_samples_f32_to_i16(mono_samples),
             };
             let is_speech = self
                 .vad
@@ -205,20 +228,13 @@ impl ResamplingVad {
     }
 }
 
+/// nop when there are not enough frames
+/// executes inner multiple times if sufficient frames are present
 pub fn audio_loop(
-    data: &[f32],
-    channels: u16,
     ring_buffer: &mut impl Producer<Item = i16>,
     vad: &mut ResamplingVad,
     activity: &mut UnboundedSender<VadActivity>,
 ) {
-    let data = match channels {
-        1 => data,
-        2 => &stereo_to_mono(data.to_vec()),
-        n => panic!("configs with {n} channels are not supported"),
-    };
-
-    vad.input(data);
     loop {
         let status = vad.output_to(ring_buffer);
         match status {
@@ -273,10 +289,10 @@ pub fn get_microphone_by_name(name: &str) -> Result<(Device, StreamConfig), Inpu
         println!("using buffer size {buffer_size:?}");
         let sample_rate = config.sample_rate();
         let channels = config.channels();
-        if channels > 2 {
-            return Err(InputDeviceError::Invalid(format!(
-                "only audio devices with mono or stereo are supported, '{channels}' channels are not supported"
-            )));
+        if channels > 1 {
+            warn!(
+                "input device uses more then one channel, some spacial audio setups may cause issues when their audio is compressed to mono"
+            );
         }
         let config = StreamConfig {
             channels,
@@ -319,4 +335,35 @@ pub fn convert_samples_f32_to_i16(samples: &[f32]) -> Vec<i16> {
         samples_i16.push((*v * i16::MAX as f32) as i16);
     }
     samples_i16
+}
+
+/// condenses all `samples` of interleaved audio with `channels` into single
+/// channel audio
+///
+/// # Note
+/// - returned array has size `samples.len()/channels`, samples in
+///   `samples[new_len..]` remain untouched
+///
+/// # Panics
+/// - when `samples` does not have a multiple of `channels` elements
+pub fn condense_in_place(samples: &mut [f32], channels: u16) -> &mut [f32] {
+    let channels = channels as usize;
+    if channels == 1 {
+        // mono fastpath
+        return samples;
+    }
+    assert_eq!(
+        samples.len() % channels,
+        0,
+        "invalid samples for {channels} channels"
+    );
+    let new_size = samples.len() / channels;
+    for i in 0..new_size {
+        let current_pos = i * channels;
+        samples[i] = samples[current_pos..current_pos + channels]
+            .iter()
+            .sum::<f32>()
+            / channels as f32;
+    }
+    &mut samples[..new_size]
 }

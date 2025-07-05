@@ -6,7 +6,7 @@ use futures::StreamExt;
 use futures::channel::mpsc::{self};
 use futures::channel::oneshot::{self, Receiver};
 use ringbuf::HeapRb;
-use ringbuf::traits::{Consumer, Split};
+use ringbuf::traits::{Consumer, Observer, Producer, Split};
 use rodio::DeviceTrait;
 use rodio::cpal::Stream;
 use rodio::cpal::traits::StreamTrait;
@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, Runtime, State, plugin};
 use thiserror::Error;
 use tokio::select;
+use tracing::{error, trace_span, warn};
 use vad::{
     InputDeviceError,
     ResamplingVad,
@@ -104,38 +105,48 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
 
     let (device, config) =
         get_microphone_by_name(&args.input_device).map_err(WhisperError::AudioSetupError)?;
-    let mut vad = ResamplingVad::with_silence_interval(
+
+    let (mut audio_prod, mut vad) = ResamplingVad::with_silence_interval(
         &config,
         Some(Duration::from_millis(args.silence_interval)),
     )?;
-    let (audio_tx, audio_rx) = std::sync::mpsc::sync_channel(10);
+
     // audio processing thread
     thread::spawn(move || {
-        let channels = match config.channels {
-            n @ 1..=2 => {
-                eprintln!("running with {n} channels");
-                n
-            }
-            invalid => {
-                panic!("configs with {invalid} channels are not supported");
-            }
-        };
+        let requested_frames_pair = Arc::new((Mutex::new(vad.missing_frames()), Condvar::new()));
+        let stream_requested_frames_pair = requested_frames_pair.clone();
 
         // audio fetching thread
         // start this thread after setup was successful to reduce cleanup work
-        thread::spawn(move || {
+        let audio_fetcher = thread::spawn(move || {
             let mut start_err = err_tx.clone();
+            let audio_loop = trace_span!("audio_loop", samplerate = config.sample_rate.0);
+            let error_span = audio_loop.clone();
             let result = || -> Result<Stream, WhisperError> {
                 let stream = device
                     .build_input_stream(
                         &config,
                         move |data: &[f32], _info| {
-                            if audio_tx.try_send(data.to_vec()).is_err() {
-                                eprintln!("audio is being dropped");
+                            let _span = audio_loop.enter();
+                            let written = audio_prod.push_slice(data);
+                            let diff = data.len() - written;
+
+                            if diff != 0 {
+                                warn!("cannot keep up, dropping {diff} audio frames",);
+                            }
+
+                            // track how many frames we have written and notify audio thread if it
+                            // has what it wanted
+                            let (lock, cvar) = &*stream_requested_frames_pair;
+                            let requested = lock.lock().unwrap();
+                            if *requested <= audio_prod.occupied_len() {
+                                cvar.notify_all(); // tell audio processor it can proceed
                             }
                         },
                         move |err| {
                             // only try send because we might have had an earlier error
+                            let _span = error_span.enter();
+                            error!("fatal: '{err}'");
                             let _ =
                                 err_tx.try_send(WhisperError::AudioStreamError(err.to_string()));
                         },
@@ -169,8 +180,15 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
             }
         });
 
-        while let Ok(data) = audio_rx.recv() {
-            audio_loop(&data, channels, &mut producer, &mut vad, &mut activity_tx);
+        let (lock, cvar) = &*requested_frames_pair;
+        let mut request = lock.lock().unwrap();
+        while !audio_fetcher.is_finished() {
+            // exit if we don't get more audio
+            request = cvar.wait(request).unwrap();
+            // handles spurious wake ups well so we don't need to check anything on the
+            // condvar
+            audio_loop(&mut producer, &mut vad, &mut activity_tx);
+            *request = vad.input_frames_next();
         }
     });
 
