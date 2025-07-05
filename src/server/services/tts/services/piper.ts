@@ -25,7 +25,16 @@ export class TTS_PiperService implements ITTSService {
                 return this.bindings.onStop(`Option '${Object.keys(state)[i]}' is missing`);
             i += 1;
         }
-        this.bindings.onStart();
+        invoke<void>("plugin:piper-tts|start", {
+                args: {
+                    device: this.state.device,
+                    exePath: this.state.exe_location,
+                    voicePath: this.state.voice,
+                    speakerId: this.state.speaker_id,
+                },
+        }).then(() => this.bindings.onStart()).catch(err => {
+            this.bindings.onStop(err)
+        });
     }
 
     async play(value: string) {
@@ -33,11 +42,11 @@ export class TTS_PiperService implements ITTSService {
             await invoke<void>("plugin:piper-tts|speak", {
                 args: {
                     device: this.state.device,
-                    exe_path: this.state.exe_location,
-                    voice_path: this.state.voice,
-                    speaker_id: this.state.speaker_id,
-                    value,
+                    exePath: this.state.exe_location,
+                    voicePath: this.state.voice,
+                    speakerId: this.state.speaker_id,
                 },
+                text: value
             }).catch(err => {
                 toast.error(err)
             })
@@ -45,6 +54,8 @@ export class TTS_PiperService implements ITTSService {
     }
 
     stop(): void {
-        this.bindings.onStop();
+        invoke<void>("plugin:piper-tts|stop").catch(err => toast.error(`error stopping piper: '${err}'`)).finally(() => {
+            this.bindings.onStop();
+        });
     }
 }

@@ -28,7 +28,7 @@ fn main() {
             .plugin(
                 "piper-tts",
                 tauri_build::InlinedPlugin::new()
-                    .commands(&["speak", "get_voices"])
+                    .commands(&["get_voices", "start", "speak", "stop"])
                     .default_permission(tauri_build::DefaultPermissionRule::AllowAllCommands),
             )
             .plugin(
