@@ -4,6 +4,11 @@ import IMigration from "./IMigration";
 import { MigrationID, MigrationData, AppliedMigration } from "./types";
 import migrations from "./migrations";
 
+const MIGRATIONS_FILE = {
+    PATH: "migrations.json",
+    BASE_DIR: BaseDirectory.AppLocalData
+} as const;
+
 /**
  * Validate the contents of the migration tracking file
  * @param appliedMigrations - the contents of the migration tracking file
@@ -32,11 +37,11 @@ function isValidMigrationsJSON(
  * @returns - list of applied migrations
  */
 async function getAppliedMigrations(): Promise<AppliedMigration[]> {
-  const MIGRATIONS_FILE = ["migrations.json", { baseDir: BaseDirectory.AppLocalData }] as const;
 
-  if (!(await exists(...MIGRATIONS_FILE))) return [];
+  if (!(await exists(MIGRATIONS_FILE.PATH, { baseDir: MIGRATIONS_FILE.BASE_DIR }))) return [];
 
-  const json = new TextDecoder().decode(await readFile(...MIGRATIONS_FILE));
+  const json = new TextDecoder()
+    .decode(await readFile(MIGRATIONS_FILE.PATH, { baseDir: MIGRATIONS_FILE.BASE_DIR }));
 
   const migrationsJSON = JSON.parse(json);
   if (!isValidMigrationsJSON(migrationsJSON)) {
@@ -54,7 +59,7 @@ async function getAppliedMigrations(): Promise<AppliedMigration[]> {
 async function apply(migrationID: MigrationID): Promise<MigrationData> {
   const migration: IMigration = migrations[migrationID];
 
-  if (migration.isApplicable()) {
+  if (await migration.isApplicable()) {
     console.log(`Migration \`${migrationID}\`: applied`);
     return await migration.apply();
   }
@@ -72,7 +77,7 @@ async function reapply(appliedMigration: AppliedMigration): Promise<[boolean, Mi
 
   if (
     !migration.isStillValid(appliedMigration.version, appliedMigration.data) &&
-    migration.isApplicable()
+    await migration.isApplicable()
   ) {
     console.log(`Migration \`${appliedMigration.migrationID}\`: reset and applied`);
     return [true, await migration.apply()];
@@ -126,5 +131,5 @@ export default async function applyAllMigrations() {
   }
 
   const json = new TextEncoder().encode(JSON.stringify(appliedMigrations, null, 4));
-  writeFile("migrations.json", json, { baseDir: BaseDirectory.AppLocalData });
+  writeFile(MIGRATIONS_FILE.PATH, json, { baseDir: MIGRATIONS_FILE.BASE_DIR });
 }

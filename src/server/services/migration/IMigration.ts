@@ -9,7 +9,7 @@ export default interface IMigration {
    * This function is also supposed to stop us from breaking something by applying the same
    * migration twice if the user deletes the migration tracking file.
    */
-  isApplicable(): boolean;
+  isApplicable(): Promise<boolean>;
 
   /**
    * Checks if the migration is still valid by looking at the data saved at the time of migration.
