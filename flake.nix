@@ -1,7 +1,7 @@
 {
   inputs = {
     # nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     flake-utils.url = "github:numtide/flake-utils";
     flakebox.url = "github:rustshop/flakebox";
     flakebox.inputs.nixpkgs.follows = "nixpkgs";
@@ -168,7 +168,7 @@
               pnpmDeps = pnpm.fetchDeps {
                 pname = projectName;
                 src = buildSrc;
-                hash = "sha256-rrSWBKjLPQX+rErnqW/QCCokPKQKMjwhFH+93M1dEns=";
+                hash = "sha256-VYBEDIprax4UpTUSe1UQECwNK8WQvLIvJlPxkuzZ0WM=";
               };
               cargoBuildCommand = "cargo tauri build --no-bundle --";
               postInstall = ''
