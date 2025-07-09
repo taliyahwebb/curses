@@ -176,7 +176,10 @@
         packages.curses = multiBuild.curses;
         packages.dev-tools = multiBuild.dev-tools;
         devShells.lint = flakeboxLib.mkLintShell {
-          packages = [ ];
+          packages = [
+            pnpm
+            pkgs.nodejs
+          ];
         };
         devShells.default = flakeboxLib.mkDevShell {
           inputsFrom = [ multiBuild.curses ];
