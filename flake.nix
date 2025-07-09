@@ -31,8 +31,22 @@
             github.ci.enable = false;
             semgrep.enable = false;
             flakebox.lint.enable = false;
+            rust.rustfmt.content = ''
+              group_imports = "StdExternalCrate"
+              imports_layout = "HorizontalVertical"
+              wrap_comments = true
+              format_code_in_doc_comments = true
+              imports_granularity = "Module"
+              edition = "2021"
+            '';
             just = {
               enable = true;
+              rules.update.content = ''
+                # update all dependencies
+                update:
+                  #!/usr/bin/env bash
+                  ./misc/update.sh
+              '';
               rules.watch.content = lib.mkForce ''
                 # run and restart on changes
                 watch:
