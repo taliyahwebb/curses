@@ -169,12 +169,12 @@ const TextField: FC = () => {
           break;
         }
 
-        if (currentIndex === history.length) {
+        if (currentIndex == history.length - 1) { // length - 1 being the max index
           setInputValue("");
           break;
         }
 
-        setInputValue(history[currentIndex].value);
+        setInputValue(history[currentIndex + 1].value);
 
         // update after because the value will only actually get updated during the next render
         setCurrentIndex(currentIndex + 1);
