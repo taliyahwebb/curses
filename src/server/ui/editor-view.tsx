@@ -147,7 +147,7 @@ const TextField: FC = () => {
     setInputValue(value);
   }
 
-  const handleArrowKeys = (key: string, text: string, cursorPos: int) => {
+  const handleArrowKeys = (key: string, text: string, cursorPos: number) => {
     switch (key) {
       case "ArrowUp":
         if (cursorPos !== 0) {
@@ -191,7 +191,20 @@ const TextField: FC = () => {
     className="flex items-center space-x-2 w-96">
     {/* <button className="btn btn-circle btn-ghost"><RiChatDeleteFill/></button> */}
     <form onSubmit={submit} className="w-full">
-      <input type="text" autoComplete="off" name="textfield" placeholder={t('main.keyboard_input')} className="w-full input text-sm" value={inputValue} onChange={e => handleChange(e.target.value)} onKeyDown={e => handleArrowKeys(e.key, e.target.value, e.target.selectionStart)} />
+      <input type="text" name="textfield" placeholder={t('main.keyboard_input')} autoComplete="off"
+      className="w-full input text-sm" value={inputValue}
+      onChange={
+        (e) => handleChange(e.target.value)
+      }
+      onKeyDown={
+        ({key, target}) => {
+          if (
+            "value" in target && typeof target.value === "string"
+            && "selectionStart" in target && typeof target.selectionStart === "number"
+          )
+            handleArrowKeys(key, target.value, target.selectionStart);
+        }
+      } />
     </form>
   </motion.div>
 }
