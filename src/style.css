@@ -100,9 +100,6 @@ html.host, html.host body, html.host #root {
   -moz-osx-font-smoothing: grayscale;
   font-size: calc(16px * var(--uiscale));
   transition: font-size .1s ease-in-out;
-}
-
-:root {
   user-select: none;
 }
 
@@ -224,4 +221,11 @@ fieldset > input[type="color"]::-webkit-color-swatch {
 }
 .no-highlightable {
   user-select: none;
+}
+
+::selection {
+  background-color: theme("colors.primary");
+  /* color is either pure black or white depending on what is further from the OKLCH luminosity of the primary color
+   * i like math :3 */
+  color: oklch(from theme("colors.primary") calc((1 - sign(l - 0.5)) / 2) 0 0);
 }
