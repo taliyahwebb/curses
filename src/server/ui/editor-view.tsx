@@ -174,7 +174,7 @@ const TextField: FC = () => {
           break;
         }
 
-        setInputValue(history[currentIndex + 1].value);
+        setInputValue(history[currentIndex].value);
 
         // update after because the value will only actually get updated during the next render
         setCurrentIndex(currentIndex + 1);
