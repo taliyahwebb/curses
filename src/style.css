@@ -102,7 +102,7 @@ html.host, html.host body, html.host #root {
   transition: font-size .1s ease-in-out;
 }
 
-* {
+:root {
   user-select: none;
 }
 
@@ -218,3 +218,10 @@ fieldset > input[type="color"]::-webkit-color-swatch {
   height: inherit;
   border-radius: 0;
 } */
+
+.highlightable {
+  user-select: text;
+}
+.no-highlightable {
+  user-select: none;
+}

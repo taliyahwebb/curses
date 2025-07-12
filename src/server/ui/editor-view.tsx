@@ -103,11 +103,11 @@ const LogsView = () => {
     exit={{ opacity: 0 }}
     transition={{ ease: "anticipate", duration: 0.3 }}
     className="relative w-full h-full flex flex-col">
-    <div ref={scrollContainer} className="flex flex-grow overflow-y-scroll scrollbar-hide flex-col-reverse mb-8">
+    <div ref={scrollContainer} className="flex flex-grow overflow-y-scroll scrollbar-hide flex-col-reverse mb-8 highlightable">
       <div className="w-full flex flex-col px-4 pt-6 pb-12 space-y-2">
         {list.map(event => <div key={event.id} className="flex flex-col rounded-md bg-neutral/10 hover:bg-neutral/30 transition-colors px-4 py-2 cursor-pointer">
-          <div className="hidden sm:block text-xs opacity-50 font-semibold">from {event.event}</div>
-          <div className="text-sm sm:text-lg font-semibold !leading-none">{event.value}</div>
+          <div className="hidden sm:block text-xs opacity-50 font-semibold no-highlightable">from {event.event}</div>
+          <div className="text-sm sm:text-lg font-semibold !leading-none cursor-text">{event.value}</div>
         </div>)}
       </div>
     </div>
