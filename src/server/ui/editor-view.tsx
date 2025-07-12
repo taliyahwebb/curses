@@ -31,7 +31,7 @@ const EditorView: FC = () => {
           <ActionBar />
           <EditorViewport />
           <AnimatePresence initial={false}>
-            {!showOverlay && <div className="absolute flex justify-center self-center bottom-4 left-4 right-4"><STTInput /></div>}
+            {!showOverlay && <div className="absolute flex justify-center self-center bottom-4 left-4 right-4"><TextField /></div>}
           </AnimatePresence>
         </div>
         <AnimatePresence>
@@ -123,21 +123,71 @@ export const EditorViewport: FC = () => {
   </div>
 }
 
-const STTInput: FC = () => {
+const TextField: FC = () => {
   const { showLogs } = useSnapshot(window.ApiServer.state);
   const { t } = useTranslation();
+
   const [inputValue, setInputValue] = useState('');
+  const history = useSnapshot(window.ApiShared.pubsub.textHistory).list;
+  const [currentIndex, setCurrentIndex] = useState(history.length);
+  const [lastLength, setLastLength] = useState(history.length);
+
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (inputValue) {
       setInputValue('');
+
       window.ApiShared.pubsub.publishText(TextEventSource.textfield, { type: TextEventType.final, value: inputValue });
+
+      setCurrentIndex(history.length);
+      setLastLength(history.length);
     }
   }
 
   const handleChange = (value: string) => {
     window.ApiShared.pubsub.publishText(TextEventSource.textfield, { type: TextEventType.interim, value });
     setInputValue(value);
+  }
+
+  const handleArrowKeys = (key: string, text: string, cursorPos: number) => {
+    let index = currentIndex;
+    if (lastLength != history.length && index === lastLength) {
+      index += history.length - lastLength;
+    }
+
+    switch (key) {
+      case "ArrowUp":
+        if (cursorPos !== 0) {
+          break;
+        }
+
+        if (index < 0) {
+          break;
+        }
+
+        index -= 1;
+        break;
+      case "ArrowDown":
+        if (cursorPos !== text.length) {
+          break;
+        }
+
+        if (index >= history.length) {
+          break;
+        }
+
+        index += 1;
+        break;
+      default: return;
+    }
+
+    if (index < 0 || index >= history.length)
+      setInputValue("");
+    else
+      setInputValue(history[index].value);
+
+    setCurrentIndex(index);
+    setLastLength(history.length);
   }
 
   return <motion.div
@@ -149,7 +199,20 @@ const STTInput: FC = () => {
     className="flex items-center space-x-2 w-96">
     {/* <button className="btn btn-circle btn-ghost"><RiChatDeleteFill/></button> */}
     <form onSubmit={submit} className="w-full">
-      <input type="text" autoComplete="off" name="sttinput" placeholder={t('main.keyboard_input')} className="w-full input text-sm" value={inputValue} onChange={e => handleChange(e.target.value)} />
+      <input type="text" name="textfield" placeholder={t('main.keyboard_input')} autoComplete="off"
+      className="w-full input text-sm" value={inputValue}
+      onChange={
+        (e) => handleChange(e.target.value)
+      }
+      onKeyDown={
+        ({key, target}) => {
+          if (
+            "value" in target && typeof target.value === "string"
+            && "selectionStart" in target && typeof target.selectionStart === "number"
+          )
+            handleArrowKeys(key, target.value, target.selectionStart);
+        }
+      } />
     </form>
   </motion.div>
 }
