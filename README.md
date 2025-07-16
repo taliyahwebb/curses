@@ -122,9 +122,9 @@ We get the Web Speech API through WebKitGTK.
 It works locally, without going through OpenAI's servers, and also supports GPU acceleration, with a pretty small performance cost.
 You can also automatically translate to english at the same time.
 
-You're going to need to [download a model (`.bin`)](https://github.com/ggerganov/whisper.cpp) (or [learn how to download more models](https://github.com/ggerganov/whisper.cpp)), and select it in the *Whisper Model* field.
+You're going to need to [download a model (`.bin`)](https://huggingface.co/ggerganov/whisper.cpp/tree/main) (or [learn how obtain more models](https://github.com/ggml-org/whisper.cpp/blob/master/models/README.md)), and select it in the *Whisper Model* field.
 
-Smaller models have a smaller performance impact, but larger models are more accurate. There are also english-only models (files with `.en`), all others being multilingual. `-q5_0` models take less memory and disk space and *can* be more efficient. `-tdrz` models can detect speaker changes but are more resource-intensive.
+Smaller models have a smaller performance impact, but larger models are more accurate. There are also english-only models (files with `.en.bin`), all others being multilingual. `-q5_0` models take less memory and disk space and *can* be more efficient. `-tdrz` models can detect speaker changes but are more resource-intensive.
 
 > [!TIP]
 > The `base.en-q5_1` ([ggml-base.en-q5_1.bin](https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en-q5_1.bin?download=true)) gives pretty decent results when speaking clear english and is near instant on GPU and even works with acceptable performance on integrated graphics.
