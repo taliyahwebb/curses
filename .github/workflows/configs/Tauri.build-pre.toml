@@ -1,2 +1,2 @@
-productName = "curses-prerelease"
-bundle.targets = ["msi", "appimage"]
+identifier = "com.cursescaptions.testing"
+bundle.targets = ["msi"]
