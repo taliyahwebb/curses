@@ -1,2 +1,2 @@
 productName = "curses prerelease"
-bundle.targets = ["appimage"]
+bundle.targets = ["msi", "appimage"]
