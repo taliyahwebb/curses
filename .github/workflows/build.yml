@@ -53,9 +53,9 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libasound2-dev libvulkan-dev
  
       - name: Install Vulkan SDK and Runtime
-        uses: jakoch/install-vulkan-sdk-action@v1.2.3
+        uses: jakoch/install-vulkan-sdk-action@v1
         with:
-          vulkan_version: 1.4.313.2
+            vulkan_version: 1.4.304.1
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
