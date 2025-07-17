@@ -130,15 +130,17 @@ const TextField: FC = () => {
   const [inputValue, setInputValue] = useState('');
   const history = useSnapshot(window.ApiShared.pubsub.textHistory).list;
   const [currentIndex, setCurrentIndex] = useState(history.length);
-
+  const [lastLength, setLastLength] = useState(history.length);
 
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (inputValue) {
       setInputValue('');
-      setCurrentIndex(history.length + 1);
 
       window.ApiShared.pubsub.publishText(TextEventSource.textfield, { type: TextEventType.final, value: inputValue });
+
+      setCurrentIndex(history.length);
+      setLastLength(history.length);
     }
   }
 
@@ -148,38 +150,44 @@ const TextField: FC = () => {
   }
 
   const handleArrowKeys = (key: string, text: string, cursorPos: number) => {
+    let index = currentIndex;
+    if (lastLength != history.length && index === lastLength) {
+      index += history.length - lastLength;
+    }
+
     switch (key) {
       case "ArrowUp":
         if (cursorPos !== 0) {
           break;
         }
 
-        if (currentIndex === 0) {
-          setInputValue("");
+        if (index < 0) {
           break;
         }
 
-        setInputValue(history[currentIndex - 1].value);
-
-        // update after because the value will only actually get updated during the next render
-        setCurrentIndex(currentIndex - 1);
+        index -= 1;
         break;
       case "ArrowDown":
         if (cursorPos !== text.length) {
           break;
         }
 
-        if (currentIndex == history.length - 1) { // length - 1 being the max index
-          setInputValue("");
+        if (index >= history.length) {
           break;
         }
 
-        setInputValue(history[currentIndex + 1].value);
-
-        // update after because the value will only actually get updated during the next render
-        setCurrentIndex(currentIndex + 1);
+        index += 1;
         break;
-      }
+      default: return;
+    }
+
+    if (index < 0 || index >= history.length)
+      setInputValue("");
+    else
+      setInputValue(history[index].value);
+
+    setCurrentIndex(index);
+    setLastLength(history.length);
   }
 
   return <motion.div
