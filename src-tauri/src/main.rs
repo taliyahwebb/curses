@@ -94,14 +94,15 @@ fn app_setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn main() {
+    let filter = EnvFilter::from_default_env();
+    #[cfg(debug_assertions)]
+    let filter = filter.add_directive(
+        "curses=trace"
+            .parse()
+            .expect("should be valid filter directive"),
+    );
     // a builder for `FmtSubscriber`.
-    let subscriber = FmtSubscriber::builder()
-        .with_env_filter(EnvFilter::from_default_env())
-        // all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)
-        // will be written to stdout.
-        // .with_max_level(Level::TRACE)
-        // completes the builder.
-        .finish();
+    let subscriber = FmtSubscriber::builder().with_env_filter(filter).finish();
 
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
