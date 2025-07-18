@@ -309,10 +309,7 @@ type BufferedResampler = Option<(FftFixedOut<f32>, Vec<Vec<f32>>)>;
 
 pub fn get_resampler(src_rate: u32) -> Result<BufferedResampler, ResamplerSetupError> {
     if src_rate != SAMPLE_RATE as u32 {
-        eprintln!(
-            "running with resampling src{:?}->dest{SAMPLE_RATE}",
-            src_rate
-        );
+        eprintln!("running with resampling src{src_rate}->dest{SAMPLE_RATE}");
         let resampler = FftFixedOut::<f32>::new(
             src_rate as usize,
             SAMPLE_RATE,
