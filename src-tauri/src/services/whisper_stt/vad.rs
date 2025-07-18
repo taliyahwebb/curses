@@ -169,7 +169,7 @@ impl ResamplingVad {
                         .process_into_buffer(&[&mono_samples], out, None)
                         .expect("resampler started with invalid buffers");
                     assert!(
-                        consumed == raw_needed,
+                        consumed == mono_samples.len(),
                         "resampler did not consume all frames"
                     );
                     assert!(
@@ -291,7 +291,7 @@ pub fn get_microphone_by_name(name: &str) -> Result<(Device, StreamConfig), Inpu
         let channels = config.channels();
         if channels > 1 {
             warn!(
-                "input device uses more then one channel, some spacial audio setups may cause issues when their audio is compressed to mono"
+                "input device uses more then one channel ({channels}), some spacial audio setups may cause issues when their audio is compressed to mono"
             );
         }
         let config = StreamConfig {
