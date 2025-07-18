@@ -64,6 +64,7 @@ pub struct WhisperArgs {
     lang: String,
     translate_to_english: bool,
     silence_interval: u64,
+    use_gpu: bool,
 }
 
 pub fn init<R: Runtime>() -> plugin::TauriPlugin<R> {
@@ -81,6 +82,7 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
     let whisper_opt = WhisperOptions {
         translate_en: args.translate_to_english,
         language: args.lang,
+        use_gpu: args.use_gpu,
     };
 
     let state = app.state::<WhisperState>();

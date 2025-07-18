@@ -23,6 +23,8 @@ pub struct WhisperOptions {
     /// the language whisper should transcribe (can be "auto" for auto
     /// detection)
     pub language: String,
+    /// whether to use gpu
+    pub use_gpu: bool,
 }
 
 pub struct Whisper {
@@ -46,7 +48,10 @@ impl Whisper {
         model: impl AsRef<Path>,
         opt: WhisperOptions,
     ) -> Result<Whisper, WhisperSetupError> {
-        let params = WhisperContextParameters::default();
+        let params = WhisperContextParameters {
+            use_gpu: opt.use_gpu,
+            ..WhisperContextParameters::default()
+        };
         let ctx = WhisperContext::new_with_params(
             model
                 .as_ref()

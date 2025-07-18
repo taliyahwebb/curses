@@ -83,6 +83,7 @@
     "whisper_lang_desc_note": "Note: Quality differs between the languages and the model selected",
     "whisper_vad_silence": "VAD Silence",
     "whisper_silence_note": "Duration in ms to wait for to detect end of speech segment. Default: 240",
+    "whisper_use_gpu": "GPU Acceleration",
 
     "deepgram_title": "Deepgram",
     "deepgram_key": "Key",

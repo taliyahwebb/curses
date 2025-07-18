@@ -48,6 +48,7 @@ export const Service_STT_Schema = z.object({
     language_group: zSafe(z.coerce.string(), "Auto"),
     translateToEnglish: zSafe(z.coerce.boolean(), false),
     silenceInterval: zSafe(zStringNumber(), "240"),
+    useGpu: zSafe(z.coerce.boolean(), true),
   }).default({}),
   deepgram: z.object({
     device: zSafe(z.coerce.string(), "default"),
