@@ -12,6 +12,7 @@ import Service_TTS from "./services/tts";
 import Service_Twitch from "./services/twitch";
 import Service_VRC from "./services/vrc";
 import { changeLanguage, initI18n } from '@/i18n';
+import applyAllMigrations from "./services/migration";
 
 export enum Services {
   vrc = "vrc",
@@ -94,6 +95,7 @@ class ApiServer {
   public async init() {
     if (window.Config.isClient())
       return;
+    await applyAllMigrations();
     await this._state.init();
     await window.ApiShared.peer.startServer();
     await this.twitch.init();
