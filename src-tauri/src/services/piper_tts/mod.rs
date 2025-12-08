@@ -1,7 +1,9 @@
 use core::str;
 use std::fs;
 use std::io::{self, Cursor};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::str::from_utf8;
+use std::time::Duration;
 
 use anyhow::{Context, bail};
 use futures::TryFutureExt;
@@ -12,7 +14,8 @@ use tempfile::TempDir;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::ChildStdout;
 use tokio::sync::Mutex;
-use tracing::{debug, trace};
+use tokio::time::timeout;
+use tracing::{debug, instrument, trace};
 
 use super::audio::{IndependentSink, get_independent_sink};
 
@@ -38,6 +41,9 @@ struct PiperArgs {
 
     /// path to the voice model
     voice_path: PathBuf,
+
+    /// directory to put the generated audio
+    out_path: Option<PathBuf>,
 
     /// id of speaker when using multi-speaker models
     speaker_id: Option<u32>,
@@ -114,24 +120,69 @@ async fn get_wav_bytes(text: &str, state: &State<'_, PiperInstance>) -> anyhow::
         bail!("piper instance not running");
     };
 
-    write_to_stdin(&mut child.0, format!("{}\n", text).as_bytes()).await?;
+    write_to_stdin(&mut child.process, format!("{}\n", text).as_bytes()).await?;
     trace!("text was input to piper");
     let mut path = String::new();
-    child.1.read_line(&mut path).await?;
+    child.stdout.read_line(&mut path).await?;
     let path = path.trim();
     trace!("piper produced output at '{path}'");
     let bytes = fs::read(path)?;
     #[cfg(windows)]
     std::thread::yield_now();
-    fs::remove_file(path)?;
-    trace!("deleted tmpfile '{path}'");
+    match &child.out_dir {
+        PiperOutput::Temp(_) => {
+            fs::remove_file(path)?;
+            trace!("deleted tmpfile '{path}'");
+        }
+        PiperOutput::Keep(dir) => {
+            let mut new_path = PathBuf::from(dir);
+            new_path.push(format!(
+                "{}{}-{}",
+                text.trim().chars().take(20).collect::<String>(),
+                if text.trim().chars().count() > 20 {
+                    "[...]"
+                } else {
+                    ""
+                },
+                PathBuf::from(path)
+                    .file_name()
+                    .expect("if not its not valid piper output")
+                    .to_str()
+                    .expect("path was built from utf-8"),
+            ));
+            fs::rename(path, &new_path)?;
+            trace!(
+                "renamed output file '{path}' -> '{}",
+                new_path.to_string_lossy()
+            );
+        }
+    }
 
     Ok(bytes)
 }
 
+enum PiperOutput {
+    Temp(TempDir),
+    Keep(PathBuf),
+}
+impl PiperOutput {
+    fn path(&self) -> &Path {
+        match self {
+            PiperOutput::Temp(temp_dir) => temp_dir.path(),
+            PiperOutput::Keep(path_buf) => path_buf.as_path(),
+        }
+    }
+}
+
+struct PiperProcess {
+    process: tokio::process::Child,
+    stdout: BufReader<ChildStdout>,
+    out_dir: PiperOutput,
+}
+
 #[derive(Default)]
 struct PiperInstance {
-    process: Mutex<Option<(tokio::process::Child, BufReader<ChildStdout>, TempDir)>>,
+    process: Mutex<Option<PiperProcess>>,
     sink: Mutex<Option<IndependentSink>>,
 }
 
@@ -196,6 +247,25 @@ async fn start(state: State<'_, PiperInstance>, args: PiperArgs) -> Result<(), S
     if sink_lock.is_some() {
         return Err("already running".to_string());
     }
+    if args.out_path.as_ref().is_some_and(|path| !path.is_dir()) {
+        return Err(format!(
+            "output path '{:?}' is not a directory",
+            args.out_path.expect("was checked above")
+        ));
+    }
+    let out_dir = match args.out_path {
+        None => PiperOutput::Temp(
+            tempfile::tempdir()
+                .context("creating temp piper output dir")
+                .map_err(|e| e.to_string())?,
+        ),
+        Some(path) => {
+            fs::create_dir_all(&path)
+                .context("creating persistent piper output dir")
+                .map_err(|e| e.to_string())?;
+            PiperOutput::Keep(path)
+        }
+    };
     *sink_lock = Some(
         get_independent_sink(&args.device)
             .context("creating piper-tts sink")
@@ -204,17 +274,20 @@ async fn start(state: State<'_, PiperInstance>, args: PiperArgs) -> Result<(), S
     if lock.is_some() {
         return Err("already running".to_string());
     }
-    let temp_dir = tempfile::tempdir()
-        .context("creating piper output temp dir")
-        .map_err(|e| e.to_string())?;
+
+    probe_piper_version(&args.exe_path)
+        .await
+        .map_err(|err| err.to_string())?;
+
     let mut command = tokio::process::Command::new(&args.exe_path);
+    command.kill_on_drop(true);
     command.stdin(std::process::Stdio::piped());
     command.stdout(std::process::Stdio::piped());
     command.stderr(std::process::Stdio::piped());
     command.arg("-m");
     command.arg(args.voice_path);
     command.arg("-d");
-    command.arg(temp_dir.path());
+    command.arg(out_dir.path());
 
     add_arg_if_some(&mut command, "--speaker", args.speaker_id);
     add_arg_if_some(&mut command, "--noise_scale", args.noise_scale);
@@ -230,6 +303,7 @@ async fn start(state: State<'_, PiperInstance>, args: PiperArgs) -> Result<(), S
         command.creation_flags(0x08000000); // CREATE_NO_WINDOW
     }
 
+    trace!("starting piper process, '{command:?}'");
     let mut process = command
         .spawn()
         .with_context(|| format!("Failed to start '{}'", args.exe_path.display()))
@@ -279,8 +353,48 @@ async fn start(state: State<'_, PiperInstance>, args: PiperArgs) -> Result<(), S
             return Err(format!("piper exec error: '{buf}'"));
         }
     }
-    *lock = Some((process, buffered_out, temp_dir));
+    let process = PiperProcess {
+        process,
+        stdout: buffered_out,
+        out_dir,
+    };
+    *lock = Some(process);
     Ok(())
+}
+
+#[instrument()]
+async fn probe_piper_version(exe: &PathBuf) -> anyhow::Result<()> {
+    trace!("probing for piper version");
+    let mut version_command = tokio::process::Command::new(exe);
+    version_command.arg("--version");
+    version_command.kill_on_drop(true);
+    let output = timeout(Duration::from_secs(5), version_command.output())
+        .await
+        .context("executing piper version probe command")? // context for timeout
+        .context("executing piper version probe command")?; // context for cmd failure
+    match from_utf8(&output.stdout) {
+        Ok(tag) => {
+            if tag.is_empty() {
+                if output.status.code().is_some() {
+                    bail!(
+                        "you are probably using piper version 1.3.0 from OHF-Voice, which has a very broken command line interface, try to use v1.2.0 from rhasspy"
+                    )
+                } else {
+                    bail!("invalid piper output: '{tag}', unable to detect piper runtime version")
+                }
+            }
+            let version: Vec<_> = tag.split('.').collect();
+            if version.len() == 3 && version[0] == "1" {
+                trace!("piper version 1.x from rhasspy detected '{tag}'");
+                return Ok(());
+            } else {
+                bail!("invalid piper output: '{tag}', unable to detect piper runtime version")
+            }
+        }
+        Err(_) => {
+            bail!("invalid piper output: not utf-8, unable to detect piper runtime version")
+        }
+    };
 }
 
 #[tauri::command]
@@ -289,7 +403,7 @@ async fn stop(state: State<'_, PiperInstance>) -> Result<(), String> {
         drop(sink);
     }
     if let Some(mut child) = state.process.lock().await.take() {
-        child.0.kill().map_err(|err| err.to_string()).await?
+        child.process.kill().map_err(|err| err.to_string()).await?
     }
     Ok(())
 }

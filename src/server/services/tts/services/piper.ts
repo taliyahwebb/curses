@@ -29,6 +29,7 @@ export class TTS_PiperService implements ITTSService {
                 args: {
                     device: this.state.device,
                     exePath: this.state.exe_location,
+                    outPath: this.state.out_path == "temp" ? null : this.state.out_path,
                     voicePath: this.state.voice,
                     speakerId: this.state.speaker_id,
                 },

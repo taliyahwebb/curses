@@ -349,6 +349,14 @@ const Piper: FC = () => {
         onPathSelected={path => loadVoicesFrom(path)}
         dialogOptions={{ directory: true }}
       />
+      <InputFilePath
+        label="tts.piper_out_path"
+        value={data.out_path}
+        onChange={e => handleUpdate("out_path", e.target.value)}
+        dialogOptions={{ directory: true }}
+      />
+      <Inspector.Description>{t('tts.piper_out_path_note')}</Inspector.Description>
+      <Inspector.Description>{t('tts.piper_out_path_warn')}</Inspector.Description>
       <button onClick={loadVoices} className="btn btn-sm">{t("tts.piper_reload_voices")}</button>
     </Inspector.Deactivatable>
   </>

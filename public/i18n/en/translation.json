@@ -130,6 +130,9 @@
 
     "piper_title": "Piper",
     "piper_exe_location": "Executable",
+    "piper_out_path": "Output Directory",
+    "piper_out_path_note": "Accepts 'temp' as special argument to use temporary output.",
+    "piper_out_path_warn": "If set to anything but 'temp' generated audio files are never deleted!",
     "piper_voice_location": "Voice directory",
     "piper_reload_voices": "Rescan voice directory",
     "piper_speaker_id": "Speaker ID",
