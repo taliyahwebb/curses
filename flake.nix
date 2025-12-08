@@ -1,7 +1,7 @@
 {
   inputs = {
     # nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     flake-utils.url = "github:numtide/flake-utils";
     flakebox.url = "github:rustshop/flakebox";
     flakebox.inputs.nixpkgs.follows = "nixpkgs";
@@ -26,7 +26,7 @@
         };
         lib = pkgs.lib;
         pnpm = pkgs.pnpm_9;
-        flakeboxLib = flakebox.lib.${system} {
+        flakeboxLib = flakebox.lib.mkLib pkgs {
           config = {
             github.ci.enable = false;
             semgrep.enable = false;
@@ -124,7 +124,7 @@
                   pkgs.cargo-tauri
                   pkgs.nodejs
                   pnpm
-                  pkgs.wrapGAppsHook # automatically wraps out binary to work with glib-networking
+                  pkgs.wrapGAppsHook3 # automatically wraps out binary to work with glib-networking
 
                   # whisper extra deps
                   pkgs.cmake
@@ -168,7 +168,8 @@
               pnpmDeps = pnpm.fetchDeps {
                 pname = projectName;
                 src = buildSrc;
-                hash = "sha256-pHJ6ZKnK7I3t5zzfnQT4DtVXMFe/WEMDMAbvcj+yQr0=";
+                fetcherVersion = 2;
+                hash = "sha256-cBC1jtpXRseVZDeIqfIywB84Tyo+M7KNrMEtSvNTrgw=";
               };
               cargoBuildCommand = "cargo tauri build --no-bundle --";
               postInstall = ''
@@ -206,7 +207,7 @@
           ];
           RUST_LOG = "curses";
           shellHook = ''
-            # does what nativeBuildInputs[pkgs.wrapGAppsHook] do for glib-networking so it also
+            # does what nativeBuildInputs[pkgs.wrapGAppsHook3] do for glib-networking so it also
             # works in the dev shell
             export GIO_EXTRA_MODULES="$GIO_EXTRA_MODULES:${pkgs.glib-networking}/lib/gio/modules"
             ${pkgs.lib.optionalString pkgs.stdenv.isLinux ''export ALSA_PLUGIN_DIR="${more-alsa-plugins}"''}
