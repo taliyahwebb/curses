@@ -1,6 +1,7 @@
 {
   inputs = {
     # nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs-25-05.url = "github:NixOS/nixpkgs/nixos-25.05";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     flake-utils.url = "github:numtide/flake-utils";
     flakebox.url = "github:rustshop/flakebox";
@@ -11,6 +12,7 @@
   outputs =
     {
       nixpkgs,
+      nixpkgs-25-05,
       flake-utils,
       flakebox,
       nixgl,
@@ -20,6 +22,7 @@
       system:
       let
         projectName = "curses";
+        piper-v1-2-0 = nixpkgs-25-05.legacyPackages.${system}.piper-tts;
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ nixgl.overlay ];
@@ -175,7 +178,7 @@
               postInstall = ''
                 wrapProgram $out/bin/curses \
                   ${pkgs.lib.optionalString pkgs.stdenv.isLinux "--set ALSA_PLUGIN_DIR ${more-alsa-plugins}"} \
-                  --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.piper-tts ]}
+                  --suffix PATH : ${pkgs.lib.makeBinPath [ piper-v1-2-0 ]}
               '';
             };
             nixGLCurses = pkgs.writeShellScriptBin "curses" ''
@@ -203,7 +206,7 @@
             pkgs.nixgl.nixGLIntel
             pkgs.nixgl.nixVulkanIntel
             pkgs.coreutils
-            pkgs.piper-tts
+            piper-v1-2-0
           ];
           RUST_LOG = "curses";
           shellHook = ''
