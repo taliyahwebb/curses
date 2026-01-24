@@ -8,6 +8,7 @@ import React, {ReactNode, Suspense} from "react";
 import AppConfiguration   from "@/config";
 import ApiShared          from "@/shared";
 import ClientLoadingView from "./client/ui/view_loading";
+import {FallbackView} from "@/fallbackView";
 
 declare global {
   interface Window {
@@ -25,15 +26,6 @@ declare module 'react' {
   }
 }
 
-// prevent rightclicks
-window.addEventListener('contextmenu', e => {
-  const ele = e.target as HTMLElement;
-  if (ele.nodeName !== "INPUT" && ele.nodeName !== "TEXTAREA") {
-    e.preventDefault();
-    return false;
-  }
-}, false);
-
 let root_ele = document.getElementById("root");
 if (!root_ele)
   throw Error("Root not found");
@@ -44,16 +36,25 @@ function renderView(view: ReactNode) {
   root && root.render(view);
 }
 
-const LazyServerView = React.lazy(() => import("./server/ui/editor-view"));
+(async () => {
+  // prevent rightclicks
+  window.addEventListener('contextmenu', e => {
+    const ele = e.target as HTMLElement;
+    if (ele.nodeName !== "INPUT" && ele.nodeName !== "TEXTAREA") {
+      e.preventDefault();
+      return false;
+    }
+  }, false);
 
-(async function () {
+  const LazyServerView = React.lazy(() => import("./server/ui/editor-view"));
+
   window.Config = new AppConfiguration();
   window.ApiShared = new ApiShared();
   window.ApiClient = new ApiClient();
 
   await window.Config.init();
   await window.ApiShared.init();
-  
+
   if (window.Config.isClient()) {
     if('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js', { scope: '/', type: 'classic' }).then((sw) => {
@@ -68,8 +69,6 @@ const LazyServerView = React.lazy(() => import("./server/ui/editor-view"));
 
   if (window.Config.isClient())
     renderView(<ClientLoadingView/>);
-  // else
-  //   renderView(<LazyServerView/>);
 
   // always load client api
   await window.ApiClient.init();
@@ -79,14 +78,9 @@ const LazyServerView = React.lazy(() => import("./server/ui/editor-view"));
     const serverApi  = await import("./server");
     window.ApiServer = new serverApi.default();
     await window.ApiServer.init();
-  }
-
-
-  if (window.Config.isServer())
     document.documentElement.className = "host";
-
-  if (window.Config.isClient())
-    renderView(<ClientView/>);
-  else
     renderView(<LazyServerView/>);
-})();
+  } else {
+    renderView(<ClientView/>);
+  }
+})().catch(err => renderView(<FallbackView name={err.name} message={err.message}/>));
