@@ -4,6 +4,7 @@ import { BackendState } from "@/server/schema";
 import { TextEvent, TextEventSource } from "@/types";
 import { z } from "zod";
 import { useSnapshot } from "valtio";
+import { toast } from "react-toastify";
 
 export function GetArrayDiff(source: string[], target: string[]) {
   const add = difference(target, source);
@@ -67,7 +68,14 @@ export function buildWordReplacementsCache(map: Record<string, string>, caseInse
   }
   else
     _map = { ...map };
-  let regexp = new RegExp(`\\b(${Object.keys(_map).join("|")})\\b`, caseInsensitive ? "ig" : "g");
+  let regexp;
+  try {
+    regexp = new RegExp(`\\b(${Object.keys(_map).join("|")})\\b`, caseInsensitive ? "ig" : "g");
+  } catch (e) {
+    console.error(e);
+    toast.error(`Invalid word replacement, ignoring:\n${e}`);
+    regexp = new RegExp("(?!x)x"); // unmatchable
+  }
   return {
     regexp,
     map: _map,
