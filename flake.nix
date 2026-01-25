@@ -172,7 +172,7 @@
                 pname = projectName;
                 src = buildSrc;
                 fetcherVersion = 2;
-                hash = "sha256-cBC1jtpXRseVZDeIqfIywB84Tyo+M7KNrMEtSvNTrgw=";
+                hash = "sha256-EmkSmR0uGAhVlXJUimupAGPGNsf6Fprfc8RRi2L65VA=";
               };
               cargoBuildCommand = "cargo tauri build --no-bundle --";
               postInstall = ''
