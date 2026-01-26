@@ -203,7 +203,6 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
                         Some(VadActivity::SpeechStart) => {
                             let interim_text = if args.show_speaking_prompt { "[speaking]" } else { "" };
                             if app.emit("whisper_stt_interim", interim_text).is_err() {
-                            if app.emit("whisper_stt_interim", "[speaking]").is_err() {
                                 eprintln!("wasn't able to emit to frontend {}:{}", file!(), line!());
                             }
                         },
