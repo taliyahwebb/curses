@@ -76,6 +76,15 @@
     "speechly_title": "Speechly",
     "speechly_appid": "App ID",
 
+    "whisper_title": "Whisper",
+    "whisper_model_path": "Whisper 模型",
+    "whisper_translate_to_english": "翻译为英文",
+    "whisper_lang_desc_note": "注意：质量因选择的语言和模型而异",
+    "whisper_vad_silence": "VAD 静音",
+    "whisper_silence_note": "等待检测语音段落结尾的毫秒数。默认值：240",
+    "whisper_use_gpu": "GPU 加速",
+    "whisper_speaking_prompt": "切换说话提示",
+
     "deepgram_title": "Deepgram",
     "deepgram_key": "Key",
     "deepgram_quality": "质量",

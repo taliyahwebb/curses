@@ -190,6 +190,7 @@ const Whisper: FC = () => {
     <InputRange label="stt.whisper_vad_silence" step="30" min="120" max="2000" value={data.silenceInterval} onChange={e => handleUpdate("silenceInterval", e.target.value)} />
     <Inspector.Description>{t('stt.whisper_silence_note')}</Inspector.Description>
     <InputCheckbox label="stt.whisper_use_gpu" onChange={e => handleUpdate("useGpu", e)} value={data.useGpu}/>
+    <InputCheckbox label="stt.whisper_speaking_prompt" onChange={e => handleUpdate("showSpeakingPrompt", e)} value={data.showSpeakingPrompt}/>
     <InputFilePath
       label="stt.whisper_model_path"
       value={data.modelPath}

@@ -65,6 +65,7 @@ pub struct WhisperArgs {
     translate_to_english: bool,
     silence_interval: u64,
     use_gpu: bool,
+    show_speaking_prompt: bool,
 }
 
 pub fn init<R: Runtime>() -> plugin::TauriPlugin<R> {
@@ -200,6 +201,8 @@ pub async fn start<R: Runtime>(app: AppHandle<R>, args: WhisperArgs) -> Result<(
                 event = activity_rx.next() => {
                     match event {
                         Some(VadActivity::SpeechStart) => {
+                            let interim_text = if args.show_speaking_prompt { "[speaking]" } else { "" };
+                            if app.emit("whisper_stt_interim", interim_text).is_err() {
                             if app.emit("whisper_stt_interim", "[speaking]").is_err() {
                                 eprintln!("wasn't able to emit to frontend {}:{}", file!(), line!());
                             }

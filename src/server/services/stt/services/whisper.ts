@@ -43,6 +43,7 @@ export class STT_WhisperService implements ISTTService {
             translateToEnglish: this.state.translateToEnglish,
             silenceInterval: parseInt(this.state.silenceInterval),
             useGpu: this.state.useGpu,
+            showSpeakingPrompt: this.state.showSpeakingPrompt,
         },
     }).catch(err => {
         this.#initialized = false;
